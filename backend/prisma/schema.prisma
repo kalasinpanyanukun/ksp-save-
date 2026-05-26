@@ -1,0 +1,211 @@
+// KSP SAVE+ — Prisma schema
+// ฐานข้อมูล Supabase Postgres
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ───── ผู้ใช้งานระบบ ─────
+enum UserRole {
+  admin
+  nurse_assistant
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name") @db.VarChar(100)
+  role         UserRole @default(nurse_assistant)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  opdVisits   OpdVisit[]    @relation("OpdRecordedBy")
+  admissions  Admission[]   @relation("AdmissionRecordedBy")
+  referrals   Referral[]    @relation("ReferralRecordedBy")
+  pm25Records Pm25Record[]  @relation("Pm25RecordedBy")
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+// ───── นักเรียน / ผู้รับบริการ ─────
+enum BloodType {
+  A
+  B
+  AB
+  O
+  unknown
+}
+
+model Student {
+  id                  String     @id @default(uuid())
+  studentCode         String     @unique @map("student_code") @db.VarChar(20)
+  firstName           String     @map("first_name") @db.VarChar(100)
+  lastName            String     @map("last_name") @db.VarChar(100)
+  classRoom           String?    @map("class_room") @db.VarChar(20)
+  dormitory           String?    @db.VarChar(50)
+  homeroomTeacher     String?    @map("homeroom_teacher") @db.VarChar(100)
+  bloodType           BloodType  @default(unknown) @map("blood_type")
+  congenitalDisease   String?    @map("congenital_disease")
+  drugAllergy         String?    @map("drug_allergy")
+  regularMedication   String?    @map("regular_medication")
+  parentName          String?    @map("parent_name") @db.VarChar(100)
+  parentPhone         String?    @map("parent_phone") @db.VarChar(20)
+  isActive            Boolean    @default(true) @map("is_active")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+
+  opdVisits  OpdVisit[]
+  admissions Admission[]
+  referrals  Referral[]
+
+  @@index([firstName, lastName])
+  @@index([classRoom])
+  @@index([dormitory])
+  @@map("students")
+}
+
+// ───── OPD (การเข้าใช้บริการนอกใน) ─────
+model OpdVisit {
+  id             String   @id @default(uuid())
+  studentId      String   @map("student_id")
+  visitDate      DateTime @map("visit_date") @db.Date
+  visitTime      String   @map("visit_time") @db.VarChar(5) // HH:mm
+  chiefComplaint String   @map("chief_complaint")
+  diagnosis      String?
+  treatment      String?
+  medications    Json     @default("[]") // [{ drugId, drugName, dose, qty }]
+  notes          String?
+  recordedById   String   @map("recorded_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  recordedBy User    @relation("OpdRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([studentId])
+  @@index([visitDate])
+  @@map("opd_visits")
+}
+
+// ───── การ admit นอนพักรักษาตัว ─────
+enum DischargeDestination {
+  dormitory
+  home
+  hospital
+  other
+}
+
+model Admission {
+  id                     String                @id @default(uuid())
+  studentId              String                @map("student_id")
+  admitDate              DateTime              @map("admit_date") @db.Date
+  admitTime              String                @map("admit_time") @db.VarChar(5)
+  chiefComplaint         String                @map("chief_complaint")
+  dischargeDate          DateTime?             @map("discharge_date") @db.Date
+  dischargeTime          String?               @map("discharge_time") @db.VarChar(5)
+  dischargeDestination   DischargeDestination? @map("discharge_destination")
+  totalDays              Int?                  @map("total_days")
+  notes                  String?
+  recordedById           String                @map("recorded_by")
+  createdAt              DateTime              @default(now()) @map("created_at")
+  updatedAt              DateTime              @updatedAt @map("updated_at")
+
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  recordedBy User    @relation("AdmissionRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([studentId])
+  @@index([admitDate])
+  @@index([dischargeDate])
+  @@map("admissions")
+}
+
+// ───── ส่งต่อโรงพยาบาล ─────
+model Referral {
+  id              String   @id @default(uuid())
+  studentId       String   @map("student_id")
+  referralDate    DateTime @map("referral_date") @db.Date
+  referralTime    String   @map("referral_time") @db.VarChar(5)
+  chiefComplaint  String   @map("chief_complaint")
+  referredTo      String   @map("referred_to") @db.VarChar(200)
+  treatmentGiven  String?  @map("treatment_given")
+  notes           String?
+  recordedById    String   @map("recorded_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  recordedBy User    @relation("ReferralRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([studentId])
+  @@index([referralDate])
+  @@map("referrals")
+}
+
+// ───── คลังยา ─────
+model Medication {
+  id        String   @id @default(uuid())
+  drugCode  String   @unique @map("drug_code") @db.VarChar(20)
+  drugName  String   @map("drug_name") @db.VarChar(200)
+  drugType  String?  @map("drug_type") @db.VarChar(50)
+  unit      String?  @db.VarChar(20)
+  stockQty  Int      @default(0) @map("stock_qty")
+  minStock  Int      @default(0) @map("min_stock")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("medications")
+}
+
+// ───── PM 2.5 ─────
+enum AqiLevel {
+  good
+  moderate
+  unhealthy_sensitive
+  unhealthy
+  very_unhealthy
+  hazardous
+}
+
+model Pm25Record {
+  id           String    @id @default(uuid())
+  recordDate   DateTime  @map("record_date") @db.Date
+  recordTime   String    @map("record_time") @db.VarChar(5)
+  pm25Value    Decimal   @map("pm25_value") @db.Decimal(6, 2)
+  aqiLevel     AqiLevel  @map("aqi_level")
+  notes        String?
+  recordedById String    @map("recorded_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  recordedBy User @relation("Pm25RecordedBy", fields: [recordedById], references: [id])
+
+  @@index([recordDate])
+  @@map("pm25_records")
+}
+
+// ───── Audit Log ─────
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String   @db.VarChar(50) // CREATE | UPDATE | DELETE | LOGIN | LOGOUT
+  entity    String   @db.VarChar(50)
+  entityId  String?  @map("entity_id") @db.VarChar(64)
+  diff      Json?
+  ipAddress String?  @map("ip_address") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}

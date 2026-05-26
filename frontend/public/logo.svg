@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="kspGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4DB6E6" />
+      <stop offset="100%" stop-color="#2077C7" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="88" stroke="url(#kspGrad)" stroke-width="6" fill="white" />
+  <!-- BI!7-#-I2CI -->
+  <path d="M30 132 Q100 178 170 132" stroke="#2077C7" stroke-width="6" stroke-linecap="round" fill="none" />
+  <!-- +%12I2 -->
+  <path d="M55 92 L100 56 L145 92" stroke="#0D2B45" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <!-- 22 -->
+  <rect x="92" y="74" width="16" height="40" rx="3" fill="#2077C7" />
+  <rect x="80" y="86" width="40" height="16" rx="3" fill="#2077C7" />
+  <!-- @5"9IH'" -->
+  <path d="M55 132 L145 132" stroke="#0D2B45" stroke-width="5" stroke-linecap="round" />
+  <path d="M60 132 L60 144" stroke="#0D2B45" stroke-width="5" stroke-linecap="round" />
+  <path d="M140 132 L140 144" stroke="#0D2B45" stroke-width="5" stroke-linecap="round" />
+  <!-- I2+H! -->
+  <rect x="78" y="124" width="60" height="8" rx="3" fill="#4DB6E6" />
+  <!-- +1' -->
+  <circle cx="72" cy="120" r="6" fill="#0D2B45" />
+</svg>

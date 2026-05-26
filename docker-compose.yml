@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ksp-save-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ksp_admin
+      POSTGRES_PASSWORD: change-me-in-dev
+      POSTGRES_DB: ksp_save_plus
+    ports:
+      - "5432:5432"
+    volumes:
+      - ksp_pgdata:/var/lib/postgresql/data
+
+volumes:
+  ksp_pgdata:

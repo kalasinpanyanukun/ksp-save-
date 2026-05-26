@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    font-family: "Prompt", system-ui, -apple-system, "Sarabun", sans-serif;
+    color: #0d2b45;
+    background-color: #f2f6fa;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(32, 119, 199, 0.35);
+    border-radius: 0.5rem;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply btn bg-ksp-blue-500 text-white shadow-sm hover:bg-ksp-blue-600 active:bg-ksp-blue-700;
+  }
+  .btn-outline {
+    @apply btn border border-ksp-blue-200 bg-white text-ksp-blue-700 hover:bg-ksp-blue-50;
+  }
+  .btn-ghost {
+    @apply btn text-ksp-blue-700 hover:bg-ksp-blue-50;
+  }
+  .btn-danger {
+    @apply btn bg-rose-600 text-white hover:bg-rose-700;
+  }
+
+  .input {
+    @apply block w-full rounded-xl border border-ksp-blue-100 bg-white px-3.5 py-2.5 text-sm text-ksp-navy placeholder:text-ksp-gray/70 focus:border-ksp-blue-400 focus:ring-0;
+  }
+  .label {
+    @apply block text-sm font-medium text-ksp-navy mb-1.5;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white shadow-card border border-ksp-blue-50;
+  }
+  .card-pad {
+    @apply card p-5 sm:p-6;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+  .chip-blue {
+    @apply chip bg-ksp-blue-50 text-ksp-blue-700;
+  }
+  .chip-emerald {
+    @apply chip bg-emerald-50 text-emerald-700;
+  }
+  .chip-amber {
+    @apply chip bg-amber-50 text-amber-700;
+  }
+  .chip-rose {
+    @apply chip bg-rose-50 text-rose-700;
+  }
+  .chip-slate {
+    @apply chip bg-slate-100 text-slate-700;
+  }
+
+  .table-base {
+    @apply w-full text-left text-sm;
+  }
+  .table-base thead th {
+    @apply bg-ksp-blue-50/60 px-4 py-3 font-semibold text-ksp-navy text-xs uppercase tracking-wider;
+  }
+  .table-base tbody td {
+    @apply border-t border-ksp-blue-50 px-4 py-3 text-ksp-navy/90;
+  }
+  .table-base tbody tr:hover td {
+    @apply bg-ksp-blue-50/40;
+  }
+}
