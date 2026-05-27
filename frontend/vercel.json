@@ -1,4 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "installCommand": "npm install && npm --prefix ../backend install",
+  "buildCommand": "npm --prefix ../backend run prisma:generate && npm --prefix ../backend run prisma:deploy && npm --prefix ../backend run build && npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "regions": ["sin1"],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

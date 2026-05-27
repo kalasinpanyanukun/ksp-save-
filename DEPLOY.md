@@ -1,5 +1,52 @@
 # KSP SAVE+ — คู่มือการ Deploy
 
+## แผนฟรีที่ใช้จริงตอนนี้: Vercel Functions + Supabase
+
+โปรเจกต์นี้สามารถ deploy แบบฟรีโดยใช้ **GitHub + Vercel + Supabase** ได้ โดยให้ Vercel ทำ 2 หน้าที่:
+
+1. เสิร์ฟหน้าเว็บ React/Vite จาก `frontend/dist`
+2. รัน Express backend เดิมผ่าน Vercel Functions ที่ `/api/*`
+
+ไม่ต้องใช้ Render ถ้าผู้ใช้น้อยและงานหลักคือ login, บันทึกข้อมูล, ค้นข้อมูล, และดูรายงานทั่วไป
+
+### ตั้งค่า Vercel Project
+
+แนะนำให้ตั้ง **Root Directory เป็น repo root** หรือปล่อยว่าง ไม่ใช่ `frontend` เพื่อให้ Vercel เห็นทั้ง `api/`, `backend/`, `frontend/`, และ `vercel.json` ที่ root
+
+ค่าที่ config ไว้ใน `vercel.json`:
+
+- Install: `npm install && npm --prefix backend install && npm --prefix frontend install`
+- Build: generate Prisma client, deploy migrations, build backend, build frontend
+- Output: `frontend/dist`
+- Function region: `sin1` เพื่อให้อยู่ใกล้ Supabase Singapore
+- SPA fallback: route อื่น ๆ ที่ไม่ใช่ `/api/*` จะกลับไปที่ `index.html`
+
+### Environment Variables บน Vercel
+
+ตั้งค่าต่อไปนี้ใน Vercel → Project → Settings → Environment Variables:
+
+```env
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+JWT_SECRET="random-long-string-at-least-32-chars"
+JWT_REFRESH_SECRET="another-random-long-string-at-least-32-chars"
+JWT_EXPIRES_IN="8h"
+JWT_REFRESH_EXPIRES_IN="7d"
+CORS_ORIGIN="https://ksp-save.vercel.app"
+NODE_ENV="production"
+VITE_API_URL="/api"
+VITE_APP_NAME="KSP SAVE+"
+```
+
+หลังตั้ง env แล้วให้ redeploy จาก Vercel หรือ push commit ใหม่ไป GitHub
+
+### ตรวจหลัง Deploy
+
+1. เปิด `https://ksp-save.vercel.app/api/health`
+2. ต้องได้ JSON เช่น `{ "status": "ok", "db": "up" }`
+3. ถ้าได้หน้า HTML แปลว่า Vercel ยัง route `/api/*` ไป frontend อยู่ ให้ตรวจ Root Directory และ `vercel.json`
+4. Login ด้วย `admin / ChangeMe123!` แล้วทดสอบบันทึกข้อมูลจริง
+
 ระบบประกอบด้วย 3 ชิ้นที่ deploy แยกกันได้:
 
 1. **Database** — Supabase Postgres (managed) หรือ PostgreSQL ที่ host เอง

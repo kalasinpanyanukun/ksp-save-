@@ -9,5 +9,3 @@ build/
 Thumbs.db
 .vscode/
 .idea/
-backend/prisma/migrations/
-!backend/prisma/migrations/.gitkeep
