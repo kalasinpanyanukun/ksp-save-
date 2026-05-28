@@ -21,15 +21,15 @@ interface StatCardProps {
   value: string | number;
   hint?: string;
   Icon: typeof Users;
-  tone: "blue" | "navy" | "cyan" | "amber";
+  tone: "blue" | "orange" | "cyan" | "green";
   loading?: boolean;
 }
 
 const statTones = {
   blue: "from-ksp-blue-700 to-ksp-blue-500",
-  navy: "from-ksp-navy to-ksp-blue-800",
+  orange: "from-orange-600 to-amber-500",
   cyan: "from-sky-600 to-cyan-500",
-  amber: "from-amber-500 to-orange-500",
+  green: "from-emerald-900 to-emerald-600",
 } as const;
 
 function StatCard({
@@ -105,7 +105,7 @@ export default function DashboardPage() {
           label="กำลัง admit อยู่"
           value={stats?.activeAdmissions ?? 0}
           Icon={BedDouble}
-          tone="navy"
+          tone="orange"
           loading={loading}
         />
         <StatCard
@@ -119,45 +119,56 @@ export default function DashboardPage() {
           label="นักเรียนทั้งหมด"
           value={stats?.students ?? 0}
           Icon={Users}
-          tone="amber"
+          tone="green"
           loading={loading}
         />
       </div>
 
-      <section className="mt-6 rounded-lg border border-ksp-blue-50 bg-white p-5 shadow-card">
-        <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+      <section className="relative mt-6 overflow-hidden rounded-lg border border-white/10 bg-ksp-navy p-5 text-white shadow-2xl">
+        <div className="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/10" />
+        <div className="absolute bottom-0 left-1/3 h-24 w-72 rounded-full bg-ksp-blue-500/20 blur-2xl" />
+        <div className="relative mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
-            <h2 className="text-lg font-semibold text-ksp-navy">ทางลัด</h2>
-            <p className="mt-1 text-sm text-ksp-gray">
+            <h2 className="text-xl font-semibold text-white">ทางลัด</h2>
+            <p className="mt-1 text-sm text-white/70">
               เข้าถึงงานหลักประจำวันได้ทันที
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="relative grid grid-cols-1 gap-3 md:grid-cols-3">
           <Link
             to="/opd"
-            className="group flex items-center justify-between rounded-lg bg-ksp-blue-600 px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-ksp-blue-700 hover:shadow-md"
+            className="group flex items-center justify-between rounded-lg border border-white/15 bg-white/10 px-5 py-4 text-white shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/16 hover:shadow-lg"
           >
             <span className="flex items-center gap-3 font-semibold">
-              <Stethoscope className="h-5 w-5" /> บันทึก OPD
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-white/14">
+                <Stethoscope className="h-5 w-5" />
+              </span>
+              บันทึก OPD
             </span>
             <Plus className="h-4 w-4 opacity-80 transition group-hover:rotate-90" />
           </Link>
           <Link
             to="/admissions"
-            className="group flex items-center justify-between rounded-lg bg-ksp-navy px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-ksp-blue-800 hover:shadow-md"
+            className="group flex items-center justify-between rounded-lg border border-white/15 bg-white/10 px-5 py-4 text-white shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/16 hover:shadow-lg"
           >
             <span className="flex items-center gap-3 font-semibold">
-              <BedDouble className="h-5 w-5" /> รับ admit ใหม่
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-white/14">
+                <BedDouble className="h-5 w-5" />
+              </span>
+              รับ admit ใหม่
             </span>
             <Plus className="h-4 w-4 opacity-80 transition group-hover:rotate-90" />
           </Link>
           <Link
             to="/patients"
-            className="group flex items-center justify-between rounded-lg bg-cyan-600 px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-md"
+            className="group flex items-center justify-between rounded-lg border border-white/15 bg-white/10 px-5 py-4 text-white shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/16 hover:shadow-lg"
           >
             <span className="flex items-center gap-3 font-semibold">
-              <Search className="h-5 w-5" /> ค้นหานักเรียน
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-white/14">
+                <Search className="h-5 w-5" />
+              </span>
+              ค้นหานักเรียน
             </span>
             <Plus className="h-4 w-4 opacity-80 transition group-hover:rotate-90" />
           </Link>

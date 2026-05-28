@@ -47,11 +47,11 @@ export default function LoginPage() {
           <section className="hidden text-white md:block">
             <Brand
               variant="white"
-              size="xl"
+              size="xxl"
               withTagline
-              className="scale-95 origin-left"
+              className="origin-left"
             />
-            <h1 className="mt-10 max-w-3xl text-4xl font-extrabold leading-tight tracking-normal lg:text-5xl">
+            <h1 className="mt-10 max-w-2xl text-2xl font-extrabold leading-snug tracking-normal lg:text-3xl">
               บริหารจัดการเรือนพยาบาล โรงเรียนกาฬสินธุ์ปัญญานุกูล
               จังหวัดกาฬสินธุ์ อย่างเป็นระบบ ทันสมัย ปลอดภัย
             </h1>
@@ -145,7 +145,7 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <footer className="relative mx-auto mt-4 max-w-4xl text-center text-xs font-medium leading-6 text-white/88 drop-shadow">
+      <footer className="relative mx-auto mt-4 max-w-4xl text-center text-xs font-medium leading-6 text-white drop-shadow">
         <div>KSP SAVE+ V 0.1.0</div>
         <div>โรงเรียนกาฬสินธุ์ปัญญานุกูล จังหวัดกาฬสินธุ์</div>
         <div>พัฒนาโดย ครูธนิท ธนพัตนิรัชกุล</div>

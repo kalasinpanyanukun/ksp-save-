@@ -2,7 +2,7 @@ import clsx from "clsx";
 
 interface BrandProps {
   variant?: "color" | "white";
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | "xxl";
   withText?: boolean;
   withTagline?: boolean;
   className?: string;
@@ -13,6 +13,7 @@ const sizes = {
   md: { icon: "h-10 w-10", title: "text-lg", subtitle: "text-xs" },
   lg: { icon: "h-16 w-16", title: "text-2xl", subtitle: "text-sm" },
   xl: { icon: "h-32 w-32", title: "text-5xl", subtitle: "text-xl" },
+  xxl: { icon: "h-40 w-40", title: "text-6xl", subtitle: "text-2xl" },
 } as const;
 
 export default function Brand({
