@@ -4,8 +4,9 @@ import {
   Stethoscope,
   BedDouble,
   Send,
-  ArrowUpRight,
   Loader2,
+  Plus,
+  Search,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
@@ -20,43 +21,49 @@ interface StatCardProps {
   value: string | number;
   hint?: string;
   Icon: typeof Users;
-  tone?: "blue" | "navy" | "accent" | "amber";
+  tone: "blue" | "navy" | "cyan" | "amber";
   loading?: boolean;
 }
+
+const statTones = {
+  blue: "from-ksp-blue-700 to-ksp-blue-500",
+  navy: "from-ksp-navy to-ksp-blue-800",
+  cyan: "from-sky-600 to-cyan-500",
+  amber: "from-amber-500 to-orange-500",
+} as const;
 
 function StatCard({
   label,
   value,
   hint,
   Icon,
-  tone = "blue",
+  tone,
   loading,
 }: StatCardProps) {
-  const toneClasses = {
-    blue: "bg-ksp-blue-50 text-ksp-blue-700",
-    navy: "bg-ksp-blue-100 text-ksp-blue-800",
-    accent: "bg-ksp-blue-50 text-ksp-blue-500",
-    amber: "bg-amber-50 text-amber-700",
-  }[tone];
   return (
-    <div className="card-pad flex items-center gap-4">
-      <div
-        className={`grid h-14 w-14 place-items-center rounded-2xl ${toneClasses}`}
-      >
-        <Icon className="h-6 w-6" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm text-ksp-gray">{label}</div>
-        <div className="text-2xl font-bold text-ksp-navy mt-0.5">
+    <section
+      className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${statTones[tone]} p-5 text-white shadow-card`}
+    >
+      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/12" />
+      <div className="relative flex min-h-[9.5rem] flex-col justify-between">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-white/82">{label}</p>
+            {hint && <p className="mt-1 text-xs text-white/72">{hint}</p>}
+          </div>
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-white/16 text-white ring-1 ring-white/20">
+            <Icon className="h-6 w-6" />
+          </div>
+        </div>
+        <div className="mt-4 text-7xl font-extrabold leading-none tracking-normal text-white">
           {loading ? (
-            <Loader2 className="h-5 w-5 animate-spin inline" />
+            <Loader2 className="h-10 w-10 animate-spin" />
           ) : (
             value
           )}
         </div>
-        {hint && <div className="mt-0.5 text-xs text-ksp-gray">{hint}</div>}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -85,12 +92,13 @@ export default function DashboardPage() {
         description={`วันนี้: ${today}`}
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="ผู้ใช้บริการวันนี้"
           value={stats?.opdToday ?? 0}
           hint={`เดือนนี้รวม ${stats?.opdMonth ?? 0}`}
           Icon={Stethoscope}
+          tone="blue"
           loading={loading}
         />
         <StatCard
@@ -104,7 +112,7 @@ export default function DashboardPage() {
           label="ส่งต่อ รพ. เดือนนี้"
           value={stats?.referralsMonth ?? 0}
           Icon={Send}
-          tone="accent"
+          tone="cyan"
           loading={loading}
         />
         <StatCard
@@ -116,69 +124,45 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="card-pad lg:col-span-2">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-ksp-navy">
-              คู่มือใช้งานเบื้องต้น
-            </h2>
-            <Link
-              to="/reports"
-              className="text-sm text-ksp-blue-500 hover:text-ksp-blue-700 inline-flex items-center gap-1"
-            >
-              ดูรายงาน <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <ol className="space-y-2 text-sm text-ksp-navy/90">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-ksp-blue-500 text-white text-[11px] font-bold">
-                1
-              </span>
-              ค้นหานักเรียนด้วย Ctrl+K หรือเลือกจากเมนู <strong>นักเรียน</strong>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-ksp-blue-500 text-white text-[11px] font-bold">
-                2
-              </span>
-              บันทึก <strong>OPD</strong> เมื่อมีการเข้ามารับยา/รักษาเบื้องต้น
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-ksp-blue-500 text-white text-[11px] font-bold">
-                3
-              </span>
-              ถ้านอนพักเรือนพยาบาล ให้ใช้เมนู <strong>นอนพักรักษา</strong>{" "}
-              และจำหน่ายเมื่อกลับ
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-ksp-blue-500 text-white text-[11px] font-bold">
-                4
-              </span>
-              ถ้าต้องส่งโรงพยาบาล ใช้เมนู <strong>ส่งต่อโรงพยาบาล</strong>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-ksp-blue-500 text-white text-[11px] font-bold">
-                5
-              </span>
-              ดูสรุปสถิติและส่งออก PDF ที่ <strong>รายงาน &amp; สถิติ</strong>
-            </li>
-          </ol>
-        </div>
-
-        <div className="card-pad">
-          <h2 className="text-base font-semibold text-ksp-navy mb-3">ทางลัด</h2>
-          <div className="space-y-2">
-            <Link to="/opd" className="btn-outline w-full justify-start">
-              <Stethoscope className="h-4 w-4" /> บันทึก OPD
-            </Link>
-            <Link to="/admissions" className="btn-outline w-full justify-start">
-              <BedDouble className="h-4 w-4" /> รับ admit ใหม่
-            </Link>
-            <Link to="/patients" className="btn-outline w-full justify-start">
-              <Users className="h-4 w-4" /> ค้นหานักเรียน
-            </Link>
+      <section className="mt-6 rounded-lg border border-ksp-blue-50 bg-white p-5 shadow-card">
+        <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+          <div>
+            <h2 className="text-lg font-semibold text-ksp-navy">ทางลัด</h2>
+            <p className="mt-1 text-sm text-ksp-gray">
+              เข้าถึงงานหลักประจำวันได้ทันที
+            </p>
           </div>
         </div>
-      </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <Link
+            to="/opd"
+            className="group flex items-center justify-between rounded-lg bg-ksp-blue-600 px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-ksp-blue-700 hover:shadow-md"
+          >
+            <span className="flex items-center gap-3 font-semibold">
+              <Stethoscope className="h-5 w-5" /> บันทึก OPD
+            </span>
+            <Plus className="h-4 w-4 opacity-80 transition group-hover:rotate-90" />
+          </Link>
+          <Link
+            to="/admissions"
+            className="group flex items-center justify-between rounded-lg bg-ksp-navy px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-ksp-blue-800 hover:shadow-md"
+          >
+            <span className="flex items-center gap-3 font-semibold">
+              <BedDouble className="h-5 w-5" /> รับ admit ใหม่
+            </span>
+            <Plus className="h-4 w-4 opacity-80 transition group-hover:rotate-90" />
+          </Link>
+          <Link
+            to="/patients"
+            className="group flex items-center justify-between rounded-lg bg-cyan-600 px-5 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-700 hover:shadow-md"
+          >
+            <span className="flex items-center gap-3 font-semibold">
+              <Search className="h-5 w-5" /> ค้นหานักเรียน
+            </span>
+            <Plus className="h-4 w-4 opacity-80 transition group-hover:rotate-90" />
+          </Link>
+        </div>
+      </section>
     </>
   );
 }

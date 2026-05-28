@@ -2,7 +2,7 @@ import clsx from "clsx";
 
 interface BrandProps {
   variant?: "color" | "white";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   withText?: boolean;
   withTagline?: boolean;
   className?: string;
@@ -12,6 +12,7 @@ const sizes = {
   sm: { icon: "h-8 w-8", title: "text-base", subtitle: "text-[10px]" },
   md: { icon: "h-10 w-10", title: "text-lg", subtitle: "text-xs" },
   lg: { icon: "h-16 w-16", title: "text-2xl", subtitle: "text-sm" },
+  xl: { icon: "h-32 w-32", title: "text-5xl", subtitle: "text-xl" },
 } as const;
 
 export default function Brand({
@@ -28,7 +29,7 @@ export default function Brand({
     variant === "white" ? "text-white/80" : "text-ksp-blue-500";
 
   return (
-    <div className={clsx("flex items-center gap-2.5", className)}>
+    <div className={clsx("flex items-center gap-3", className)}>
       <img src={src} alt="KSP SAVE+" className={clsx(s.icon, "shrink-0")} />
       {withText && (
         <div className="flex flex-col leading-tight">

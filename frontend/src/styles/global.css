@@ -41,14 +41,14 @@
   }
 
   .input {
-    @apply block w-full rounded-xl border border-ksp-blue-100 bg-white px-3.5 py-2.5 text-sm text-ksp-navy placeholder:text-ksp-gray/70 focus:border-ksp-blue-400 focus:ring-0;
+    @apply block w-full rounded-lg border border-ksp-blue-100 bg-white px-3.5 py-2.5 text-sm text-ksp-navy placeholder:text-ksp-gray/70 focus:border-ksp-blue-400 focus:ring-0;
   }
   .label {
     @apply block text-sm font-medium text-ksp-navy mb-1.5;
   }
 
   .card {
-    @apply rounded-2xl bg-white shadow-card border border-ksp-blue-50;
+    @apply rounded-lg bg-white shadow-card border border-ksp-blue-50;
   }
   .card-pad {
     @apply card p-5 sm:p-6;

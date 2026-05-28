@@ -1,6 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { BloodType, Student } from "../../types";
 import type { StudentInput } from "../../services/studentsService";
+import {
+  BLOOD_TYPE_OPTIONS,
+  CLASS_ROOM_OPTIONS,
+  DORMITORY_OPTIONS,
+} from "../../constants/studentOptions";
 
 interface PatientFormProps {
   initial?: Partial<Student>;
@@ -8,14 +13,6 @@ interface PatientFormProps {
   onCancel?: () => void;
   submitting?: boolean;
 }
-
-const bloodOptions: { value: BloodType; label: string }[] = [
-  { value: "unknown", label: "ไม่ระบุ" },
-  { value: "A", label: "A" },
-  { value: "B", label: "B" },
-  { value: "AB", label: "AB" },
-  { value: "O", label: "O" },
-];
 
 const empty: StudentInput = {
   studentCode: "",
@@ -73,8 +70,8 @@ export default function PatientForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <section>
-        <h3 className="font-semibold text-ksp-navy mb-3">ข้อมูลพื้นฐาน</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <h3 className="mb-3 font-semibold text-ksp-navy">ข้อมูลพื้นฐาน</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">รหัสนักเรียน *</label>
             <input
@@ -87,12 +84,18 @@ export default function PatientForm({
           </div>
           <div>
             <label className="label">ชั้นเรียน</label>
-            <input
+            <select
               className="input"
               value={form.classRoom ?? ""}
               onChange={(e) => update("classRoom", e.target.value)}
-              placeholder="เช่น ม.3/1"
-            />
+            >
+              <option value="">เลือกชั้นเรียน</option>
+              {CLASS_ROOM_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="label">ชื่อ *</label>
@@ -114,12 +117,18 @@ export default function PatientForm({
           </div>
           <div>
             <label className="label">เรือนนอน</label>
-            <input
+            <select
               className="input"
               value={form.dormitory ?? ""}
               onChange={(e) => update("dormitory", e.target.value)}
-              placeholder="เช่น เรือนนอนชาย 1"
-            />
+            >
+              <option value="">เลือกเรือนนอน</option>
+              {DORMITORY_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="label">ครูประจำชั้น</label>
@@ -133,10 +142,10 @@ export default function PatientForm({
       </section>
 
       <section>
-        <h3 className="font-semibold text-ksp-navy mb-3">ข้อมูลสุขภาพ</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <h3 className="mb-3 font-semibold text-ksp-navy">ข้อมูลสุขภาพ</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">กรุปเลือด</label>
+            <label className="label">กรุ๊ปเลือด</label>
             <select
               className="input"
               value={form.bloodType ?? "unknown"}
@@ -144,9 +153,10 @@ export default function PatientForm({
                 update("bloodType", e.target.value as BloodType)
               }
             >
-              {bloodOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
+              <option value="unknown">ไม่ระบุ</option>
+              {BLOOD_TYPE_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
                 </option>
               ))}
             </select>
@@ -182,8 +192,8 @@ export default function PatientForm({
       </section>
 
       <section>
-        <h3 className="font-semibold text-ksp-navy mb-3">ผู้ปกครอง</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <h3 className="mb-3 font-semibold text-ksp-navy">ผู้ปกครอง</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="label">ชื่อผู้ปกครอง</label>
             <input
@@ -204,7 +214,7 @@ export default function PatientForm({
         </div>
       </section>
 
-      <div className="flex justify-end gap-2 pt-3 border-t border-ksp-blue-50">
+      <div className="flex justify-end gap-2 border-t border-ksp-blue-50 pt-3">
         {onCancel && (
           <button type="button" className="btn-outline" onClick={onCancel}>
             ยกเลิก

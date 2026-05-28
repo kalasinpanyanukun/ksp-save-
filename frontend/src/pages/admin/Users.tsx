@@ -92,7 +92,7 @@ export default function AdminUsersPage() {
                     <td>
                       {u.role === "admin" ? (
                         <span className="chip-blue">
-                          <ShieldCheck className="h-3 w-3" /> Admin
+                          <ShieldCheck className="h-3 w-3" /> Super Admin
                         </span>
                       ) : (
                         <span className="chip-slate">
@@ -298,7 +298,7 @@ function UserForm({
           onChange={(e) => setRole(e.target.value as UserRole)}
         >
           <option value="nurse_assistant">พี่เลี้ยงเรือนพยาบาล</option>
-          <option value="admin">ครูเรือนพยาบาล (Admin)</option>
+          <option value="admin">Super Admin</option>
         </select>
       </div>
 

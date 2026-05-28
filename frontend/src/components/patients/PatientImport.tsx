@@ -8,6 +8,7 @@ import {
 } from "../../services/studentsService";
 import Modal from "../common/Modal";
 import { useToast } from "../common/useToast";
+import { BLOOD_TYPE_OPTIONS } from "../../constants/studentOptions";
 
 interface PatientImportProps {
   open: boolean;
@@ -46,7 +47,9 @@ function pick<T extends Record<string, unknown>>(
 function normalizeBlood(value: string | undefined) {
   if (!value) return undefined;
   const v = value.toUpperCase().trim();
-  if (["A", "B", "AB", "O"].includes(v)) return v as StudentInput["bloodType"];
+  if (BLOOD_TYPE_OPTIONS.includes(v as never)) {
+    return v as StudentInput["bloodType"];
+  }
   return undefined;
 }
 
@@ -136,40 +139,12 @@ export default function PatientImport({
   }
 
   function downloadTemplate() {
-    const headers = [
-      [
-        "รหัสนักเรียน",
-        "ชื่อ",
-        "นามสกุล",
-        "ชั้นเรียน",
-        "เรือนนอน",
-        "ครูประจำชั้น",
-        "กรุปเลือด",
-        "โรคประจำตัว",
-        "การแพ้ยา",
-        "ยาประจำตัว",
-        "ชื่อผู้ปกครอง",
-        "เบอร์โทรศัพท์",
-      ],
-      [
-        "6601001",
-        "สมชาย",
-        "ใจดี",
-        "ม.3/1",
-        "เรือนนอนชาย 1",
-        "ครูสมศรี",
-        "O",
-        "-",
-        "-",
-        "-",
-        "นายอำพล",
-        "0812345678",
-      ],
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(headers);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "students");
-    XLSX.writeFile(wb, "ksp_save_students_template.xlsx");
+    const a = document.createElement("a");
+    a.href = "/ksp_save_students_template.xlsx";
+    a.download = "ksp_save_students_template.xlsx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   function reset() {

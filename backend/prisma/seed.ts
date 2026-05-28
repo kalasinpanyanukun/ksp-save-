@@ -7,14 +7,15 @@ async function main() {
   console.log("[seed] เริ่ม seed ข้อมูลตั้งต้น...");
 
   const adminUsername = "admin";
-  const adminPassword = "ChangeMe123!";
+  const adminPassword = "@ksp123456";
 
   const existing = await prisma.user.findUnique({
     where: { username: adminUsername },
   });
 
+  const passwordHash = await hashPassword(adminPassword);
+
   if (!existing) {
-    const passwordHash = await hashPassword(adminPassword);
     await prisma.user.create({
       data: {
         username: adminUsername,
@@ -23,9 +24,18 @@ async function main() {
         role: UserRole.admin,
       },
     });
-    console.log(`[seed] สร้างผู้ใช้ admin: ${adminUsername} / ${adminPassword}`);
+    console.log(`[seed] สร้างผู้ใช้ Super Admin: ${adminUsername}`);
   } else {
-    console.log("[seed] มีผู้ใช้ admin อยู่แล้ว — ข้าม");
+    await prisma.user.update({
+      where: { username: adminUsername },
+      data: {
+        passwordHash,
+        fullName: "ผู้ดูแลระบบ",
+        role: UserRole.admin,
+        isActive: true,
+      },
+    });
+    console.log("[seed] อัปเดตผู้ใช้ admin เป็น Super Admin แล้ว");
   }
 
   const sampleMedications = [

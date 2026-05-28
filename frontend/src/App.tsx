@@ -11,6 +11,7 @@ import ReferralsPage from "./pages/Referrals";
 import ReportsPage from "./pages/Reports";
 import PM25Page from "./pages/PM25";
 import MedicationStockPage from "./pages/MedicationStock";
+import HelpPage from "./pages/Help";
 import AdminUsersPage from "./pages/admin/Users";
 import AdminAuditPage from "./pages/admin/AuditLog";
 import AdminSettingsPage from "./pages/admin/Settings";
@@ -110,6 +111,16 @@ export default function App() {
           <ProtectedRoute>
             <Shell>
               <MedicationStockPage />
+            </Shell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/help"
+        element={
+          <ProtectedRoute>
+            <Shell>
+              <HelpPage />
             </Shell>
           </ProtectedRoute>
         }

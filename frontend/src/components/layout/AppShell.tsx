@@ -22,7 +22,7 @@ export default function AppShell({ children }: AppShellProps) {
   }, [location.pathname, dispatch]);
 
   return (
-    <div className="min-h-screen flex bg-ksp-bg">
+    <div className="min-h-screen flex bg-gradient-to-br from-ksp-bg via-white to-ksp-blue-50/45">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />

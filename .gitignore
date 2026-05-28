@@ -11,3 +11,5 @@ Thumbs.db
 .idea/
 
 .vercel
+.codex-spreadsheet/
+.codex-browser/
