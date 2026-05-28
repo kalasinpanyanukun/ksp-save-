@@ -51,12 +51,14 @@ export default function LoginPage() {
               withTagline
               className="origin-left"
             />
-            <h1 className="mt-10 max-w-2xl text-2xl font-extrabold leading-snug tracking-normal lg:text-3xl">
-              ระบบบริหารจัดการเรือนพยาบาล โรงเรียนกาฬสินธุ์ปัญญานุกูล
-              จังหวัดกาฬสินธุ์
+            <h1 className="mt-8 max-w-3xl text-[1.8rem] font-extrabold leading-tight tracking-normal lg:text-[2.25rem]">
+              ระบบบริหารจัดการเรือนพยาบาล
+              <br />
+              โรงเรียนกาฬสินธุ์ปัญญานุกูล จังหวัดกาฬสินธุ์
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/86">
               ระบบสำหรับบันทึก ติดตาม และดูแลข้อมูลสุขภาพนักเรียน
+              <br />
               และติดตามสถานะคลังยา / เวชภัณฑ์ รวมถึงงานพยาบาลอื่น ๆ
             </p>
           </section>
