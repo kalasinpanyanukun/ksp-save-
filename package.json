@@ -2,6 +2,7 @@
   "name": "ksp-save-plus",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "KSP SAVE+ - ระบบบริหารจัดการเรือนพยาบาลออนไลน์ โรงเรียนกาฬสินธุ์ปัญญานุกูล",
   "scripts": {
     "dev": "concurrently -k -n backend,frontend -c blue,cyan \"npm run dev:backend\" \"npm run dev:frontend\"",
