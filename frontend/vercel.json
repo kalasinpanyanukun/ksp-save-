@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install && npm --prefix ../backend install",
+  "installCommand": "npm install --include=dev && npm --prefix ../backend install --include=dev",
   "buildCommand": "npm --prefix ../backend run prisma:generate && npm --prefix ../backend run prisma:deploy && npm --prefix ../backend run build && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
