@@ -39,11 +39,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-ksp-blue-800 via-ksp-blue-700 to-ksp-blue-500 px-4 py-10">
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_82%_78%,rgba(95,198,235,0.28),transparent_32%)]" />
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-gradient-to-br from-ksp-blue-800 via-ksp-blue-700 to-ksp-blue-500 px-4 py-5 sm:py-8">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_82%_78%,rgba(95,198,235,0.28),transparent_32%)]" />
 
-      <main className="relative mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center justify-center">
-        <div className="grid w-full grid-cols-1 items-center gap-10 md:grid-cols-[1fr_22rem] lg:gap-16">
+      <main className="relative mx-auto flex w-full max-w-6xl flex-1 items-center justify-center py-3 sm:py-5">
+        <div className="grid w-full grid-cols-1 items-center gap-8 md:grid-cols-[1fr_22rem] lg:gap-16">
           <section className="hidden text-white md:block">
             <Brand
               variant="white"
@@ -52,23 +52,24 @@ export default function LoginPage() {
               className="origin-left"
             />
             <h1 className="mt-10 max-w-2xl text-2xl font-extrabold leading-snug tracking-normal lg:text-3xl">
-              บริหารจัดการเรือนพยาบาล โรงเรียนกาฬสินธุ์ปัญญานุกูล
-              จังหวัดกาฬสินธุ์ อย่างเป็นระบบ ทันสมัย ปลอดภัย
+              ระบบบริหารจัดการเรือนพยาบาล โรงเรียนกาฬสินธุ์ปัญญานุกูล
+              จังหวัดกาฬสินธุ์
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/86">
-              ระบบงานเรือนพยาบาลสำหรับบันทึก ติดตาม และดูแลข้อมูลสุขภาพนักเรียน
-              ด้วยหน้าจอที่เป็นทางการ ใช้งานง่าย และรองรับงานประจำวันของโรงเรียน
+              ระบบสำหรับบันทึก ติดตาม และดูแลข้อมูลสุขภาพนักเรียน
+              และติดตามสถานะคลังยา / เวชภัณฑ์ รวมถึงงานพยาบาลอื่น ๆ
             </p>
           </section>
 
-          <section className="mx-auto flex min-h-[33rem] w-full max-w-[22rem] flex-col justify-center rounded-lg border border-white/45 bg-white/95 px-6 py-9 shadow-2xl backdrop-blur md:px-7">
-            <div className="mb-7 flex justify-center md:hidden">
-              <Brand variant="color" size="lg" withTagline />
+          <div className="flex flex-col items-center gap-7">
+            <div className="flex justify-center md:hidden">
+              <Brand variant="white" size="lg" withTagline />
             </div>
+            <section className="mx-auto flex min-h-[30rem] w-full max-w-[22rem] flex-col justify-center rounded-lg border border-white/45 bg-white/95 px-6 py-9 shadow-2xl backdrop-blur md:min-h-[33rem] md:px-7">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-ksp-navy">เข้าสู่ระบบ</h2>
               <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-6 text-ksp-gray">
-                กรุณากรอกชื่อผู้ใช้และรหัสผ่านที่ได้รับจากครูเรือนพยาบาล
+                กรุณากรอกชื่อผู้ใช้และรหัสผ่าน
               </p>
             </div>
 
@@ -139,15 +140,17 @@ export default function LoginPage() {
             </form>
 
             <p className="mt-6 text-center text-xs leading-5 text-ksp-gray">
-              หากลืมรหัสผ่าน กรุณาติดต่อครูเรือนพยาบาลเพื่อรีเซ็ตให้ใหม่
+              พบปัญหาการใช้งานติดต่อ
+              <br />
+              ครูธนิทฯ โทร 0964969369
             </p>
-          </section>
+            </section>
+          </div>
         </div>
       </main>
 
-      <footer className="relative mx-auto mt-4 max-w-4xl text-center text-xs font-medium leading-6 text-white drop-shadow">
+      <footer className="relative mx-auto w-full max-w-4xl shrink-0 pb-1 text-center text-xs font-medium leading-6 text-white drop-shadow">
         <div>KSP SAVE+ V 0.1.0</div>
-        <div>โรงเรียนกาฬสินธุ์ปัญญานุกูล จังหวัดกาฬสินธุ์</div>
         <div>พัฒนาโดย ครูธนิท ธนพัตนิรัชกุล</div>
       </footer>
     </div>

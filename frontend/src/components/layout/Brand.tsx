@@ -9,11 +9,11 @@ interface BrandProps {
 }
 
 const sizes = {
-  sm: { icon: "h-8 w-8", title: "text-base", subtitle: "text-[10px]" },
-  md: { icon: "h-10 w-10", title: "text-lg", subtitle: "text-xs" },
-  lg: { icon: "h-16 w-16", title: "text-2xl", subtitle: "text-sm" },
-  xl: { icon: "h-32 w-32", title: "text-5xl", subtitle: "text-xl" },
-  xxl: { icon: "h-40 w-40", title: "text-6xl", subtitle: "text-2xl" },
+  sm: "h-9 w-auto max-w-[10rem]",
+  md: "h-11 w-auto max-w-[12rem]",
+  lg: "h-16 w-auto max-w-[18rem]",
+  xl: "h-28 w-auto max-w-[34rem]",
+  xxl: "h-36 w-auto max-w-[42rem]",
 } as const;
 
 export default function Brand({
@@ -24,28 +24,15 @@ export default function Brand({
   className,
 }: BrandProps) {
   const s = sizes[size];
-  const src = variant === "white" ? "/logo-white.svg" : "/logo.svg";
-  const titleColor = variant === "white" ? "text-white" : "text-ksp-navy";
-  const subColor =
-    variant === "white" ? "text-white/80" : "text-ksp-blue-500";
+  void variant;
+  void withText;
+  void withTagline;
 
   return (
-    <div className={clsx("flex items-center gap-3", className)}>
-      <img src={src} alt="KSP SAVE+" className={clsx(s.icon, "shrink-0")} />
-      {withText && (
-        <div className="flex flex-col leading-tight">
-          <span
-            className={clsx("font-bold tracking-wide", s.title, titleColor)}
-          >
-            KSP <span className={subColor}>SAVE+</span>
-          </span>
-          {withTagline && (
-            <span className={clsx(s.subtitle, subColor, "font-medium")}>
-              ระบบบริหารจัดการเรือนพยาบาล
-            </span>
-          )}
-        </div>
-      )}
-    </div>
+    <img
+      src="/logo.png"
+      alt="KSP SAVE+ ระบบบริหารจัดการเรือนพยาบาล"
+      className={clsx(s, "block shrink-0 object-contain", className)}
+    />
   );
 }
