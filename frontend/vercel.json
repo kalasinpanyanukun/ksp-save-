@@ -5,5 +5,8 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "regions": ["sin1"],
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
+  ]
 }
