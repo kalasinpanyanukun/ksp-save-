@@ -13,7 +13,7 @@ const sizes = {
   md: "h-11 w-auto max-w-[12rem]",
   lg: "h-16 w-auto max-w-[18rem]",
   xl: "h-28 w-auto max-w-[34rem]",
-  xxl: "h-[34rem] w-auto max-w-[56rem]",
+  xxl: "h-[17rem] w-auto max-w-[28rem]",
 } as const;
 
 export default function Brand({
