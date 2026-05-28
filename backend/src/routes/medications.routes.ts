@@ -67,7 +67,16 @@ router.get("/search", async (req, res, next) => {
 router.post("/", requireAdmin, async (req, res, next) => {
   try {
     const body = medicationSchema.parse(req.body);
-    const med = await prisma.medication.create({ data: body });
+    const data: Prisma.MedicationCreateInput = {
+      drugCode: body.drugCode,
+      drugName: body.drugName,
+      drugType: body.drugType,
+      unit: body.unit,
+      stockQty: body.stockQty,
+      minStock: body.minStock,
+      isActive: body.isActive,
+    };
+    const med = await prisma.medication.create({ data });
     res.status(201).json({ medication: med });
   } catch (err) {
     next(err);
