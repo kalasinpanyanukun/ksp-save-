@@ -9,6 +9,7 @@ export interface DormitoryOption {
 
 export interface SheetRow {
   rowNumber: number;
+  studentId?: string;
   cells: string[];
   record: Record<string, string>;
 }

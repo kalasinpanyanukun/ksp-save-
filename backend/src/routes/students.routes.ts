@@ -10,6 +10,7 @@ const router = Router();
 router.use(authMiddleware);
 
 const bloodTypes = ["A", "B", "AB", "O", "unknown"] as const;
+const studentStatuses = ["resident", "infirmary", "home_leave"] as const;
 
 const studentSchema = z.object({
   studentCode: z.string().trim().min(1, "กรุณากรอกรหัสนักเรียน").max(20),
@@ -24,6 +25,7 @@ const studentSchema = z.object({
   regularMedication: z.string().trim().max(2000).optional().nullable(),
   parentName: z.string().trim().max(100).optional().nullable(),
   parentPhone: z.string().trim().max(20).optional().nullable(),
+  studentStatus: z.enum(studentStatuses).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -36,7 +38,9 @@ router.get("/", async (req, res, next) => {
     const page = Math.max(1, Number(req.query.page ?? 1));
     const pageSize = Math.min(100, Math.max(5, Number(req.query.pageSize ?? 20)));
 
-    const where: Prisma.StudentWhereInput = {};
+    const where: Prisma.StudentWhereInput = {
+      NOT: { studentCode: { contains: "-MED-" } },
+    };
     if (!includeInactive) where.isActive = true;
     if (classRoom) where.classRoom = classRoom;
     if (dormitory) where.dormitory = dormitory;
@@ -71,6 +75,7 @@ router.get("/search", async (req, res, next) => {
     const data = await prisma.student.findMany({
       where: {
         isActive: true,
+        NOT: { studentCode: { contains: "-MED-" } },
         OR: [
           { studentCode: { contains: q, mode: "insensitive" } },
           { firstName: { contains: q, mode: "insensitive" } },
@@ -160,6 +165,7 @@ router.post("/", requireAdmin, async (req, res, next) => {
         regularMedication: body.regularMedication || null,
         parentName: body.parentName || null,
         parentPhone: body.parentPhone || null,
+        studentStatus: body.studentStatus ?? "resident",
       },
     });
     res.status(201).json({ student });
@@ -239,6 +245,7 @@ router.post("/import", requireAdmin, async (req, res, next) => {
               regularMedication: item.regularMedication || null,
               parentName: item.parentName || null,
               parentPhone: item.parentPhone || null,
+              studentStatus: item.studentStatus ?? existing.studentStatus,
             },
           });
           updated++;
@@ -257,6 +264,7 @@ router.post("/import", requireAdmin, async (req, res, next) => {
               regularMedication: item.regularMedication || null,
               parentName: item.parentName || null,
               parentPhone: item.parentPhone || null,
+              studentStatus: item.studentStatus ?? "resident",
             },
           });
           created++;

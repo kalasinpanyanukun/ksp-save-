@@ -20,6 +20,79 @@ function parseDate(q: unknown, fallback: Date): Date {
   return fallback;
 }
 
+function displayText(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
+function jsonRecord(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function hasStudentMedication(student: {
+  regularMedication: string | null;
+  medicationData: unknown;
+}) {
+  const regularMedication = displayText(student.regularMedication);
+  if (regularMedication && regularMedication !== "-") {
+    return true;
+  }
+  const data = jsonRecord(student.medicationData);
+  const medications = Array.isArray(data["รายการยา"])
+    ? (data["รายการยา"] as Record<string, unknown>[])
+    : [];
+  return medications.some((medication) => {
+    const name =
+      displayText(medication["ข้อมูลยา ชื่อยา"]) ||
+      displayText(medication["ชื่อยา"]);
+    return Boolean(name && name !== "-");
+  });
+}
+
+function medicationCategory(medication: {
+  drugName: string;
+  drugType: string | null;
+  unit: string | null;
+}) {
+  const text = `${medication.drugName} ${medication.drugType ?? ""}`.toLowerCase();
+  const unit = medication.unit ?? "";
+  if (
+    unit.includes("ขวด") ||
+    text.includes("น้ำ") ||
+    text.includes("syrup")
+  ) {
+    return "liquid";
+  }
+  if (
+    unit.includes("หลอด") &&
+    (text.includes("พ่น") ||
+      text.includes("spray") ||
+      text.includes("inhaler") ||
+      text.includes("nasal"))
+  ) {
+    return "inhaler";
+  }
+  if (
+    unit.includes("หลอด") &&
+    (text.includes("ทา") ||
+      text.includes("cream") ||
+      text.includes("ointment") ||
+      text.includes("gel"))
+  ) {
+    return "ointment";
+  }
+  if (
+    unit.includes("เม็ด") ||
+    text.includes("tablet") ||
+    text.includes(" tab") ||
+    text.includes("ยาเม็ด")
+  ) {
+    return "tablet";
+  }
+  return "other";
+}
+
 router.get("/daily", async (req, res, next) => {
   try {
     const date = parseDate(req.query.date, new Date());
@@ -284,8 +357,23 @@ router.get("/statistics", async (_req, res, next) => {
     const startMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startDay = startOfDay(today);
     const endDay = endOfDay(today);
+    const realStudentWhere = {
+      isActive: true,
+      NOT: { studentCode: { contains: "-MED-" } },
+    } as const;
 
-    const [opdToday, opdMonth, activeAdmissions, referralsMonth, students] =
+    const [
+      opdToday,
+      opdMonth,
+      activeAdmissions,
+      referralsMonth,
+      students,
+      residentStudents,
+      homeLeaveStudents,
+      infirmaryStudents,
+      studentsWithMedicationRows,
+      medications,
+    ] =
       await Promise.all([
         prisma.opdVisit.count({
           where: { visitDate: { gte: startDay, lte: endDay } },
@@ -293,8 +381,54 @@ router.get("/statistics", async (_req, res, next) => {
         prisma.opdVisit.count({ where: { visitDate: { gte: startMonth } } }),
         prisma.admission.count({ where: { dischargeDate: null } }),
         prisma.referral.count({ where: { referralDate: { gte: startMonth } } }),
-        prisma.student.count({ where: { isActive: true } }),
+        prisma.student.count({ where: realStudentWhere }),
+        prisma.student.count({
+          where: { ...realStudentWhere, studentStatus: "resident" },
+        }),
+        prisma.student.count({
+          where: { ...realStudentWhere, studentStatus: "home_leave" },
+        }),
+        prisma.student.count({
+          where: { ...realStudentWhere, studentStatus: "infirmary" },
+        }),
+        prisma.student.findMany({
+          where: realStudentWhere,
+          select: { regularMedication: true, medicationData: true },
+        }),
+        prisma.medication.findMany({
+          where: { isActive: true },
+          select: {
+            drugName: true,
+            drugType: true,
+            unit: true,
+            stockQty: true,
+            minStock: true,
+            entryStatus: true,
+          },
+        }),
       ]);
+
+    const medicationStock = {
+      totalTypes: medications.length,
+      tablets: 0,
+      liquids: 0,
+      ointments: 0,
+      inhalers: 0,
+      lowStockTypes: medications.filter(
+        (medication) =>
+          medication.entryStatus === "entered" &&
+          medication.stockQty <= medication.minStock,
+      ).length,
+    };
+
+    for (const medication of medications) {
+      if (medication.entryStatus !== "entered") continue;
+      const category = medicationCategory(medication);
+      if (category === "tablet") medicationStock.tablets += medication.stockQty;
+      if (category === "liquid") medicationStock.liquids += medication.stockQty;
+      if (category === "ointment") medicationStock.ointments += medication.stockQty;
+      if (category === "inhaler") medicationStock.inhalers += medication.stockQty;
+    }
 
     res.json({
       opdToday,
@@ -302,6 +436,12 @@ router.get("/statistics", async (_req, res, next) => {
       activeAdmissions,
       referralsMonth,
       students,
+      residentStudents,
+      homeLeaveStudents,
+      infirmaryStudents,
+      studentsWithMedication: studentsWithMedicationRows.filter(hasStudentMedication)
+        .length,
+      medicationStock,
     });
   } catch (err) {
     next(err);

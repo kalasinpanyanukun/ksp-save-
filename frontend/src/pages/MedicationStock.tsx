@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Pill,
   Plus,
@@ -35,6 +35,8 @@ export default function MedicationStockPage() {
   const [editing, setEditing] = useState<Medication | null>(null);
   const [adjusting, setAdjusting] = useState<Medication | null>(null);
   const [importing, setImporting] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 100;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,9 +58,25 @@ export default function MedicationStockPage() {
     return () => clearTimeout(t);
   }, [load]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [q, showLowOnly]);
+
   const lowStockCount = items.filter(
     (m) => m.entryStatus === "entered" && m.stockQty <= m.minStock,
   ).length;
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(items.length / pageSize)),
+    [items.length],
+  );
+  const visibleItems = useMemo(
+    () => items.slice((page - 1) * pageSize, page * pageSize),
+    [items, page],
+  );
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
 
   async function handleImportFromStudents() {
     setImporting(true);
@@ -150,6 +168,7 @@ export default function MedicationStockPage() {
           <table className="table-base">
             <thead>
               <tr>
+                <th>ลำดับ</th>
                 <th>รหัส</th>
                 <th>ชื่อยา</th>
                 <th>ประเภท</th>
@@ -164,17 +183,20 @@ export default function MedicationStockPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={9} className="text-center py-6">
+                  <td colSpan={10} className="text-center py-6">
                     <Loader2 className="inline h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
               )}
               {!loading &&
-                items.map((m) => {
+                visibleItems.map((m, index) => {
                   const isEntered = m.entryStatus === "entered";
                   const isLow = isEntered && m.stockQty <= m.minStock;
                   return (
                     <tr key={m.id}>
+                      <td className="font-semibold text-ksp-gray">
+                        {(page - 1) * pageSize + index + 1}
+                      </td>
                       <td className="font-mono text-xs">{m.drugCode}</td>
                       <td className="font-medium">{m.drugName}</td>
                       <td>{m.drugType ?? "-"}</td>
@@ -257,6 +279,32 @@ export default function MedicationStockPage() {
               title="ยังไม่มีรายการยา"
               description="กดปุ่ม 'เพิ่มยา' เพื่อเริ่มเพิ่มคลังยา"
             />
+          </div>
+        )}
+        {!loading && items.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-ksp-blue-50 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-ksp-gray">
+              หน้า {page} / {totalPages} · แสดง {visibleItems.length.toLocaleString("th-TH")} จาก{" "}
+              {items.length.toLocaleString("th-TH")} รายการ
+            </div>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                className="btn-outline px-3 py-1.5 text-xs"
+                disabled={page <= 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                ก่อนหน้า
+              </button>
+              <button
+                type="button"
+                className="btn-outline px-3 py-1.5 text-xs"
+                disabled={page >= totalPages}
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              >
+                ถัดไป
+              </button>
+            </div>
           </div>
         )}
       </div>

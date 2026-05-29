@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import type { BloodType, Student } from "../../types";
+import type { BloodType, Student, StudentStatus } from "../../types";
 import type { StudentInput } from "../../services/studentsService";
 import {
   BLOOD_TYPE_OPTIONS,
@@ -27,7 +27,14 @@ const empty: StudentInput = {
   regularMedication: "",
   parentName: "",
   parentPhone: "",
+  studentStatus: "resident",
 };
+
+const STUDENT_STATUS_OPTIONS: { value: StudentStatus; label: string }[] = [
+  { value: "resident", label: "ประจำ" },
+  { value: "infirmary", label: "ป่วย(นอนเรือนบาล)" },
+  { value: "home_leave", label: "ลากลับบ้าน" },
+];
 
 export default function PatientForm({
   initial,
@@ -52,6 +59,7 @@ export default function PatientForm({
         regularMedication: initial.regularMedication ?? "",
         parentName: initial.parentName ?? "",
         parentPhone: initial.parentPhone ?? "",
+        studentStatus: initial.studentStatus ?? "resident",
       });
     } else {
       setForm(empty);
@@ -137,6 +145,22 @@ export default function PatientForm({
               value={form.homeroomTeacher ?? ""}
               onChange={(e) => update("homeroomTeacher", e.target.value)}
             />
+          </div>
+          <div>
+            <label className="label">สถานะ</label>
+            <select
+              className="input"
+              value={form.studentStatus ?? "resident"}
+              onChange={(e) =>
+                update("studentStatus", e.target.value as StudentStatus)
+              }
+            >
+              {STUDENT_STATUS_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </section>

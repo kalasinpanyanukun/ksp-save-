@@ -29,6 +29,18 @@ import {
 } from "../services/studentsService";
 import type { Student } from "../types";
 
+const studentStatusLabel: Record<Student["studentStatus"], string> = {
+  resident: "ประจำ",
+  infirmary: "ป่วย(นอนเรือนบาล)",
+  home_leave: "ลากลับบ้าน",
+};
+
+const studentStatusClass: Record<Student["studentStatus"], string> = {
+  resident: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+  infirmary: "bg-orange-50 text-orange-700 ring-orange-100",
+  home_leave: "bg-sky-50 text-sky-700 ring-sky-100",
+};
+
 export default function PatientListPage() {
   const role = useAppSelector((s) => s.auth.user?.role);
   const isAdmin = role === "super_admin" || role === "admin";
@@ -212,6 +224,7 @@ export default function PatientListPage() {
                 <th>ชื่อ-นามสกุล</th>
                 <th>ชั้นเรียน</th>
                 <th>เรือนนอน</th>
+                <th>สถานะ</th>
                 <th>กรุปเลือด</th>
                 <th>แพ้ยา</th>
                 <th className="text-right">การจัดการ</th>
@@ -220,7 +233,7 @@ export default function PatientListPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={8} className="text-center py-10">
+                  <td colSpan={9} className="text-center py-10">
                     <Loader2 className="inline-block h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
@@ -242,6 +255,13 @@ export default function PatientListPage() {
                     </td>
                     <td>{s.classRoom ?? "-"}</td>
                     <td>{s.dormitory ?? "-"}</td>
+                    <td>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${studentStatusClass[s.studentStatus ?? "resident"]}`}
+                      >
+                        {studentStatusLabel[s.studentStatus ?? "resident"]}
+                      </span>
+                    </td>
                     <td>
                       <span className="chip-blue">
                         {s.bloodType === "unknown" ? "—" : s.bloodType}

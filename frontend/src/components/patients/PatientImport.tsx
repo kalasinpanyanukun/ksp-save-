@@ -29,6 +29,7 @@ const FIELD_ALIASES: Record<keyof StudentInput, string[]> = {
   regularMedication: ["regularMedication", "ยาประจำตัว"],
   parentName: ["parentName", "ผู้ปกครอง", "ชื่อผู้ปกครอง"],
   parentPhone: ["parentPhone", "เบอร์ผู้ปกครอง", "เบอร์โทร", "เบอร์โทรศัพท์"],
+  studentStatus: ["studentStatus", "สถานะ"],
 };
 
 function pick<T extends Record<string, unknown>>(
@@ -53,6 +54,17 @@ function normalizeBlood(value: string | undefined) {
   return undefined;
 }
 
+function normalizeStudentStatus(value: string | undefined) {
+  const text = value?.trim();
+  if (text === "ป่วย(นอนเรือนบาล)" || text === "ป่วย" || text === "infirmary") {
+    return "infirmary" as const;
+  }
+  if (text === "ลากลับบ้าน" || text === "กลับบ้าน" || text === "home_leave") {
+    return "home_leave" as const;
+  }
+  return "resident" as const;
+}
+
 function parseRows(rows: Record<string, unknown>[]): StudentInput[] {
   return rows
     .map((row) => {
@@ -73,6 +85,7 @@ function parseRows(rows: Record<string, unknown>[]): StudentInput[] {
         regularMedication: pick(row, FIELD_ALIASES.regularMedication) ?? null,
         parentName: pick(row, FIELD_ALIASES.parentName) ?? null,
         parentPhone: pick(row, FIELD_ALIASES.parentPhone) ?? null,
+        studentStatus: normalizeStudentStatus(pick(row, FIELD_ALIASES.studentStatus)),
       };
       return item;
     })

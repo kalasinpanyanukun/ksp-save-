@@ -47,6 +47,12 @@ enum BloodType {
   unknown
 }
 
+enum StudentStatus {
+  resident
+  infirmary
+  home_leave
+}
+
 model Student {
   id                  String     @id @default(uuid())
   studentCode         String     @unique @map("student_code") @db.VarChar(20)
@@ -63,6 +69,7 @@ model Student {
   medicationData      Json       @default("{}") @map("medication_data")
   parentName          String?    @map("parent_name") @db.VarChar(100)
   parentPhone         String?    @map("parent_phone") @db.VarChar(20)
+  studentStatus       StudentStatus @default(resident) @map("student_status")
   isActive            Boolean    @default(true) @map("is_active")
   createdAt           DateTime   @default(now()) @map("created_at")
   updatedAt           DateTime   @updatedAt @map("updated_at")

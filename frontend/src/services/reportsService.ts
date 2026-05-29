@@ -46,6 +46,18 @@ export interface DashboardStats {
   activeAdmissions: number;
   referralsMonth: number;
   students: number;
+  residentStudents: number;
+  homeLeaveStudents: number;
+  infirmaryStudents: number;
+  studentsWithMedication: number;
+  medicationStock: {
+    totalTypes: number;
+    tablets: number;
+    liquids: number;
+    ointments: number;
+    inhalers: number;
+    lowStockTypes: number;
+  };
 }
 
 export async function getDailyReport(date: string): Promise<DailyReport> {

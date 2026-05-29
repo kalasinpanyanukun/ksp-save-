@@ -146,7 +146,10 @@ router.post("/", requireAdmin, async (req, res, next) => {
 router.post("/import-from-students", requireAdmin, async (_req, res, next) => {
   try {
     const students = await prisma.student.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        NOT: { studentCode: { contains: "-MED-" } },
+      },
       select: {
         regularMedication: true,
         medicationData: true,

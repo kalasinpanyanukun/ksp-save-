@@ -14,6 +14,7 @@ export interface LoginResponse {
 }
 
 export type BloodType = "A" | "B" | "AB" | "O" | "unknown";
+export type StudentStatus = "resident" | "infirmary" | "home_leave";
 
 export interface Student {
   id: string;
@@ -31,6 +32,7 @@ export interface Student {
   medicationData: Record<string, unknown>;
   parentName: string | null;
   parentPhone: string | null;
+  studentStatus: StudentStatus;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

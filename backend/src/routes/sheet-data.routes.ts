@@ -9,6 +9,7 @@ const router = Router();
 router.use(authMiddleware);
 
 type SheetKind = "health" | "medication";
+type StoredRecord = Record<string, string> & { __studentId?: string };
 
 interface DormitorySheet {
   key: string;
@@ -167,10 +168,38 @@ function addRecordValue(
   if (!record[key]) record[key] = text;
 }
 
+function shouldSkipStoredKey(kind: SheetKind, key: string) {
+  const commonHidden = new Set([
+    "__studentId",
+    "ลำดับ",
+    "รหัสนักเรียน",
+    "เลขประจำตัวนักเรียน",
+    "เลขบัตรประชาชน",
+    "ชื่อ-สกุล",
+    "ชื่อ-นามสกุล",
+    "ชั้น",
+    "ชั้นเรียน",
+    "ห้อง",
+    "เรือนนอน",
+    "แหล่งข้อมูล",
+  ]);
+  if (commonHidden.has(key)) return true;
+  if (kind === "health") {
+    return [
+      "โรคประจำตัว",
+      "ยาประจำตัว",
+      "แพ้ยา/อาหาร",
+      "ผู้ปกครอง",
+      "เบอร์โทร",
+    ].includes(key);
+  }
+  return key.includes("ข้อมูลส่วนตัว") || key.includes("ข้อมูลยา") || key.includes("การรับประทาน");
+}
+
 function buildStoredResponse(
   kind: SheetKind,
   dormitory: DormitorySheet,
-  records: Record<string, string>[],
+  records: StoredRecord[],
 ) {
   const baseHeaders =
     kind === "health"
@@ -192,16 +221,13 @@ function buildStoredResponse(
           "ชื่อ-สกุล",
           "ชั้นเรียน",
           "เรือนนอน",
+          "จำนวนชนิดยา",
           "รายการยา",
-          "ขนาดยา",
-          "เช้า",
-          "เที่ยง",
-          "เย็น",
-          "ก่อนนอน",
         ];
   const headers = [...baseHeaders];
   for (const record of records) {
     for (const key of Object.keys(record)) {
+      if (key.startsWith("__")) continue;
       if (!headers.includes(key)) headers.push(key);
     }
   }
@@ -211,8 +237,9 @@ function buildStoredResponse(
     headers,
     rows: records.map((record, rowIndex) => ({
       rowNumber: rowIndex + 1,
+      studentId: record.__studentId,
       cells: headers.map((header) => record[header] ?? ""),
-      record,
+      record: Object.fromEntries(headers.map((header) => [header, record[header] ?? ""])),
     })),
     sourceUrl: sheetEditUrl(kind, dormitory),
     storage: "supabase",
@@ -221,11 +248,15 @@ function buildStoredResponse(
 
 async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
   const students = await prisma.student.findMany({
-    where: { isActive: true, dormitory: dormitory.name },
+    where: {
+      isActive: true,
+      dormitory: dormitory.name,
+      NOT: { studentCode: { contains: "-MED-" } },
+    },
     orderBy: [{ classRoom: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
   });
 
-  const records: Record<string, string>[] = [];
+  const records: StoredRecord[] = [];
   for (const student of students) {
     const healthRecord = jsonRecord(student.healthData);
     const base = {
@@ -240,7 +271,8 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
     };
 
     if (kind === "health") {
-      const record: Record<string, string> = {
+      const record: StoredRecord = {
+        __studentId: student.id,
         ...base,
         "โรคประจำตัว": student.congenitalDisease ?? "",
         "ยาประจำตัว": student.regularMedication ?? "",
@@ -249,6 +281,7 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
         "เบอร์โทร": student.parentPhone ?? "",
       };
       for (const [key, value] of Object.entries(healthRecord)) {
+        if (shouldSkipStoredKey(kind, key)) continue;
         addRecordValue(record, key, value);
       }
       records.push(record);
@@ -260,29 +293,27 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
 
       if (medications.length === 0) {
         records.push({
+          __studentId: student.id,
           ...base,
+          "จำนวนชนิดยา": student.regularMedication ? "1" : "",
           "รายการยา": student.regularMedication ?? "",
         });
       } else {
-        for (const medication of medications) {
-          const record: Record<string, string> = {
-            ...base,
-            "รายการยา":
-              displayValue(medication["ข้อมูลยา ชื่อยา"]) ||
-              displayValue(medication["ชื่อยา"]),
-            "ขนาดยา":
-              displayValue(medication["ข้อมูลยา ขนาดยา"]) ||
-              displayValue(medication["ขนาดยา"]),
-            "เช้า": displayValue(medication["การรับประทาน เช้า"]),
-            "เที่ยง": displayValue(medication["การรับประทาน เที่ยง"]),
-            "เย็น": displayValue(medication["การรับประทาน เย็น"]),
-            "ก่อนนอน": displayValue(medication["การรับประทาน ก่อนนอน"]),
-          };
-          for (const [key, value] of Object.entries(medication)) {
-            addRecordValue(record, key, value);
-          }
-          records.push(record);
-        }
+        records.push({
+          __studentId: student.id,
+          ...base,
+          "จำนวนชนิดยา": String(medications.length),
+          "รายการยา": medicationSummary(
+            medications.map((medication) =>
+              Object.fromEntries(
+                Object.entries(medication).map(([key, value]) => [
+                  key,
+                  displayValue(value),
+                ]),
+              ) as Record<string, string>,
+            ),
+          ),
+        });
       }
     }
   }
@@ -430,8 +461,7 @@ async function importMedicationSheets(studentCodesByName: Map<string, string>) {
       if (rowName) {
         currentName = rowName;
         currentCode =
-          studentCodesByName.get(`${dormitory.name}:${normalizeName(rowName)}`) ||
-          `${dormitory.code}-MED-${String(item.rowNumber).padStart(3, "0")}`;
+          studentCodesByName.get(`${dormitory.name}:${normalizeName(rowName)}`) || "";
       }
       if (!currentName || !currentCode) continue;
       const record = {
@@ -456,25 +486,6 @@ async function importMedicationSheets(studentCodesByName: Map<string, string>) {
           },
         });
         updated++;
-      } else {
-        const firstRecord = medications[0] ?? {};
-        const fullName = clean(firstRecord["ข้อมูลส่วนตัว ชื่อ-นามสกุล"]);
-        const { firstName, lastName } = splitFullName(fullName);
-        await prisma.student.create({
-          data: {
-            studentCode: compactCode(studentCode) || studentCode.slice(0, 20),
-            firstName,
-            lastName,
-            classRoom: clean(firstRecord["ข้อมูลส่วนตัว ชั้น"]) || null,
-            dormitory: dormitory.name,
-            parentPhone: phoneValue(
-              String(firstRecord["ข้อมูลส่วนตัว เบอร์โทรศัพท์ผู้ปกครอง"] ?? ""),
-            ),
-            regularMedication: summary || null,
-            medicationData: jsonObject({ เรือนนอน: dormitory.name, รายการยา: medications }),
-          },
-        });
-        created++;
       }
     }
   }

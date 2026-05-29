@@ -7,6 +7,15 @@ import {
   Loader2,
   Plus,
   Search,
+  Home,
+  LogOut,
+  Pill,
+  Package,
+  Tablet,
+  Droplets,
+  Paintbrush,
+  Wind,
+  AlertTriangle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
@@ -21,7 +30,7 @@ interface StatCardProps {
   value: string | number;
   hint?: string;
   Icon: typeof Users;
-  tone: "blue" | "orange" | "cyan" | "green";
+  tone: "blue" | "orange" | "cyan" | "green" | "violet" | "rose" | "slate";
   loading?: boolean;
 }
 
@@ -30,6 +39,9 @@ const statTones = {
   orange: "text-orange-600",
   cyan: "text-cyan-600",
   green: "text-emerald-700",
+  violet: "text-violet-600",
+  rose: "text-rose-600",
+  slate: "text-slate-700",
 } as const;
 
 function StatCard({
@@ -70,6 +82,28 @@ function StatCard({
   );
 }
 
+function MiniStat({
+  label,
+  value,
+  Icon,
+  tone,
+  loading,
+}: StatCardProps) {
+  return (
+    <section className="flex min-h-[7rem] items-start justify-between gap-3 border-t border-slate-100 py-4">
+      <div>
+        <p className="text-base font-bold leading-tight text-ksp-navy">{label}</p>
+        <div
+          className={`mt-3 text-5xl font-extrabold leading-none tracking-normal ${statTones[tone]}`}
+        >
+          {loading ? <Loader2 className="h-7 w-7 animate-spin" /> : value}
+        </div>
+      </div>
+      <Icon className={`mt-1 h-6 w-6 shrink-0 ${statTones[tone]}`} />
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
   const today = new Date().toLocaleDateString("th-TH", {
@@ -87,6 +121,73 @@ export default function DashboardPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const additionalStats: StatCardProps[] = [
+    {
+      label: "นักเรียนประจำโรงเรียน",
+      value: stats?.residentStudents ?? 0,
+      hint: "พักที่โรงเรียน",
+      Icon: Home,
+      tone: "green",
+      loading,
+    },
+    {
+      label: "นักเรียนกลับบ้าน",
+      value: stats?.homeLeaveStudents ?? 0,
+      Icon: LogOut,
+      tone: "cyan",
+      loading,
+    },
+    {
+      label: "มียาประจำตัว",
+      value: stats?.studentsWithMedication ?? 0,
+      Icon: Pill,
+      tone: "violet",
+      loading,
+    },
+    {
+      label: "ชนิดยาในคลัง",
+      value: stats?.medicationStock.totalTypes ?? 0,
+      Icon: Package,
+      tone: "slate",
+      loading,
+    },
+    {
+      label: "ยาเม็ด",
+      value: stats?.medicationStock.tablets ?? 0,
+      Icon: Tablet,
+      tone: "blue",
+      loading,
+    },
+    {
+      label: "ยาน้ำ (ขวด)",
+      value: stats?.medicationStock.liquids ?? 0,
+      Icon: Droplets,
+      tone: "cyan",
+      loading,
+    },
+    {
+      label: "ยาทา (หลอด)",
+      value: stats?.medicationStock.ointments ?? 0,
+      Icon: Paintbrush,
+      tone: "orange",
+      loading,
+    },
+    {
+      label: "ยาพ่น (หลอด)",
+      value: stats?.medicationStock.inhalers ?? 0,
+      Icon: Wind,
+      tone: "green",
+      loading,
+    },
+    {
+      label: "ชนิดที่เหลือน้อย",
+      value: stats?.medicationStock.lowStockTypes ?? 0,
+      Icon: AlertTriangle,
+      tone: "rose",
+      loading,
+    },
+  ];
 
   return (
     <>
@@ -125,6 +226,12 @@ export default function DashboardPage() {
           tone="green"
           loading={loading}
         />
+      </div>
+
+      <div className="mt-7 grid grid-cols-1 gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
+        {additionalStats.map((item) => (
+          <MiniStat key={item.label} {...item} />
+        ))}
       </div>
 
       <section className="relative mt-6 overflow-hidden rounded-lg border border-white/10 bg-ksp-navy p-5 text-white shadow-2xl">

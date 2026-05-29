@@ -14,6 +14,7 @@ export interface StudentInput {
   regularMedication?: string | null;
   parentName?: string | null;
   parentPhone?: string | null;
+  studentStatus?: Student["studentStatus"];
 }
 
 export interface ListStudentsParams {
