@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   Edit3,
   ArrowDownUp,
+  DownloadCloud,
 } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
@@ -15,6 +16,7 @@ import { useToast } from "../components/common/useToast";
 import {
   adjustMedication,
   createMedication,
+  importMedicationsFromStudents,
   listMedications,
   updateMedication,
   type MedicationInput,
@@ -32,6 +34,7 @@ export default function MedicationStockPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Medication | null>(null);
   const [adjusting, setAdjusting] = useState<Medication | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,7 +56,38 @@ export default function MedicationStockPage() {
     return () => clearTimeout(t);
   }, [load]);
 
-  const lowStockCount = items.filter((m) => m.stockQty <= m.minStock).length;
+  const lowStockCount = items.filter(
+    (m) => m.entryStatus === "entered" && m.stockQty <= m.minStock,
+  ).length;
+
+  async function handleImportFromStudents() {
+    setImporting(true);
+    try {
+      const result = await importMedicationsFromStudents();
+      toast(
+        `ดึงรายการยาจากข้อมูลนักเรียนแล้ว เพิ่ม ${result.created} รายการ ข้าม ${result.skipped} รายการ`,
+        "success",
+      );
+      await load();
+    } catch {
+      toast("ดึงรายการยาจากข้อมูลนักเรียนไม่สำเร็จ", "error");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleStatusChange(
+    medication: Medication,
+    entryStatus: Medication["entryStatus"],
+  ) {
+    try {
+      await updateMedication(medication.id, { entryStatus });
+      toast("อัปเดตหมายเหตุเรียบร้อย", "success");
+      await load();
+    } catch {
+      toast("อัปเดตหมายเหตุไม่สำเร็จ", "error");
+    }
+  }
 
   return (
     <>
@@ -62,16 +96,31 @@ export default function MedicationStockPage() {
         description={`ทั้งหมด ${items.length} รายการ · stock ต่ำ ${lowStockCount} รายการ`}
         actions={
           isAdmin && (
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => {
-                setEditing(null);
-                setOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" /> เพิ่มยา
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={handleImportFromStudents}
+                disabled={importing}
+              >
+                {importing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <DownloadCloud className="h-4 w-4" />
+                )}
+                ดึงยาจากข้อมูลนักเรียน
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  setEditing(null);
+                  setOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" /> เพิ่มยา
+              </button>
+            </>
           )
         }
       />
@@ -108,35 +157,66 @@ export default function MedicationStockPage() {
                 <th>คงเหลือ</th>
                 <th>ขั้นต่ำ</th>
                 <th>สถานะ</th>
+                <th>หมายเหตุ</th>
                 <th className="text-right">การจัดการ</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={8} className="text-center py-6">
+                  <td colSpan={9} className="text-center py-6">
                     <Loader2 className="inline h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
               )}
               {!loading &&
                 items.map((m) => {
-                  const isLow = m.stockQty <= m.minStock;
+                  const isEntered = m.entryStatus === "entered";
+                  const isLow = isEntered && m.stockQty <= m.minStock;
                   return (
                     <tr key={m.id}>
                       <td className="font-mono text-xs">{m.drugCode}</td>
                       <td className="font-medium">{m.drugName}</td>
                       <td>{m.drugType ?? "-"}</td>
                       <td>{m.unit ?? "-"}</td>
-                      <td className="font-semibold">{m.stockQty}</td>
-                      <td>{m.minStock}</td>
+                      <td className="font-semibold">
+                        {isEntered ? m.stockQty : <span className="text-ksp-gray">-</span>}
+                      </td>
+                      <td>{isEntered ? m.minStock : <span className="text-ksp-gray">-</span>}</td>
                       <td>
-                        {isLow ? (
+                        {!isEntered ? (
+                          <span className="chip-amber">รอลงข้อมูล</span>
+                        ) : isLow ? (
                           <span className="chip-rose">
                             <AlertTriangle className="h-3 w-3" /> ต่ำกว่าขั้นต่ำ
                           </span>
                         ) : (
                           <span className="chip-emerald">ปกติ</span>
+                        )}
+                      </td>
+                      <td>
+                        {isAdmin ? (
+                          <select
+                            className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+                              isEntered
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-rose-200 bg-rose-50 text-rose-700"
+                            }`}
+                            value={m.entryStatus}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                m,
+                                e.target.value as Medication["entryStatus"],
+                              )
+                            }
+                          >
+                            <option value="entered">ลงข้อมูลแล้ว</option>
+                            <option value="not_entered">ยังไม่ได้ลงข้อมูล</option>
+                          </select>
+                        ) : isEntered ? (
+                          <span className="chip-emerald">ลงข้อมูลแล้ว</span>
+                        ) : (
+                          <span className="chip-rose">ยังไม่ได้ลงข้อมูล</span>
                         )}
                       </td>
                       <td className="text-right">
@@ -254,6 +334,7 @@ function MedicationForm({
     unit: initial?.unit ?? "",
     stockQty: initial?.stockQty ?? 0,
     minStock: initial?.minStock ?? 0,
+    entryStatus: initial?.entryStatus ?? "entered",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -332,6 +413,22 @@ function MedicationForm({
               setForm((f) => ({ ...f, minStock: Number(e.target.value) }))
             }
           />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">หมายเหตุ</label>
+          <select
+            className="input"
+            value={form.entryStatus ?? "entered"}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                entryStatus: e.target.value as Medication["entryStatus"],
+              }))
+            }
+          >
+            <option value="entered">ลงข้อมูลแล้ว</option>
+            <option value="not_entered">ยังไม่ได้ลงข้อมูล</option>
+          </select>
         </div>
       </div>
       <div className="flex justify-end gap-2 pt-2">

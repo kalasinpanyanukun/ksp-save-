@@ -27,7 +27,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", label: "แดชบอร์ด", Icon: LayoutDashboard },
-  { to: "/patients", label: "นักเรียน / ผู้ป่วย", Icon: Users },
+  { to: "/patients", label: "ข้อมูลนักเรียน", Icon: Users },
   { to: "/opd", label: "OPD - บันทึกการรักษา", Icon: Stethoscope },
   { to: "/admissions", label: "นอนพักรักษา", Icon: BedDouble },
   { to: "/referrals", label: "ส่งต่อโรงพยาบาล", Icon: Send },

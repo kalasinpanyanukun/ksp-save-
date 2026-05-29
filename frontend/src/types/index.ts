@@ -104,6 +104,7 @@ export interface Medication {
   unit: string | null;
   stockQty: number;
   minStock: number;
+  entryStatus: "entered" | "not_entered";
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

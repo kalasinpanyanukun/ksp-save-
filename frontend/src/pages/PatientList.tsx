@@ -20,7 +20,7 @@ import { useAppSelector } from "../store";
 import { useToast } from "../components/common/useToast";
 import {
   createStudent,
-  deactivateStudent,
+  deleteStudent,
   fetchClassrooms,
   fetchDormitories,
   listStudents,
@@ -37,7 +37,7 @@ export default function PatientListPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize] = useState(100);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [classFilter, setClassFilter] = useState("");
@@ -110,8 +110,8 @@ export default function PatientListPage() {
   async function handleDelete() {
     if (!deleting) return;
     try {
-      await deactivateStudent(deleting.id);
-      toast("ปิดการใช้งานนักเรียนเรียบร้อย", "success");
+      await deleteStudent(deleting.id);
+      toast("ลบข้อมูลนักเรียนเรียบร้อย", "success");
       await load();
     } catch {
       toast("ไม่สามารถดำเนินการได้", "error");
@@ -128,7 +128,7 @@ export default function PatientListPage() {
   return (
     <>
       <PageHeader
-        title="นักเรียน / ผู้ป่วย"
+        title="ข้อมูลนักเรียน"
         description={`ทั้งหมด ${total.toLocaleString("th-TH")} คน`}
         actions={
           isAdmin && (
@@ -207,6 +207,7 @@ export default function PatientListPage() {
           <table className="table-base">
             <thead>
               <tr>
+                <th>ลำดับ</th>
                 <th>รหัส</th>
                 <th>ชื่อ-นามสกุล</th>
                 <th>ชั้นเรียน</th>
@@ -219,14 +220,17 @@ export default function PatientListPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={7} className="text-center py-10">
+                  <td colSpan={8} className="text-center py-10">
                     <Loader2 className="inline-block h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
               )}
               {!loading &&
-                students.map((s) => (
+                students.map((s, index) => (
                   <tr key={s.id}>
+                    <td className="font-semibold text-ksp-gray">
+                      {(page - 1) * pageSize + index + 1}
+                    </td>
                     <td className="font-mono text-xs">{s.studentCode}</td>
                     <td>
                       <Link
@@ -266,7 +270,7 @@ export default function PatientListPage() {
                             type="button"
                             className="btn-ghost px-2 py-1.5 text-rose-600 hover:bg-rose-50"
                             onClick={() => setDeleting(s)}
-                            title="ปิดการใช้งาน"
+                            title="ลบข้อมูล"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -346,10 +350,10 @@ export default function PatientListPage() {
 
       <ConfirmDialog
         open={Boolean(deleting)}
-        title="ยืนยันการปิดการใช้งาน"
-        message={`ต้องการปิดการใช้งานนักเรียน ${deleting?.firstName} ${deleting?.lastName}? ระบบจะยังเก็บประวัติไว้แต่จะไม่แสดงในรายการหลัก`}
+        title="ยืนยันการลบข้อมูล"
+        message={`ต้องการลบข้อมูลนักเรียน ${deleting?.firstName} ${deleting?.lastName}? ระบบจะลบข้อมูลนักเรียนและประวัติการรักษาที่ผูกอยู่แบบถาวร`}
         danger
-        confirmLabel="ปิดการใช้งาน"
+        confirmLabel="ลบข้อมูล"
         onConfirm={handleDelete}
         onClose={() => setDeleting(null)}
       />

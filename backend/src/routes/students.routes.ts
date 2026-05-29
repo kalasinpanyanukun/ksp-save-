@@ -196,10 +196,12 @@ router.put("/:id", requireAdmin, async (req, res, next) => {
 
 router.delete("/:id", requireAdmin, async (req, res, next) => {
   try {
-    await prisma.student.update({
-      where: { id: req.params.id },
-      data: { isActive: false },
-    });
+    await prisma.$transaction([
+      prisma.opdVisit.deleteMany({ where: { studentId: req.params.id } }),
+      prisma.admission.deleteMany({ where: { studentId: req.params.id } }),
+      prisma.referral.deleteMany({ where: { studentId: req.params.id } }),
+      prisma.student.delete({ where: { id: req.params.id } }),
+    ]);
     res.json({ ok: true });
   } catch (err) {
     next(err);

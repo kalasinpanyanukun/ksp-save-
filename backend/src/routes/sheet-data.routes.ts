@@ -176,6 +176,7 @@ function buildStoredResponse(
     kind === "health"
       ? [
           "รหัสนักเรียน",
+          "รหัสบัตรประชาชน",
           "ชื่อ-สกุล",
           "ชั้นเรียน",
           "เรือนนอน",
@@ -187,6 +188,7 @@ function buildStoredResponse(
         ]
       : [
           "รหัสนักเรียน",
+          "รหัสบัตรประชาชน",
           "ชื่อ-สกุล",
           "ชั้นเรียน",
           "เรือนนอน",
@@ -225,8 +227,13 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
 
   const records: Record<string, string>[] = [];
   for (const student of students) {
+    const healthRecord = jsonRecord(student.healthData);
     const base = {
-      "รหัสนักเรียน": student.studentCode,
+      "รหัสนักเรียน":
+        displayValue(healthRecord["รหัสนักเรียน"]) ||
+        displayValue(healthRecord["เลขประจำตัวนักเรียน"]),
+      "รหัสบัตรประชาชน":
+        displayValue(healthRecord["เลขบัตรประชาชน"]) || student.studentCode,
       "ชื่อ-สกุล": `${student.firstName} ${student.lastName}`,
       "ชั้นเรียน": student.classRoom ?? "",
       "เรือนนอน": student.dormitory ?? "",
@@ -241,7 +248,7 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
         "ผู้ปกครอง": student.parentName ?? "",
         "เบอร์โทร": student.parentPhone ?? "",
       };
-      for (const [key, value] of Object.entries(jsonRecord(student.healthData))) {
+      for (const [key, value] of Object.entries(healthRecord)) {
         addRecordValue(record, key, value);
       }
       records.push(record);

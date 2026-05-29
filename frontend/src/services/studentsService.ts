@@ -64,7 +64,7 @@ export async function updateStudent(
   return data.student;
 }
 
-export async function deactivateStudent(id: string): Promise<void> {
+export async function deleteStudent(id: string): Promise<void> {
   await api.delete(`/students/${id}`);
 }
 

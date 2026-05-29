@@ -6,15 +6,12 @@ import {
   Pill,
   RefreshCw,
   Search,
-  UploadCloud,
 } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
 import { useToast } from "../components/common/useToast";
-import { useAppSelector } from "../store";
 import {
   getSheetData,
-  importStudentsFromSheets,
   listSheetDormitories,
   type DormitoryOption,
   type SheetDataKind,
@@ -45,14 +42,11 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
     icon: typeof HeartPulse;
   };
   const Icon = copy.icon;
-  const role = useAppSelector((s) => s.auth.user?.role);
-  const isAdmin = role === "super_admin" || role === "admin";
   const toast = useToast();
   const [dormitories, setDormitories] = useState<DormitoryOption[]>([]);
   const [activeDormitory, setActiveDormitory] = useState("");
   const [sheet, setSheet] = useState<SheetDataResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -70,7 +64,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
     try {
       setSheet(await getSheetData(kind, activeDormitory));
     } catch {
-      toast("โหลดข้อมูลจาก Google Sheets ไม่สำเร็จ", "error");
+      toast("โหลดข้อมูลจาก Supabase ไม่สำเร็จ", "error");
     } finally {
       setLoading(false);
     }
@@ -89,27 +83,8 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
     );
   }, [q, sheet]);
 
-  async function handleImport() {
-    setImporting(true);
-    try {
-      const result = await importStudentsFromSheets();
-      toast(
-        `นำเข้าลง Supabase แล้ว: สุขภาพ เพิ่ม ${result.health.created} อัปเดต ${result.health.updated} | ยา เพิ่ม ${result.medication.created} อัปเดต ${result.medication.updated}`,
-        "success",
-      );
-      await load();
-    } catch (err) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "นำเข้าข้อมูลไม่สำเร็จ";
-      toast(message, "error");
-    } finally {
-      setImporting(false);
-    }
-  }
-
   return (
-    <>
+    <div className="relative left-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 lg:w-[calc(100vw-18rem-2rem)]">
       <PageHeader
         title={copy.title}
         description={copy.description}
@@ -128,36 +103,20 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             <button type="button" className="btn-outline" onClick={load}>
               <RefreshCw className="h-4 w-4" /> โหลดใหม่
             </button>
-            {isAdmin && (
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleImport}
-                disabled={importing}
-              >
-                {importing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <UploadCloud className="h-4 w-4" />
-                )}
-                นำเข้าจาก Google Sheets เข้า Supabase
-              </button>
-            )}
           </>
         }
       />
 
-      <div className="card-pad mb-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap gap-2">
+      <div className="mb-3 flex flex-col gap-3 rounded-md border border-ksp-blue-100 bg-white px-3 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-1.5">
             {dormitories.map((item) => (
               <button
                 key={item.key}
                 type="button"
                 className={
                   activeDormitory === item.name
-                    ? "btn-primary px-3 py-2 text-xs"
-                    : "btn-outline px-3 py-2 text-xs"
+                    ? "rounded-md border border-ksp-blue-600 bg-ksp-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm"
+                    : "rounded-md border border-ksp-blue-200 bg-white px-3 py-2 text-xs font-semibold text-ksp-blue-700 hover:bg-ksp-blue-50"
                 }
                 onClick={() => setActiveDormitory(item.name)}
               >
@@ -174,13 +133,12 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
-        </div>
       </div>
 
-      <div className="card overflow-hidden">
-        <div className="flex items-center justify-between border-b border-ksp-blue-50 px-5 py-4">
+      <section className="overflow-hidden rounded-md border border-slate-300 bg-white">
+        <div className="flex items-center justify-between border-b border-slate-300 bg-white px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-ksp-blue-50 text-ksp-blue-700">
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-ksp-blue-50 text-ksp-blue-700">
               <Icon className="h-5 w-5" />
             </div>
             <div>
@@ -199,38 +157,35 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
           <div className="p-6">
             <EmptyState
               title="ยังไม่มีข้อมูลใน Supabase"
-              description={
-                isAdmin
-                  ? "กดปุ่มนำเข้าจาก Google Sheets เข้า Supabase เพื่อบันทึกเป็นฐานข้อมูลนักเรียน"
-                  : "ติดต่อผู้ดูแลระบบให้นำเข้าข้อมูลจาก Google Sheets ก่อน"
-              }
+              description="ยังไม่พบข้อมูลของเรือนนอนนี้ในฐานข้อมูล"
             />
           </div>
         ) : (
-          <div className="max-h-[62vh] overflow-auto">
-            <table className="min-w-full border-collapse text-left text-xs">
-              <thead className="sticky top-0 z-10 bg-ksp-blue-50 text-ksp-navy">
+          <div className="max-h-[calc(100vh-17rem)] overflow-auto">
+            <table className="min-w-max border-separate border-spacing-0 text-left text-xs">
+              <thead className="sticky top-0 z-10 bg-slate-100 text-ksp-navy">
                 <tr>
                   {sheet?.headers.map((header, index) => (
                     <th
                       key={`${header}-${index}`}
-                      className="whitespace-nowrap border-b border-ksp-blue-100 px-3 py-2 font-semibold"
+                      className="border-b border-r border-slate-300 px-3 py-2.5 font-semibold last:border-r-0"
+                      style={{ minWidth: columnWidth(header, index) }}
                     >
                       {header}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ksp-blue-50">
+              <tbody>
                 {filteredRows.map((row) => (
-                  <tr key={row.rowNumber} className="hover:bg-ksp-blue-50/40">
+                  <tr key={row.rowNumber} className="odd:bg-white even:bg-slate-50/70 hover:bg-ksp-blue-50/50">
                     {sheet?.headers.map((header, index) => (
                       <td
                         key={`${row.rowNumber}-${header}-${index}`}
-                        className="max-w-[18rem] whitespace-nowrap px-3 py-2 text-ksp-navy/85"
+                        className="max-w-[22rem] overflow-hidden text-ellipsis whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 align-middle text-ksp-navy/85 last:border-r-0"
                         title={row.cells[index] ?? ""}
                       >
-                        {row.cells[index] || <span className="text-ksp-gray">-</span>}
+                        <CellValue header={header} value={row.cells[index] ?? ""} />
                       </td>
                     ))}
                   </tr>
@@ -239,7 +194,43 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             </table>
           </div>
         )}
-      </div>
-    </>
+      </section>
+    </div>
   );
+}
+
+function columnWidth(header: string, index: number) {
+  if (index <= 1) return "10rem";
+  if (header.includes("ชื่อ")) return "15rem";
+  if (header.includes("ที่อยู่") || header.includes("หมายเหตุ")) return "22rem";
+  if (header.includes("โรค") || header.includes("ยา") || header.includes("แพ้")) {
+    return "16rem";
+  }
+  if (header.includes("กด ✓")) return "8rem";
+  return "11rem";
+}
+
+function isCheckboxColumn(header: string) {
+  return header.includes("กด ✓") || header.includes("ถ้ามีกด ✓");
+}
+
+function CellValue({ header, value }: { header: string; value: string }) {
+  if (isCheckboxColumn(header)) {
+    const checked = value.toUpperCase() === "TRUE" || value === "จริง" || value === "✓";
+    return (
+      <span
+        aria-label={checked ? "เลือกแล้ว" : "ยังไม่เลือก"}
+        className={`inline-grid h-5 w-5 place-items-center rounded border text-[11px] font-bold ${
+          checked
+            ? "border-ksp-blue-600 bg-ksp-blue-600 text-white"
+            : "border-slate-300 bg-white text-transparent"
+        }`}
+      >
+        ✓
+      </span>
+    );
+  }
+
+  if (!value) return <span className="text-ksp-gray">-</span>;
+  return <span>{value}</span>;
 }

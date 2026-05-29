@@ -154,6 +154,7 @@ export interface MedicationInput {
   unit?: string | null;
   stockQty: number;
   minStock: number;
+  entryStatus?: "entered" | "not_entered";
 }
 
 export async function listMedications(params: {
@@ -202,4 +203,14 @@ export async function adjustMedication(
     { delta, reason },
   );
   return data.medication;
+}
+
+export async function importMedicationsFromStudents(): Promise<{
+  created: number;
+  skipped: number;
+}> {
+  const { data } = await api.post<{ created: number; skipped: number }>(
+    "/medications/import-from-students",
+  );
+  return data;
 }

@@ -16,8 +16,67 @@ const medicationSchema = z.object({
   unit: z.string().trim().max(20).optional().nullable(),
   stockQty: z.number().int().nonnegative().default(0),
   minStock: z.number().int().nonnegative().default(0),
+  entryStatus: z.enum(["entered", "not_entered"]).optional(),
   isActive: z.boolean().optional(),
 });
+
+function jsonRecord(value: Prisma.JsonValue | null | undefined) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function displayText(value: unknown) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+}
+
+function hashDrugName(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return `STU${hash.toString(36).toUpperCase().slice(0, 9)}`.slice(0, 20);
+}
+
+function normalizeDrugName(name: string) {
+  return name.replace(/\s+/g, " ").trim();
+}
+
+function splitMedicationSummary(summary: string | null) {
+  if (!summary) return [];
+  return summary
+    .split(/[;,\n]/)
+    .map(normalizeDrugName)
+    .filter((name) => name.length >= 2 && name !== "-");
+}
+
+function extractStudentMedicationNames(student: {
+  regularMedication: string | null;
+  medicationData: Prisma.JsonValue;
+}) {
+  const names = new Set<string>();
+  const data = jsonRecord(student.medicationData);
+  const medications = Array.isArray(data["รายการยา"])
+    ? (data["รายการยา"] as Record<string, unknown>[])
+    : [];
+
+  for (const medication of medications) {
+    const name =
+      displayText(medication["ข้อมูลยา ชื่อยา"]) ||
+      displayText(medication["ชื่อยา"]);
+    const strength =
+      displayText(medication["ข้อมูลยา ขนาดยา"]) ||
+      displayText(medication["ขนาดยา"]);
+    const normalized = normalizeDrugName([name, strength].filter(Boolean).join(" "));
+    if (normalized) names.add(normalized);
+  }
+
+  for (const name of splitMedicationSummary(student.regularMedication)) {
+    names.add(name);
+  }
+
+  return [...names];
+}
 
 router.get("/", async (req, res, next) => {
   try {
@@ -35,7 +94,7 @@ router.get("/", async (req, res, next) => {
       orderBy: { drugName: "asc" },
     });
     const result = lowStock
-      ? items.filter((m) => m.stockQty <= m.minStock)
+      ? items.filter((m) => m.entryStatus === "entered" && m.stockQty <= m.minStock)
       : items;
     res.json({ data: result });
   } catch (err) {
@@ -74,10 +133,72 @@ router.post("/", requireAdmin, async (req, res, next) => {
       unit: body.unit,
       stockQty: body.stockQty,
       minStock: body.minStock,
+      entryStatus: body.entryStatus ?? "entered",
       isActive: body.isActive,
     };
     const med = await prisma.medication.create({ data });
     res.status(201).json({ medication: med });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/import-from-students", requireAdmin, async (_req, res, next) => {
+  try {
+    const students = await prisma.student.findMany({
+      where: { isActive: true },
+      select: {
+        regularMedication: true,
+        medicationData: true,
+      },
+    });
+    const existing = await prisma.medication.findMany({
+      select: { drugName: true, drugCode: true },
+    });
+    const existingNames = new Set(
+      existing.map((item) => item.drugName.trim().toLowerCase()),
+    );
+    const existingCodes = new Set(existing.map((item) => item.drugCode));
+    const names = new Set<string>();
+
+    for (const student of students) {
+      for (const name of extractStudentMedicationNames(student)) {
+        names.add(name);
+      }
+    }
+
+    let created = 0;
+    let skipped = 0;
+    for (const name of names) {
+      if (existingNames.has(name.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+
+      let drugCode = hashDrugName(name);
+      let suffix = 1;
+      while (existingCodes.has(drugCode)) {
+        drugCode = `${hashDrugName(name).slice(0, 17)}${suffix}`;
+        suffix++;
+      }
+      existingCodes.add(drugCode);
+      existingNames.add(name.toLowerCase());
+
+      await prisma.medication.create({
+        data: {
+          drugCode,
+          drugName: name,
+          drugType: "ยาประจำตัวนักเรียน",
+          unit: null,
+          stockQty: 0,
+          minStock: 0,
+          entryStatus: "not_entered",
+        },
+      });
+      created++;
+    }
+
+    res.json({ created, skipped });
   } catch (err) {
     next(err);
   }

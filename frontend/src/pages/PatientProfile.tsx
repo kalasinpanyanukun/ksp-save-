@@ -12,6 +12,12 @@ import {
   Loader2,
   ClipboardList,
   Pill,
+  Ruler,
+  FileCheck2,
+  Syringe,
+  Activity,
+  Home,
+  NotebookText,
 } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
@@ -203,18 +209,8 @@ export default function PatientProfilePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
-        <SheetDetailCard
-          title="รายละเอียดสุขภาพจากเรือนนอน"
-          Icon={ClipboardList}
-          data={student.healthData}
-        />
-        <SheetDetailCard
-          title="รายละเอียดยาประจำตัวจากเรือนนอน"
-          Icon={Pill}
-          data={student.medicationData}
-        />
-      </div>
+      <HealthDetailSections data={student.healthData} />
+      <MedicationDetailSections data={student.medicationData} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <TimelineCard
@@ -291,82 +287,200 @@ function formatDetailValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "-";
   if (Array.isArray(value)) return `${value.length.toLocaleString("th-TH")} รายการ`;
   if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
+  const text = String(value);
+  if (text.toUpperCase() === "TRUE") return "✓";
+  if (text.toUpperCase() === "FALSE") return "-";
+  return text;
 }
 
-function SheetDetailCard({
+function valueFrom(data: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = data[key];
+    if (value !== null && value !== undefined && value !== "") {
+      return formatDetailValue(value);
+    }
+  }
+  return "-";
+}
+
+interface DetailItem {
+  label: string;
+  value: string;
+}
+
+function DetailSectionCard({
   title,
   Icon,
-  data,
+  items,
 }: {
   title: string;
   Icon: typeof ClipboardList;
-  data: Record<string, unknown>;
+  items: DetailItem[];
 }) {
-  const entries = isPlainObject(data)
-    ? Object.entries(data).filter(([, value]) => {
-        if (Array.isArray(value)) return value.length > 0;
-        return value !== null && value !== undefined && value !== "";
-      })
-    : [];
-  const medicationRows = Array.isArray(data?.["รายการยา"])
-    ? (data["รายการยา"] as Record<string, unknown>[])
-    : [];
-
+  const visible = items.filter((item) => item.value && item.value !== "-");
   return (
-    <div className="card-pad">
-      <h3 className="font-semibold text-ksp-navy flex items-center gap-2 mb-4">
-        <Icon className="h-4 w-4" /> {title}
+    <section className="card-pad">
+      <h3 className="mb-3 flex items-center gap-2 font-semibold text-ksp-navy">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-ksp-blue-50 text-ksp-blue-700">
+          <Icon className="h-4 w-4" />
+        </span>
+        {title}
       </h3>
-      {entries.length === 0 ? (
-        <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลจากชีตต้นทาง</p>
-      ) : medicationRows.length > 0 ? (
-        <div className="space-y-3">
-          <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-            {entries
-              .filter(([key]) => key !== "รายการยา")
-              .map(([key, value]) => (
-                <div key={key} className="rounded-lg bg-ksp-blue-50/50 px-3 py-2">
-                  <dt className="text-xs text-ksp-gray">{key}</dt>
-                  <dd className="font-medium text-ksp-navy">
-                    {formatDetailValue(value)}
-                  </dd>
-                </div>
-              ))}
-          </dl>
-          <div className="max-h-72 overflow-auto rounded-xl border border-ksp-blue-50">
-            <table className="min-w-full text-left text-xs">
-              <tbody className="divide-y divide-ksp-blue-50">
-                {medicationRows.map((row, index) => (
-                  <tr key={index}>
-                    <td className="w-12 px-3 py-2 font-semibold text-ksp-blue-700">
-                      {index + 1}
-                    </td>
-                    <td className="px-3 py-2 text-ksp-navy/85">
-                      {Object.entries(row)
-                        .filter(([, value]) => Boolean(value))
-                        .map(([key, value]) => `${key}: ${formatDetailValue(value)}`)
-                        .join(" | ")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {visible.length === 0 ? (
+        <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูล</p>
       ) : (
         <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-          {entries.map(([key, value]) => (
-            <div key={key} className="rounded-lg bg-ksp-blue-50/50 px-3 py-2">
-              <dt className="text-xs text-ksp-gray">{key}</dt>
-              <dd className="font-medium text-ksp-navy">
-                {formatDetailValue(value)}
+          {visible.map((item) => (
+            <div key={item.label} className="rounded-lg bg-slate-50 px-3 py-2">
+              <dt className="text-xs text-ksp-gray">{item.label}</dt>
+              <dd className="font-medium leading-relaxed text-ksp-navy">
+                {item.value}
               </dd>
             </div>
           ))}
         </dl>
       )}
+    </section>
+  );
+}
+
+function HealthDetailSections({ data }: { data: Record<string, unknown> }) {
+  const record = isPlainObject(data) ? data : {};
+  const sections = [
+    {
+      title: "ข้อมูลทะเบียน",
+      Icon: ClipboardList,
+      items: [
+        { label: "เลขบัตรประชาชน", value: valueFrom(record, ["เลขบัตรประชาชน"]) },
+        { label: "ชื่อเล่น", value: valueFrom(record, ["ชื่อเล่น"]) },
+        { label: "ประเภทความพิการ", value: valueFrom(record, ["ประเภท ความพิการ", "ประเภท"]) },
+        { label: "เด็กเก่า/ใหม่", value: valueFrom(record, ["เด็กเก่า/ใหม่"]) },
+        { label: "วันเดือนปีเกิด", value: valueFrom(record, ["วันเดือนปีเกิด"]) },
+        { label: "วันรายงานตัว", value: valueFrom(record, ["วันและเวลา มารายงานตัว", "วันและเวลา"]) },
+      ],
+    },
+    {
+      title: "ที่อยู่และผู้ปกครอง",
+      Icon: Home,
+      items: [
+        { label: "ชื่อผู้ปกครอง", value: valueFrom(record, ["ชื่อผู้ปกครอง"]) },
+        { label: "เบอร์โทร 1", value: valueFrom(record, ["เบอร์โทร 1"]) },
+        { label: "เบอร์โทร 2", value: valueFrom(record, ["เบอร์โทร 2"]) },
+        { label: "ที่อยู่", value: valueFrom(record, ["ที่อยู่"]) },
+      ],
+    },
+    {
+      title: "สัดส่วนและ BMI",
+      Icon: Ruler,
+      items: [
+        { label: "น้ำหนัก", value: valueFrom(record, ["น้ำหนัก (กิโลกรัม)", "น้ำหนัก"]) },
+        { label: "ส่วนสูง", value: valueFrom(record, ["ส่วนสูง (เซนติเมตร)", "ส่วนสูง"]) },
+        { label: "คะแนน BMI", value: valueFrom(record, ["คะแนน BMI", "คะแนน"]) },
+        { label: "แปลผล BMI", value: valueFrom(record, ["แปลผล BMI", "แปลผล"]) },
+      ],
+    },
+    {
+      title: "สิทธิและเอกสาร",
+      Icon: FileCheck2,
+      items: [
+        { label: "สิทธิ", value: valueFrom(record, ["สิทธิ"]) },
+        { label: "ฝากบัตรประชาชน", value: valueFrom(record, ["ฝากบัตรประชาชน กด ✓", "ฝากบัตรประชาชน"]) },
+        { label: "ฝากบัตรคนพิการ", value: valueFrom(record, ["ฝากบัตรคนพิการ กด ✓", "ฝากบัตรคนพิการ"]) },
+      ],
+    },
+    {
+      title: "วัคซีน",
+      Icon: Syringe,
+      items: [
+        {
+          label: "วัคซีนพื้นฐาน",
+          value: valueFrom(record, ["ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", "ได้รับวัคซีนพื้นฐาน(สมุดชมพู)"]),
+        },
+        { label: "ไข้หวัดใหญ่", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", "ป้องกันไข้หวัดใหญ่ (ปี)"]) },
+        { label: "โควิด", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันโควิค (ปี)", "ป้องกันโควิค (ปี)"]) },
+      ],
+    },
+    {
+      title: "สุขภาพและการแพ้",
+      Icon: Activity,
+      items: [
+        { label: "โรคประจำตัว", value: valueFrom(record, ["โรคประจำตัว"]) },
+        { label: "ยาประจำตัว", value: valueFrom(record, ["ยาประจำตัว ถ้ามีกด ✓", "ยาประจำตัว"]) },
+        { label: "แพ้ยา/อาหาร", value: valueFrom(record, ["แพ้ยา/อาหาร แพ้ระบุ/ไม่แพ้ -", "แพ้ยา/อาหาร"]) },
+        { label: "อาการแสดงการแพ้", value: valueFrom(record, ["อาการแสดงการแพ้"]) },
+        { label: "ผลตรวจร่างกาย", value: valueFrom(record, ["ผลตรวจร่างกาย"]) },
+      ],
+    },
+    {
+      title: "หมายเหตุ",
+      Icon: NotebookText,
+      items: [{ label: "หมายเหตุ", value: valueFrom(record, ["หมายเหตุ"]) }],
+    },
+  ];
+
+  return (
+    <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      {sections.map((section) => (
+        <DetailSectionCard key={section.title} {...section} />
+      ))}
     </div>
+  );
+}
+
+function MedicationDetailSections({ data }: { data: Record<string, unknown> }) {
+  const record = isPlainObject(data) ? data : {};
+  const medicationRows = Array.isArray(record["รายการยา"])
+    ? (record["รายการยา"] as Record<string, unknown>[])
+    : [];
+
+  return (
+    <section className="card-pad mb-6">
+      <h3 className="mb-3 flex items-center gap-2 font-semibold text-ksp-navy">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-ksp-blue-50 text-ksp-blue-700">
+          <Pill className="h-4 w-4" />
+        </span>
+        รายละเอียดยาประจำตัวจากเรือนนอน
+      </h3>
+      {medicationRows.length === 0 ? (
+        <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลยาประจำตัวจากชีตต้นทาง</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {medicationRows.map((row, index) => (
+            <div
+              key={index}
+              className="rounded-lg border border-ksp-blue-50 bg-white p-3 shadow-sm"
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="font-semibold text-ksp-navy">
+                  {valueFrom(row, ["ข้อมูลยา ชื่อยา", "ชื่อยา"])}
+                </div>
+                <span className="chip-blue">รายการที่ {index + 1}</span>
+              </div>
+              <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                {[
+                  { label: "ชื่อรอง", value: valueFrom(row, ["ข้อมูลยา ชื่อรอง", "ชื่อรอง"]) },
+                  { label: "ชนิดยา", value: valueFrom(row, ["ข้อมูลยา ชนิดยา", "ชนิดยา"]) },
+                  { label: "ขนาดยา", value: valueFrom(row, ["ข้อมูลยา ขนาดยา", "ขนาดยา"]) },
+                  { label: "จำนวน", value: valueFrom(row, ["ข้อมูลยา จำนวน (หน่วย)", "จำนวน (หน่วย)"]) },
+                  { label: "เช้า", value: valueFrom(row, ["การรับประทาน เช้า", "เช้า"]) },
+                  { label: "เที่ยง", value: valueFrom(row, ["การรับประทาน เที่ยง", "เที่ยง"]) },
+                  { label: "เย็น", value: valueFrom(row, ["การรับประทาน เย็น", "เย็น"]) },
+                  { label: "ก่อนนอน", value: valueFrom(row, ["การรับประทาน ก่อนนอน", "ก่อนนอน"]) },
+                  { label: "หมายเหตุ", value: valueFrom(row, ["หมายเหตุ"]) },
+                ]
+                  .filter((item) => item.value !== "-")
+                  .map((item) => (
+                    <div key={item.label} className="rounded-lg bg-slate-50 px-3 py-2">
+                      <dt className="text-xs text-ksp-gray">{item.label}</dt>
+                      <dd className="font-medium text-ksp-navy">{item.value}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
