@@ -28,12 +28,12 @@ interface SheetDataPageProps {
 const pageCopy = {
   health: {
     title: "ข้อมูลสุขภาพนักเรียน",
-    description: "ข้อมูลสุขภาพแยกตามเรือนนอนจาก Google Sheets",
+    description: "ข้อมูลสุขภาพแยกตามเรือนนอนจากฐานข้อมูล Supabase",
     icon: HeartPulse,
   },
   medication: {
     title: "ข้อมูลยาประจำตัวนักเรียน",
-    description: "ข้อมูลรายการยาประจำตัวแยกตามเรือนนอนจาก Google Sheets",
+    description: "ข้อมูลรายการยาประจำตัวแยกตามเรือนนอนจากฐานข้อมูล Supabase",
     icon: Pill,
   },
 } satisfies Record<SheetDataKind, unknown>;
@@ -94,9 +94,10 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
     try {
       const result = await importStudentsFromSheets();
       toast(
-        `นำเข้าข้อมูลแล้ว: สุขภาพ เพิ่ม ${result.health.created} อัปเดต ${result.health.updated} | ยา เพิ่ม ${result.medication.created} อัปเดต ${result.medication.updated}`,
+        `นำเข้าลง Supabase แล้ว: สุขภาพ เพิ่ม ${result.health.created} อัปเดต ${result.health.updated} | ยา เพิ่ม ${result.medication.created} อัปเดต ${result.medication.updated}`,
         "success",
       );
+      await load();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -139,7 +140,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
                 ) : (
                   <UploadCloud className="h-4 w-4" />
                 )}
-                นำเข้าเป็นข้อมูลนักเรียน
+                นำเข้าจาก Google Sheets เข้า Supabase
               </button>
             )}
           </>
@@ -196,7 +197,14 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
 
         {!loading && filteredRows.length === 0 ? (
           <div className="p-6">
-            <EmptyState title="ยังไม่มีข้อมูลให้แสดง" />
+            <EmptyState
+              title="ยังไม่มีข้อมูลใน Supabase"
+              description={
+                isAdmin
+                  ? "กดปุ่มนำเข้าจาก Google Sheets เข้า Supabase เพื่อบันทึกเป็นฐานข้อมูลนักเรียน"
+                  : "ติดต่อผู้ดูแลระบบให้นำเข้าข้อมูลจาก Google Sheets ก่อน"
+              }
+            />
           </div>
         ) : (
           <div className="max-h-[62vh] overflow-auto">

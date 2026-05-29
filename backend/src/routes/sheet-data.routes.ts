@@ -129,7 +129,7 @@ function toObjects(headers: string[], rows: string[][]) {
     });
 }
 
-async function getSheetData(kind: SheetKind, dormitory: DormitorySheet) {
+async function getGoogleSheetData(kind: SheetKind, dormitory: DormitorySheet) {
   const rows = await fetchRows(kind, dormitory);
   const headerRows = kind === "health" ? rows.slice(0, 2) : rows.slice(1, 3);
   const dataRows = kind === "health" ? rows.slice(2) : rows.slice(3);
@@ -140,6 +140,147 @@ async function getSheetData(kind: SheetKind, dormitory: DormitorySheet) {
     rows: toObjects(headers, dataRows),
     sourceUrl: sheetEditUrl(kind, dormitory),
   };
+}
+
+function jsonRecord(value: Prisma.JsonValue | null | undefined) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  return value as Record<string, unknown>;
+}
+
+function displayValue(value: unknown) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.length ? `${value.length} รายการ` : "";
+  return JSON.stringify(value);
+}
+
+function addRecordValue(
+  record: Record<string, string>,
+  key: string,
+  value: unknown,
+) {
+  const text = displayValue(value);
+  if (!text) return;
+  if (!record[key]) record[key] = text;
+}
+
+function buildStoredResponse(
+  kind: SheetKind,
+  dormitory: DormitorySheet,
+  records: Record<string, string>[],
+) {
+  const baseHeaders =
+    kind === "health"
+      ? [
+          "รหัสนักเรียน",
+          "ชื่อ-สกุล",
+          "ชั้นเรียน",
+          "เรือนนอน",
+          "โรคประจำตัว",
+          "ยาประจำตัว",
+          "แพ้ยา/อาหาร",
+          "ผู้ปกครอง",
+          "เบอร์โทร",
+        ]
+      : [
+          "รหัสนักเรียน",
+          "ชื่อ-สกุล",
+          "ชั้นเรียน",
+          "เรือนนอน",
+          "รายการยา",
+          "ขนาดยา",
+          "เช้า",
+          "เที่ยง",
+          "เย็น",
+          "ก่อนนอน",
+        ];
+  const headers = [...baseHeaders];
+  for (const record of records) {
+    for (const key of Object.keys(record)) {
+      if (!headers.includes(key)) headers.push(key);
+    }
+  }
+
+  return {
+    dormitory: dormitory.name,
+    headers,
+    rows: records.map((record, rowIndex) => ({
+      rowNumber: rowIndex + 1,
+      cells: headers.map((header) => record[header] ?? ""),
+      record,
+    })),
+    sourceUrl: sheetEditUrl(kind, dormitory),
+    storage: "supabase",
+  };
+}
+
+async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
+  const students = await prisma.student.findMany({
+    where: { isActive: true, dormitory: dormitory.name },
+    orderBy: [{ classRoom: "asc" }, { firstName: "asc" }, { lastName: "asc" }],
+  });
+
+  const records: Record<string, string>[] = [];
+  for (const student of students) {
+    const base = {
+      "รหัสนักเรียน": student.studentCode,
+      "ชื่อ-สกุล": `${student.firstName} ${student.lastName}`,
+      "ชั้นเรียน": student.classRoom ?? "",
+      "เรือนนอน": student.dormitory ?? "",
+    };
+
+    if (kind === "health") {
+      const record: Record<string, string> = {
+        ...base,
+        "โรคประจำตัว": student.congenitalDisease ?? "",
+        "ยาประจำตัว": student.regularMedication ?? "",
+        "แพ้ยา/อาหาร": student.drugAllergy ?? "",
+        "ผู้ปกครอง": student.parentName ?? "",
+        "เบอร์โทร": student.parentPhone ?? "",
+      };
+      for (const [key, value] of Object.entries(jsonRecord(student.healthData))) {
+        addRecordValue(record, key, value);
+      }
+      records.push(record);
+    } else {
+      const medicationData = jsonRecord(student.medicationData);
+      const medications = Array.isArray(medicationData["รายการยา"])
+        ? (medicationData["รายการยา"] as Record<string, unknown>[])
+        : [];
+
+      if (medications.length === 0) {
+        records.push({
+          ...base,
+          "รายการยา": student.regularMedication ?? "",
+        });
+      } else {
+        for (const medication of medications) {
+          const record: Record<string, string> = {
+            ...base,
+            "รายการยา":
+              displayValue(medication["ข้อมูลยา ชื่อยา"]) ||
+              displayValue(medication["ชื่อยา"]),
+            "ขนาดยา":
+              displayValue(medication["ข้อมูลยา ขนาดยา"]) ||
+              displayValue(medication["ขนาดยา"]),
+            "เช้า": displayValue(medication["การรับประทาน เช้า"]),
+            "เที่ยง": displayValue(medication["การรับประทาน เที่ยง"]),
+            "เย็น": displayValue(medication["การรับประทาน เย็น"]),
+            "ก่อนนอน": displayValue(medication["การรับประทาน ก่อนนอน"]),
+          };
+          for (const [key, value] of Object.entries(medication)) {
+            addRecordValue(record, key, value);
+          }
+          records.push(record);
+        }
+      }
+    }
+  }
+
+  return buildStoredResponse(kind, dormitory, records);
 }
 
 function normalizeName(name: string) {
@@ -199,7 +340,7 @@ async function importHealthSheets() {
   const studentCodesByName = new Map<string, string>();
 
   for (const dormitory of dormitorySheets) {
-    const sheet = await getSheetData("health", dormitory);
+    const sheet = await getGoogleSheetData("health", dormitory);
     for (const item of sheet.rows) {
       const fullName = clean(item.cells[1]);
       if (!fullName) continue;
@@ -272,7 +413,7 @@ async function importMedicationSheets(studentCodesByName: Map<string, string>) {
   let created = 0;
 
   for (const dormitory of dormitorySheets) {
-    const sheet = await getSheetData("medication", dormitory);
+    const sheet = await getGoogleSheetData("medication", dormitory);
     let currentName = "";
     let currentCode = "";
     const grouped = new Map<string, Record<string, string>[]>();
@@ -347,7 +488,11 @@ router.get("/:kind", async (req, res, next) => {
       res.status(404).json({ message: "ไม่พบเรือนนอน" });
       return;
     }
-    const data = await getSheetData(kind, dormitory);
+    const source = String(req.query.source ?? "supabase");
+    const data =
+      source === "google"
+        ? await getGoogleSheetData(kind, dormitory)
+        : await getStoredSheetData(kind, dormitory);
     res.json(data);
   } catch (err) {
     next(err);
