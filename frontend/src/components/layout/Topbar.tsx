@@ -1,5 +1,5 @@
 import { Menu, LogOut, ChevronDown, Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { toggleSidebar } from "../../store/uiSlice";
@@ -11,6 +11,23 @@ export default function Topbar() {
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    if (menuOpen) {
+      document.addEventListener("pointerdown", handlePointerDown);
+    }
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [menuOpen]);
 
   async function handleLogout() {
     await logout();
@@ -56,7 +73,7 @@ export default function Topbar() {
           </span>
         </button>
       </div>
-      <div className="relative">
+      <div className="relative" ref={menuRef}>
         <button
           type="button"
           onClick={() => setMenuOpen((v) => !v)}

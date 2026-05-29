@@ -26,10 +26,10 @@ interface StatCardProps {
 }
 
 const statTones = {
-  blue: "from-ksp-blue-700 to-ksp-blue-500",
-  orange: "from-orange-600 to-amber-500",
-  cyan: "from-sky-600 to-cyan-500",
-  green: "from-emerald-900 to-emerald-600",
+  blue: "text-ksp-blue-600",
+  orange: "text-orange-600",
+  cyan: "text-cyan-600",
+  green: "text-emerald-700",
 } as const;
 
 function StatCard({
@@ -41,21 +41,24 @@ function StatCard({
   loading,
 }: StatCardProps) {
   return (
-    <section
-      className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${statTones[tone]} p-5 text-white shadow-card`}
-    >
-      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/12" />
-      <div className="relative flex min-h-[9.5rem] flex-col justify-between">
+    <section className="p-1">
+      <div className="flex min-h-[9.5rem] flex-col justify-between">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-white/82">{label}</p>
-            {hint && <p className="mt-1 text-xs text-white/72">{hint}</p>}
+            <p className="text-2xl font-bold leading-tight text-ksp-navy">
+              {label}
+            </p>
+            {hint && <p className="mt-2 text-sm text-ksp-gray">{hint}</p>}
           </div>
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-white/16 text-white ring-1 ring-white/20">
+          <div
+            className={`grid h-12 w-12 shrink-0 place-items-center ${statTones[tone]}`}
+          >
             <Icon className="h-6 w-6" />
           </div>
         </div>
-        <div className="mt-4 text-7xl font-extrabold leading-none tracking-normal text-white">
+        <div
+          className={`mt-4 text-7xl font-extrabold leading-none tracking-normal ${statTones[tone]}`}
+        >
           {loading ? (
             <Loader2 className="h-10 w-10 animate-spin" />
           ) : (

@@ -12,7 +12,13 @@ export default function ReportHeader({
   const generatedAt = new Date().toLocaleString("th-TH");
   return (
     <div className="flex items-center gap-4 pb-4 mb-4 border-b-2 border-ksp-blue-500">
-      <img src="/logo.svg" alt="KSP SAVE+" className="h-14 w-14" />
+      <div className="grid h-16 w-28 place-items-center rounded-lg bg-ksp-navy px-2">
+        <img
+          src="/logo.png"
+          alt="KSP SAVE+"
+          className="max-h-12 w-full object-contain"
+        />
+      </div>
       <div className="flex-1">
         <div className="text-xl font-bold text-ksp-navy">
           KSP SAVE+ <span className="text-ksp-blue-500">·</span> โรงเรียนกาฬสินธุ์ปัญญานุกูล
