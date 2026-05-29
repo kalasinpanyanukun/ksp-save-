@@ -24,7 +24,8 @@ async function main() {
       data: {
         username: adminUsername,
         passwordHash,
-        fullName: "ผู้ดูแลระบบ",
+        passwordDisplay: adminPassword,
+        fullName: "ผู้พัฒนาระบบ",
         role: UserRole.super_admin,
       },
     });
@@ -35,7 +36,8 @@ async function main() {
       data: {
         username: adminUsername,
         passwordHash,
-        fullName: "ผู้ดูแลระบบ",
+        passwordDisplay: adminPassword,
+        fullName: "ผู้พัฒนาระบบ",
         role: UserRole.super_admin,
         isActive: true,
       },

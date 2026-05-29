@@ -11,6 +11,7 @@ import ReferralsPage from "./pages/Referrals";
 import ReportsPage from "./pages/Reports";
 import PM25Page from "./pages/PM25";
 import MedicationStockPage from "./pages/MedicationStock";
+import SheetDataPage from "./pages/SheetDataPage";
 import AdminUsersPage from "./pages/admin/Users";
 import AdminAuditPage from "./pages/admin/AuditLog";
 import AdminSettingsPage from "./pages/admin/Settings";
@@ -110,6 +111,26 @@ export default function App() {
           <ProtectedRoute>
             <Shell>
               <MedicationStockPage />
+            </Shell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student-health-data"
+        element={
+          <ProtectedRoute>
+            <Shell>
+              <SheetDataPage kind="health" />
+            </Shell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student-medication-data"
+        element={
+          <ProtectedRoute>
+            <Shell>
+              <SheetDataPage kind="medication" />
             </Shell>
           </ProtectedRoute>
         }

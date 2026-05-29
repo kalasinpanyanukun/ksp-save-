@@ -10,6 +10,7 @@ import reportsRoutes from "./reports.routes.js";
 import pm25Routes from "./pm25.routes.js";
 import usersRoutes from "./users.routes.js";
 import auditRoutes from "./audit.routes.js";
+import sheetDataRoutes from "./sheet-data.routes.js";
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use("/reports", reportsRoutes);
 router.use("/pm25", pm25Routes);
 router.use("/users", usersRoutes);
 router.use("/audit-logs", auditRoutes);
+router.use("/sheet-data", sheetDataRoutes);
 
 export default router;

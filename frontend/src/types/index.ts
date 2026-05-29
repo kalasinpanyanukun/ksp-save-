@@ -27,6 +27,8 @@ export interface Student {
   congenitalDisease: string | null;
   drugAllergy: string | null;
   regularMedication: string | null;
+  healthData: Record<string, unknown>;
+  medicationData: Record<string, unknown>;
   parentName: string | null;
   parentPhone: string | null;
   isActive: boolean;

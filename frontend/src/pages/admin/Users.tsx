@@ -4,19 +4,26 @@ import {
   Plus,
   Loader2,
   Edit3,
-  KeyRound,
   ShieldCheck,
   Shield,
   Crown,
+  Trash2,
+  Eye,
+  EyeOff,
+  LockKeyhole,
 } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
 import Modal from "../../components/common/Modal";
+import ConfirmDialog from "../../components/common/ConfirmDialog";
 import { useToast } from "../../components/common/useToast";
+import { useAppSelector } from "../../store";
 import {
+  changeUserPassword,
   createUser,
+  deleteUser,
+  getUserPassword,
   listUsers,
-  resetUserPassword,
   updateUser,
   type AdminUser,
   type CreateUserInput,
@@ -25,7 +32,7 @@ import type { UserRole } from "../../types";
 
 function roleLabel(role: UserRole) {
   if (role === "super_admin") return "Super Admin (ผู้พัฒนาระบบ)";
-  if (role === "admin") return "ครูเรือนพยาบาล (Admin)";
+  if (role === "admin") return "ครูเรือนพยาบาล (ผู้ดูแลระบบ Admin)";
   return "พี่เลี้ยงเรือนพยาบาล (User)";
 }
 
@@ -33,13 +40,25 @@ function isSuperAdmin(user: AdminUser | null) {
   return user?.role === "super_admin";
 }
 
+function canViewPassword(viewerRole: UserRole | undefined, target: AdminUser) {
+  return viewerRole === "super_admin" || target.role !== "super_admin";
+}
+
 export default function AdminUsersPage() {
   const toast = useToast();
+  const viewer = useAppSelector((s) => s.auth.user);
+  const viewerRole = viewer?.role;
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<AdminUser | null>(null);
-  const [resetting, setResetting] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState<AdminUser | null>(null);
+  const [visiblePasswords, setVisiblePasswords] = useState<
+    Record<string, string | null | undefined>
+  >({});
+  const [passwordLoading, setPasswordLoading] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,6 +74,45 @@ export default function AdminUsersPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function togglePassword(user: AdminUser) {
+    if (visiblePasswords[user.id] !== undefined) {
+      setVisiblePasswords((prev) => {
+        const next = { ...prev };
+        delete next[user.id];
+        return next;
+      });
+      return;
+    }
+
+    setPasswordLoading((prev) => ({ ...prev, [user.id]: true }));
+    try {
+      const password = await getUserPassword(user.id);
+      setVisiblePasswords((prev) => ({ ...prev, [user.id]: password }));
+    } catch (err) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "ไม่สามารถดูรหัสผ่านได้";
+      toast(message, "error");
+    } finally {
+      setPasswordLoading((prev) => ({ ...prev, [user.id]: false }));
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!deleting) return;
+    try {
+      await deleteUser(deleting.id);
+      toast("ลบผู้ใช้งานเรียบร้อย", "success");
+      setDeleting(null);
+      await load();
+    } catch (err) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? "ลบผู้ใช้งานไม่สำเร็จ";
+      toast(message, "error");
+    }
+  }
 
   return (
     <>
@@ -83,6 +141,7 @@ export default function AdminUsersPage() {
                 <th>username</th>
                 <th>บทบาท</th>
                 <th>สถานะ</th>
+                <th>รหัสผ่าน</th>
                 <th>สร้างเมื่อ</th>
                 <th className="text-right">การจัดการ</th>
               </tr>
@@ -90,7 +149,7 @@ export default function AdminUsersPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={6} className="text-center py-6">
+                  <td colSpan={7} className="py-6 text-center">
                     <Loader2 className="inline h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
@@ -119,7 +178,43 @@ export default function AdminUsersPage() {
                       {u.isActive ? (
                         <span className="chip-emerald">ใช้งาน</span>
                       ) : (
-                        <span className="chip-rose">ระงับ</span>
+                        <span className="chip-rose">ปิดใช้งาน</span>
+                      )}
+                    </td>
+                    <td>
+                      {canViewPassword(viewerRole, u) ? (
+                        <div className="inline-flex items-center gap-2">
+                          {visiblePasswords[u.id] !== undefined ? (
+                            <code className="rounded-md bg-ksp-blue-50 px-2 py-1 text-xs font-semibold text-ksp-navy">
+                              {visiblePasswords[u.id] || "ไม่มีข้อมูลรหัสเดิม"}
+                            </code>
+                          ) : (
+                            <span className="text-xs text-ksp-gray">ปิดไว้</span>
+                          )}
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-1.5"
+                            onClick={() => togglePassword(u)}
+                            title={
+                              visiblePasswords[u.id] !== undefined
+                                ? "ปิดรหัสผ่าน"
+                                : "ดูรหัสผ่าน"
+                            }
+                            disabled={passwordLoading[u.id]}
+                          >
+                            {passwordLoading[u.id] ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : visiblePasswords[u.id] !== undefined ? (
+                              <Eye className="h-4 w-4" />
+                            ) : (
+                              <EyeOff className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-medium text-ksp-gray">
+                          ไม่แสดง
+                        </span>
                       )}
                     </td>
                     <td className="text-xs text-ksp-gray">
@@ -143,14 +238,16 @@ export default function AdminUsersPage() {
                           >
                             <Edit3 className="h-4 w-4" />
                           </button>
-                          <button
-                            type="button"
-                            className="btn-ghost px-2 py-1.5"
-                            onClick={() => setResetting(u)}
-                            title="รีเซ็ตรหัสผ่าน"
-                          >
-                            <KeyRound className="h-4 w-4" />
-                          </button>
+                          {u.id !== viewer?.id && (
+                            <button
+                              type="button"
+                              className="btn-ghost px-2 py-1.5 text-rose-600 hover:bg-rose-50"
+                              onClick={() => setDeleting(u)}
+                              title="ลบผู้ใช้งาน"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>
@@ -178,6 +275,7 @@ export default function AdminUsersPage() {
       >
         <UserForm
           editing={editing}
+          viewerRole={viewerRole}
           onCancel={() => setOpen(false)}
           onSubmit={async (data) => {
             try {
@@ -195,26 +293,31 @@ export default function AdminUsersPage() {
               await load();
             } catch (err) {
               const m =
-                (err as { response?: { data?: { message?: string } } })?.response
-                  ?.data?.message ?? "บันทึกไม่สำเร็จ";
+                (err as { response?: { data?: { message?: string } } })
+                  ?.response?.data?.message ?? "บันทึกไม่สำเร็จ";
               toast(m, "error");
             }
           }}
-          onToggleActive={
-            editing && !isSuperAdmin(editing)
-              ? async () => {
+          onChangePassword={
+            editing
+              ? async (currentPassword, newPassword) => {
                   try {
-                    await updateUser(editing.id, { isActive: !editing.isActive });
-                    toast(
-                      editing.isActive
-                        ? "ระงับการใช้งานเรียบร้อย"
-                        : "เปิดใช้งานเรียบร้อย",
-                      "success",
+                    await changeUserPassword(
+                      editing.id,
+                      currentPassword,
+                      newPassword,
                     );
-                    setOpen(false);
-                    await load();
-                  } catch {
-                    toast("ดำเนินการไม่สำเร็จ", "error");
+                    setVisiblePasswords((prev) => ({
+                      ...prev,
+                      [editing.id]: newPassword,
+                    }));
+                    toast("เปลี่ยนรหัสผ่านเรียบร้อย", "success");
+                  } catch (err) {
+                    const message =
+                      (err as { response?: { data?: { message?: string } } })
+                        ?.response?.data?.message ?? "เปลี่ยนรหัสผ่านไม่สำเร็จ";
+                    toast(message, "error");
+                    throw err;
                   }
                 }
               : undefined
@@ -222,50 +325,47 @@ export default function AdminUsersPage() {
         />
       </Modal>
 
-      <Modal
-        open={Boolean(resetting)}
-        onClose={() => setResetting(null)}
-        title={`รีเซ็ตรหัสผ่าน: ${resetting?.username ?? ""}`}
-        size="sm"
-      >
-        {resetting && (
-          <ResetForm
-            onCancel={() => setResetting(null)}
-            onSubmit={async (pw) => {
-              try {
-                await resetUserPassword(resetting.id, pw);
-                toast("รีเซ็ตรหัสผ่านเรียบร้อย", "success");
-                setResetting(null);
-              } catch (err) {
-                const m =
-                  (err as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message ?? "รีเซ็ตไม่สำเร็จ";
-                toast(m, "error");
-              }
-            }}
-          />
-        )}
-      </Modal>
+      <ConfirmDialog
+        open={Boolean(deleting)}
+        title="ยืนยันการลบผู้ใช้งาน"
+        message={`ต้องการลบผู้ใช้งาน ${deleting?.fullName ?? ""} ใช่หรือไม่? บัญชีนี้จะไม่สามารถเข้าสู่ระบบได้อีก`}
+        confirmLabel="ลบผู้ใช้งาน"
+        danger
+        onConfirm={handleDeleteUser}
+        onClose={() => setDeleting(null)}
+      />
     </>
   );
 }
 
 function UserForm({
   editing,
+  viewerRole,
   onSubmit,
   onCancel,
-  onToggleActive,
+  onChangePassword,
 }: {
   editing: AdminUser | null;
+  viewerRole: UserRole | undefined;
   onSubmit: (data: CreateUserInput) => Promise<void> | void;
   onCancel: () => void;
-  onToggleActive?: () => void;
+  onChangePassword?: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<void> | void;
 }) {
   const [username, setUsername] = useState(editing?.username ?? "");
   const [fullName, setFullName] = useState(editing?.fullName ?? "");
   const [role, setRole] = useState<UserRole>(editing?.role ?? "nurse_assistant");
   const [password, setPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const canChangePassword =
+    Boolean(editing) &&
+    Boolean(onChangePassword) &&
+    (viewerRole === "super_admin" || editing?.role !== "super_admin");
 
   async function handle(e: FormEvent) {
     e.preventDefault();
@@ -276,72 +376,82 @@ function UserForm({
       setSubmitting(false);
     }
   }
+
+  async function handleChangePassword(e: FormEvent) {
+    e.preventDefault();
+    if (!onChangePassword) return;
+    setChangingPassword(true);
+    try {
+      await onChangePassword(currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch {
+      // Error toast is shown by the parent so the form can keep the typed values.
+    } finally {
+      setChangingPassword(false);
+    }
+  }
+
   return (
-    <form onSubmit={handle} className="space-y-4">
-      <div>
-        <label className="label">ชื่อ-สกุล *</label>
-        <input
-          className="input"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
-      </div>
-      <div>
-        <label className="label">username *</label>
-        <input
-          className="input"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-          disabled={Boolean(editing)}
-        />
-      </div>
-      {!editing && (
+    <div className="space-y-5">
+      <form onSubmit={handle} className="space-y-4">
         <div>
-          <label className="label">รหัสผ่านเริ่มต้น *</label>
+          <label className="label">ชื่อ-สกุล *</label>
           <input
-            type="password"
             className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="อย่างน้อย 8 ตัวอักษร"
-            minLength={8}
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
             required
           />
         </div>
-      )}
-      <div>
-        <label className="label">บทบาท *</label>
-        <select
-          className="input"
-          value={role}
-          onChange={(e) => setRole(e.target.value as UserRole)}
-        >
-          <option value="super_admin" disabled>
-            Super Admin (ผู้พัฒนาระบบ)
-          </option>
-          <option value="admin">ครูเรือนพยาบาล (ผู้ดูแลระบบ Admin)</option>
-          <option value="nurse_assistant">พี่เลี้ยงเรือนพยาบาล (User)</option>
-        </select>
-        <p className="mt-1 text-xs text-ksp-gray">
-          บทบาท Super Admin เป็นบัญชีหลักของระบบ แสดงไว้เท่านั้นและไม่สามารถเลือกเพิ่มได้
-        </p>
-      </div>
-
-      <div className="flex justify-between gap-2 pt-2">
-        {editing && onToggleActive ? (
-          <button
-            type="button"
-            className={editing.isActive ? "btn-danger" : "btn-outline"}
-            onClick={onToggleActive}
-          >
-            {editing.isActive ? "ระงับการใช้งาน" : "เปิดใช้งาน"}
-          </button>
-        ) : (
-          <span />
+        <div>
+          <label className="label">username *</label>
+          <input
+            className="input"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            disabled={Boolean(editing)}
+          />
+        </div>
+        {!editing && (
+          <div>
+            <label className="label">รหัสผ่านเริ่มต้น *</label>
+            <input
+              type="password"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="อย่างน้อย 8 ตัวอักษร"
+              minLength={8}
+              required
+            />
+          </div>
         )}
-        <div className="flex gap-2">
+        <div>
+          <label className="label">บทบาท *</label>
+          <select
+            className="input"
+            value={role}
+            onChange={(e) => setRole(e.target.value as UserRole)}
+            disabled={editing?.role === "super_admin"}
+          >
+            <option value="super_admin" disabled>
+              Super Admin (ผู้พัฒนาระบบ)
+            </option>
+            <option value="admin">
+              ครูเรือนพยาบาล (ผู้ดูแลระบบ Admin)
+            </option>
+            <option value="nurse_assistant">
+              พี่เลี้ยงเรือนพยาบาล (User)
+            </option>
+          </select>
+          <p className="mt-1 text-xs text-ksp-gray">
+            บทบาท Super Admin เป็นบัญชีหลักของระบบ แสดงไว้เท่านั้นและไม่สามารถเลือกเพิ่มได้
+          </p>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
           <button type="button" className="btn-outline" onClick={onCancel}>
             ยกเลิก
           </button>
@@ -349,51 +459,54 @@ function UserForm({
             {submitting ? "กำลังบันทึก..." : "บันทึก"}
           </button>
         </div>
-      </div>
-    </form>
-  );
-}
+      </form>
 
-function ResetForm({
-  onSubmit,
-  onCancel,
-}: {
-  onSubmit: (newPassword: string) => Promise<void> | void;
-  onCancel: () => void;
-}) {
-  const [pw, setPw] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  async function handle(e: FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      await onSubmit(pw);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-  return (
-    <form onSubmit={handle} className="space-y-4">
-      <div>
-        <label className="label">รหัสผ่านใหม่ *</label>
-        <input
-          type="password"
-          className="input"
-          minLength={8}
-          value={pw}
-          onChange={(e) => setPw(e.target.value)}
-          placeholder="อย่างน้อย 8 ตัวอักษร"
-          required
-        />
-      </div>
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-outline" onClick={onCancel}>
-          ยกเลิก
-        </button>
-        <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? "กำลังบันทึก..." : "รีเซ็ต"}
-        </button>
-      </div>
-    </form>
+      {editing && (
+        <div className="rounded-xl border border-ksp-blue-100 bg-ksp-blue-50/40 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-ksp-navy">
+            <LockKeyhole className="h-4 w-4" /> เปลี่ยนรหัสผ่าน
+          </div>
+          {canChangePassword ? (
+            <form onSubmit={handleChangePassword} className="mt-3 space-y-3">
+              <div>
+                <label className="label">รหัสผ่านเดิม *</label>
+                <input
+                  type="password"
+                  className="input bg-white"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">รหัสผ่านใหม่ *</label>
+                <input
+                  type="password"
+                  className="input bg-white"
+                  minLength={8}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="อย่างน้อย 8 ตัวอักษร"
+                  required
+                />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={changingPassword}
+                >
+                  {changingPassword ? "กำลังเปลี่ยน..." : "เปลี่ยนรหัสผ่าน"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className="mt-2 text-xs text-ksp-gray">
+              ไม่สามารถเปลี่ยนรหัสผ่านบัญชีผู้พัฒนาระบบได้
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

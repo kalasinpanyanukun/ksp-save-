@@ -85,15 +85,15 @@ export default function QuickSearch() {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-ksp-navy/40 backdrop-blur-sm pt-[10vh] px-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-ksp-navy/40 px-4 py-6 backdrop-blur-sm"
       onMouseDown={(e) => e.target === e.currentTarget && close()}
     >
-      <div className="card w-full max-w-xl mx-auto overflow-hidden">
-        <div className="flex items-center gap-2 px-4 border-b border-ksp-blue-50">
+      <div className="card w-[min(40rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden">
+        <div className="flex min-w-0 items-center gap-2 border-b border-ksp-blue-50 px-4">
           <Search className="h-4 w-4 text-ksp-gray" />
           <input
             ref={inputRef}
-            className="flex-1 bg-transparent py-3.5 text-sm outline-none"
+            className="min-w-0 flex-1 border-0 bg-transparent py-3.5 text-sm outline-none ring-0 focus:ring-0"
             placeholder="ค้นหานักเรียนด้วยรหัส, ชื่อ, นามสกุล..."
             value={q}
             onChange={(e) => setQ(e.target.value)}

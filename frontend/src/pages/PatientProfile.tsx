@@ -10,6 +10,8 @@ import {
   Send,
   Edit3,
   Loader2,
+  ClipboardList,
+  Pill,
 } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
@@ -201,6 +203,19 @@ export default function PatientProfilePage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+        <SheetDetailCard
+          title="รายละเอียดสุขภาพจากเรือนนอน"
+          Icon={ClipboardList}
+          data={student.healthData}
+        />
+        <SheetDetailCard
+          title="รายละเอียดยาประจำตัวจากเรือนนอน"
+          Icon={Pill}
+          data={student.medicationData}
+        />
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <TimelineCard
           title="ประวัติ OPD"
@@ -266,6 +281,93 @@ function dischargeDescription(a: Admission) {
     other: "อื่นๆ",
   }[a.dischargeDestination ?? "other"];
   return `${dest} · ${formatDate(a.dischargeDate)} · ${a.totalDays ?? "?"} วัน`;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function formatDetailValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "-";
+  if (Array.isArray(value)) return `${value.length.toLocaleString("th-TH")} รายการ`;
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function SheetDetailCard({
+  title,
+  Icon,
+  data,
+}: {
+  title: string;
+  Icon: typeof ClipboardList;
+  data: Record<string, unknown>;
+}) {
+  const entries = isPlainObject(data)
+    ? Object.entries(data).filter(([, value]) => {
+        if (Array.isArray(value)) return value.length > 0;
+        return value !== null && value !== undefined && value !== "";
+      })
+    : [];
+  const medicationRows = Array.isArray(data?.["รายการยา"])
+    ? (data["รายการยา"] as Record<string, unknown>[])
+    : [];
+
+  return (
+    <div className="card-pad">
+      <h3 className="font-semibold text-ksp-navy flex items-center gap-2 mb-4">
+        <Icon className="h-4 w-4" /> {title}
+      </h3>
+      {entries.length === 0 ? (
+        <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลจากชีตต้นทาง</p>
+      ) : medicationRows.length > 0 ? (
+        <div className="space-y-3">
+          <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            {entries
+              .filter(([key]) => key !== "รายการยา")
+              .map(([key, value]) => (
+                <div key={key} className="rounded-lg bg-ksp-blue-50/50 px-3 py-2">
+                  <dt className="text-xs text-ksp-gray">{key}</dt>
+                  <dd className="font-medium text-ksp-navy">
+                    {formatDetailValue(value)}
+                  </dd>
+                </div>
+              ))}
+          </dl>
+          <div className="max-h-72 overflow-auto rounded-xl border border-ksp-blue-50">
+            <table className="min-w-full text-left text-xs">
+              <tbody className="divide-y divide-ksp-blue-50">
+                {medicationRows.map((row, index) => (
+                  <tr key={index}>
+                    <td className="w-12 px-3 py-2 font-semibold text-ksp-blue-700">
+                      {index + 1}
+                    </td>
+                    <td className="px-3 py-2 text-ksp-navy/85">
+                      {Object.entries(row)
+                        .filter(([, value]) => Boolean(value))
+                        .map(([key, value]) => `${key}: ${formatDetailValue(value)}`)
+                        .join(" | ")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+          {entries.map(([key, value]) => (
+            <div key={key} className="rounded-lg bg-ksp-blue-50/50 px-3 py-2">
+              <dt className="text-xs text-ksp-gray">{key}</dt>
+              <dd className="font-medium text-ksp-navy">
+                {formatDetailValue(value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
 }
 
 interface TimelineItem {

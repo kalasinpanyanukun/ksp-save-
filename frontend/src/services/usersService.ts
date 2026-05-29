@@ -21,7 +21,6 @@ export interface CreateUserInput {
 export interface UpdateUserInput {
   fullName?: string;
   role?: UserRole;
-  isActive?: boolean;
 }
 
 export async function listUsers(): Promise<AdminUser[]> {
@@ -42,11 +41,26 @@ export async function updateUser(
   return data.user;
 }
 
-export async function resetUserPassword(
+export async function getUserPassword(id: string): Promise<string | null> {
+  const { data } = await api.get<{ password: string | null }>(
+    `/users/${id}/password`,
+  );
+  return data.password;
+}
+
+export async function changeUserPassword(
   id: string,
+  currentPassword: string,
   newPassword: string,
 ): Promise<void> {
-  await api.post(`/users/${id}/reset-password`, { newPassword });
+  await api.post(`/users/${id}/change-password`, {
+    currentPassword,
+    newPassword,
+  });
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await api.delete(`/users/${id}`);
 }
 
 export async function changeMyPassword(
