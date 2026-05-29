@@ -87,7 +87,7 @@ export default function LoginPage() {
                   autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="เช่น admin"
+                  placeholder="เช่น Super Admin"
                   required
                 />
               </div>

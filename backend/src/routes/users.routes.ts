@@ -66,6 +66,14 @@ const updateSchema = z.object({
 router.put("/:id", requireAdmin, async (req, res, next) => {
   try {
     const body = updateSchema.parse(req.body);
+    const existing = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { role: true },
+    });
+    if (!existing) throw new HttpError(404, "ไม่พบผู้ใช้");
+    if (existing.role === "super_admin") {
+      throw new HttpError(403, "ไม่สามารถแก้ไขบัญชี Super Admin ได้");
+    }
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: body,
@@ -83,6 +91,14 @@ const resetSchema = z.object({
 
 router.post("/:id/reset-password", requireAdmin, async (req, res, next) => {
   try {
+    const existing = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { role: true },
+    });
+    if (!existing) throw new HttpError(404, "ไม่พบผู้ใช้");
+    if (existing.role === "super_admin") {
+      throw new HttpError(403, "ไม่สามารถรีเซ็ตรหัสผ่านบัญชี Super Admin ได้");
+    }
     const { newPassword } = resetSchema.parse(req.body);
     const passwordHash = await hashPassword(newPassword);
     await prisma.user.update({

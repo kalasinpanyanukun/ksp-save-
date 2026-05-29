@@ -6,12 +6,16 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("[seed] เริ่ม seed ข้อมูลตั้งต้น...");
 
-  const adminUsername = "admin";
+  const adminUsername = "Super Admin";
   const adminPassword = "@ksp123456";
 
-  const existing = await prisma.user.findUnique({
-    where: { username: adminUsername },
-  });
+  const existing =
+    (await prisma.user.findUnique({
+      where: { username: adminUsername },
+    })) ??
+    (await prisma.user.findUnique({
+      where: { username: "admin" },
+    }));
 
   const passwordHash = await hashPassword(adminPassword);
 
@@ -21,17 +25,18 @@ async function main() {
         username: adminUsername,
         passwordHash,
         fullName: "ผู้ดูแลระบบ",
-        role: UserRole.admin,
+        role: UserRole.super_admin,
       },
     });
     console.log(`[seed] สร้างผู้ใช้ Super Admin: ${adminUsername}`);
   } else {
     await prisma.user.update({
-      where: { username: adminUsername },
+      where: { id: existing.id },
       data: {
+        username: adminUsername,
         passwordHash,
         fullName: "ผู้ดูแลระบบ",
-        role: UserRole.admin,
+        role: UserRole.super_admin,
         isActive: true,
       },
     });

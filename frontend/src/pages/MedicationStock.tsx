@@ -22,7 +22,8 @@ import {
 import type { Medication } from "../types";
 
 export default function MedicationStockPage() {
-  const isAdmin = useAppSelector((s) => s.auth.user?.role) === "admin";
+  const role = useAppSelector((s) => s.auth.user?.role);
+  const isAdmin = role === "super_admin" || role === "admin";
   const toast = useToast();
   const [items, setItems] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(false);

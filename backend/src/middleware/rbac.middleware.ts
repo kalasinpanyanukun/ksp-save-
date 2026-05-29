@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 
-type Role = "admin" | "nurse_assistant";
+type Role = "super_admin" | "admin" | "nurse_assistant";
 
 export function requireRole(...allowed: Role[]) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -16,4 +16,4 @@ export function requireRole(...allowed: Role[]) {
   };
 }
 
-export const requireAdmin = requireRole("admin");
+export const requireAdmin = requireRole("super_admin", "admin");

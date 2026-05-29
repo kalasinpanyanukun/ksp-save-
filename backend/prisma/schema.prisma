@@ -13,6 +13,7 @@ datasource db {
 
 // ───── ผู้ใช้งานระบบ ─────
 enum UserRole {
+  super_admin
   admin
   nurse_assistant
 }

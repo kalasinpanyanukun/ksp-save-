@@ -41,7 +41,7 @@ function formatDate(date: string | null | undefined) {
 export default function PatientProfilePage() {
   const { id } = useParams<{ id: string }>();
   const role = useAppSelector((s) => s.auth.user?.role);
-  const isAdmin = role === "admin";
+  const isAdmin = role === "super_admin" || role === "admin";
   const toast = useToast();
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);

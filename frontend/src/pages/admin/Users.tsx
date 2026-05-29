@@ -7,6 +7,7 @@ import {
   KeyRound,
   ShieldCheck,
   Shield,
+  Crown,
 } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import EmptyState from "../../components/common/EmptyState";
@@ -21,6 +22,16 @@ import {
   type CreateUserInput,
 } from "../../services/usersService";
 import type { UserRole } from "../../types";
+
+function roleLabel(role: UserRole) {
+  if (role === "super_admin") return "Super Admin (ผู้พัฒนาระบบ)";
+  if (role === "admin") return "ครูเรือนพยาบาล (Admin)";
+  return "พี่เลี้ยงเรือนพยาบาล (User)";
+}
+
+function isSuperAdmin(user: AdminUser | null) {
+  return user?.role === "super_admin";
+}
 
 export default function AdminUsersPage() {
   const toast = useToast();
@@ -90,13 +101,17 @@ export default function AdminUsersPage() {
                     <td className="font-medium">{u.fullName}</td>
                     <td className="font-mono text-xs">{u.username}</td>
                     <td>
-                      {u.role === "admin" ? (
+                      {u.role === "super_admin" ? (
                         <span className="chip-blue">
-                          <ShieldCheck className="h-3 w-3" /> Super Admin
+                          <Crown className="h-3 w-3" /> {roleLabel(u.role)}
+                        </span>
+                      ) : u.role === "admin" ? (
+                        <span className="chip-emerald">
+                          <ShieldCheck className="h-3 w-3" /> {roleLabel(u.role)}
                         </span>
                       ) : (
                         <span className="chip-slate">
-                          <Shield className="h-3 w-3" /> พี่เลี้ยง
+                          <Shield className="h-3 w-3" /> {roleLabel(u.role)}
                         </span>
                       )}
                     </td>
@@ -111,27 +126,33 @@ export default function AdminUsersPage() {
                       {new Date(u.createdAt).toLocaleDateString("th-TH")}
                     </td>
                     <td className="text-right">
-                      <div className="inline-flex gap-1">
-                        <button
-                          type="button"
-                          className="btn-ghost px-2 py-1.5"
-                          onClick={() => {
-                            setEditing(u);
-                            setOpen(true);
-                          }}
-                          title="แก้ไข"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-ghost px-2 py-1.5"
-                          onClick={() => setResetting(u)}
-                          title="รีเซ็ตรหัสผ่าน"
-                        >
-                          <KeyRound className="h-4 w-4" />
-                        </button>
-                      </div>
+                      {isSuperAdmin(u) ? (
+                        <span className="text-xs font-medium text-ksp-gray">
+                          บัญชีหลักของระบบ
+                        </span>
+                      ) : (
+                        <div className="inline-flex gap-1">
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-1.5"
+                            onClick={() => {
+                              setEditing(u);
+                              setOpen(true);
+                            }}
+                            title="แก้ไข"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-1.5"
+                            onClick={() => setResetting(u)}
+                            title="รีเซ็ตรหัสผ่าน"
+                          >
+                            <KeyRound className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -143,7 +164,7 @@ export default function AdminUsersPage() {
             <EmptyState
               icon={<UserCog className="h-7 w-7" />}
               title="ยังไม่มีผู้ใช้อื่น"
-              description="กดปุ่ม 'เพิ่มผู้ใช้' เพื่อสร้างบัญชีพี่เลี้ยงหรือ admin เพิ่ม"
+              description="กดปุ่ม 'เพิ่มผู้ใช้' เพื่อสร้างบัญชีครูเรือนพยาบาลหรือพี่เลี้ยงเรือนพยาบาลเพิ่ม"
             />
           </div>
         )}
@@ -180,7 +201,7 @@ export default function AdminUsersPage() {
             }
           }}
           onToggleActive={
-            editing
+            editing && !isSuperAdmin(editing)
               ? async () => {
                   try {
                     await updateUser(editing.id, { isActive: !editing.isActive });
@@ -297,9 +318,15 @@ function UserForm({
           value={role}
           onChange={(e) => setRole(e.target.value as UserRole)}
         >
-          <option value="nurse_assistant">พี่เลี้ยงเรือนพยาบาล</option>
-          <option value="admin">Super Admin</option>
+          <option value="super_admin" disabled>
+            Super Admin (ผู้พัฒนาระบบ)
+          </option>
+          <option value="admin">ครูเรือนพยาบาล (ผู้ดูแลระบบ Admin)</option>
+          <option value="nurse_assistant">พี่เลี้ยงเรือนพยาบาล (User)</option>
         </select>
+        <p className="mt-1 text-xs text-ksp-gray">
+          บทบาท Super Admin เป็นบัญชีหลักของระบบ แสดงไว้เท่านั้นและไม่สามารถเลือกเพิ่มได้
+        </p>
       </div>
 
       <div className="flex justify-between gap-2 pt-2">

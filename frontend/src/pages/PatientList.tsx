@@ -31,7 +31,7 @@ import type { Student } from "../types";
 
 export default function PatientListPage() {
   const role = useAppSelector((s) => s.auth.user?.role);
-  const isAdmin = role === "admin";
+  const isAdmin = role === "super_admin" || role === "admin";
   const toast = useToast();
 
   const [students, setStudents] = useState<Student[]>([]);

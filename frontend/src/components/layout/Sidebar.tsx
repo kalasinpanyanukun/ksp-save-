@@ -12,7 +12,6 @@ import {
   UserCog,
   Settings,
   ShieldCheck,
-  BookOpenText,
 } from "lucide-react";
 import Brand from "./Brand";
 import { useAppDispatch, useAppSelector } from "../../store";
@@ -34,7 +33,6 @@ const navItems: NavItem[] = [
   { to: "/reports", label: "รายงาน & สถิติ", Icon: FileBarChart2 },
   { to: "/pm25", label: "PM 2.5", Icon: Wind },
   { to: "/medications", label: "คลังยา", Icon: Pill },
-  { to: "/help", label: "คู่มือใช้งาน", Icon: BookOpenText },
   { to: "/admin/users", label: "จัดการผู้ใช้", Icon: UserCog, adminOnly: true },
   { to: "/admin/audit", label: "Audit Log", Icon: ShieldCheck, adminOnly: true },
   { to: "/admin/settings", label: "ตั้งค่าระบบ", Icon: Settings, adminOnly: true },
@@ -66,7 +64,12 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems
-            .filter((i) => !i.adminOnly || user?.role === "admin")
+            .filter(
+              (i) =>
+                !i.adminOnly ||
+                user?.role === "super_admin" ||
+                user?.role === "admin",
+            )
             .map(({ to, label, Icon }) => (
               <NavLink
                 key={to}

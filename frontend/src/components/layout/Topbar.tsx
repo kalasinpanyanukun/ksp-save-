@@ -36,7 +36,11 @@ export default function Topbar() {
   }
 
   const roleLabel =
-    user?.role === "admin" ? "Super Admin" : "พี่เลี้ยงเรือนพยาบาล";
+    user?.role === "super_admin"
+      ? "Super Admin"
+      : user?.role === "admin"
+        ? "ครูเรือนพยาบาล (Admin)"
+        : "พี่เลี้ยงเรือนพยาบาล (User)";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-ksp-blue-50 bg-white/90 px-4 backdrop-blur sm:px-6">

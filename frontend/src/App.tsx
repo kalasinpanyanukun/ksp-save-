@@ -11,7 +11,6 @@ import ReferralsPage from "./pages/Referrals";
 import ReportsPage from "./pages/Reports";
 import PM25Page from "./pages/PM25";
 import MedicationStockPage from "./pages/MedicationStock";
-import HelpPage from "./pages/Help";
 import AdminUsersPage from "./pages/admin/Users";
 import AdminAuditPage from "./pages/admin/AuditLog";
 import AdminSettingsPage from "./pages/admin/Settings";
@@ -116,19 +115,9 @@ export default function App() {
         }
       />
       <Route
-        path="/help"
-        element={
-          <ProtectedRoute>
-            <Shell>
-              <HelpPage />
-            </Shell>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/admin/users"
         element={
-          <ProtectedRoute roles={["admin"]}>
+          <ProtectedRoute roles={["super_admin", "admin"]}>
             <Shell>
               <AdminUsersPage />
             </Shell>
@@ -138,7 +127,7 @@ export default function App() {
       <Route
         path="/admin/audit"
         element={
-          <ProtectedRoute roles={["admin"]}>
+          <ProtectedRoute roles={["super_admin", "admin"]}>
             <Shell>
               <AdminAuditPage />
             </Shell>
@@ -148,7 +137,7 @@ export default function App() {
       <Route
         path="/admin/settings"
         element={
-          <ProtectedRoute roles={["admin"]}>
+          <ProtectedRoute roles={["super_admin", "admin"]}>
             <Shell>
               <AdminSettingsPage />
             </Shell>
