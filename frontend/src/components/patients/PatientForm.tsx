@@ -1,17 +1,124 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Pill, Plus, Trash2, Users, GraduationCap, HeartPulse } from "lucide-react";
-import type { BloodType, Student, StudentStatus } from "../../types";
+import type { BloodType, Medication, Student, StudentStatus } from "../../types";
 import type {
   GuardianInput,
   HealthExtraInput,
   MedicationEntryInput,
   StudentInput,
 } from "../../services/studentsService";
+import { searchMedications, createMedication } from "../../services/visitsService";
 import {
   BLOOD_TYPE_OPTIONS,
   CLASS_ROOM_OPTIONS,
   DORMITORY_OPTIONS,
 } from "../../constants/studentOptions";
+
+/** ช่องเลือกยาจากคลังยา (ค้นหาได้) + ปุ่มเพิ่มยาชนิดใหม่ถ้าไม่เจอ */
+function MedicationCombobox({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [query, setQuery] = useState(value);
+  const [results, setResults] = useState<Medication[]>([]);
+  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => setQuery(value), [value]);
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setResults([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      searchMedications(q).then(setResults).catch(() => setResults([]));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const exact = results.some((r) => r.drugName.toLowerCase() === query.trim().toLowerCase());
+
+  async function addNew() {
+    const name = query.trim();
+    if (!name) return;
+    setCreating(true);
+    try {
+      const code = `MED-${Date.now().toString(36).toUpperCase()}`.slice(0, 20);
+      const med = await createMedication({
+        drugCode: code,
+        drugName: name,
+        source: "ยาประจำตัวนักเรียน",
+        category: "medicine",
+        unit: null,
+        stockQty: 0,
+        minStock: 0,
+        entryStatus: "not_entered",
+      });
+      onChange(med.drugName);
+      setQuery(med.drugName);
+      setOpen(false);
+    } catch {
+      // ถ้าเพิ่มไม่ได้ ยังคงใช้ชื่อที่พิมพ์ไว้
+      onChange(name);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div className="relative flex-1">
+      <input
+        className="input"
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder="ค้นหา/เลือกยาจากคลัง หรือพิมพ์ชื่อใหม่"
+      />
+      {open && query.trim() && (results.length > 0 || !exact) && (
+        <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+          {results.map((r) => (
+            <button
+              type="button"
+              key={r.id}
+              className="block w-full px-3 py-2 text-left text-sm hover:bg-ksp-blue-50"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(r.drugName);
+                setQuery(r.drugName);
+                setOpen(false);
+              }}
+            >
+              {r.drugName}
+              {r.unit && <span className="ml-1 text-xs text-ksp-gray">· {r.unit}</span>}
+            </button>
+          ))}
+          {!exact && (
+            <button
+              type="button"
+              disabled={creating}
+              className="flex w-full items-center gap-1.5 border-t border-slate-100 px-3 py-2 text-left text-sm font-medium text-ksp-blue-700 hover:bg-ksp-blue-50"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                addNew();
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" /> เพิ่มยาชนิดใหม่ "{query.trim()}"
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface PatientFormProps {
   initial?: Partial<Student>;
@@ -367,7 +474,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
             {meds.map((med, index) => (
               <div key={index} className="rounded-xl border border-ksp-blue-100 bg-ksp-bg/40 p-3">
                 <div className="mb-2 flex items-center gap-2">
-                  <input className="input flex-1" value={med.name} onChange={(e) => updateMed(index, "name", e.target.value)} placeholder="ชื่อยา เช่น Methylphenidate 10 mg" />
+                  <MedicationCombobox value={med.name} onChange={(v) => updateMed(index, "name", v)} />
                   <button type="button" className="btn-ghost px-2 py-2 text-rose-600 hover:bg-rose-50" onClick={() => setMeds((list) => list.filter((_, i) => i !== index))} title="ลบยา">
                     <Trash2 className="h-4 w-4" />
                   </button>

@@ -404,12 +404,14 @@ router.get("/statistics", async (_req, res, next) => {
             stockQty: true,
             minStock: true,
             entryStatus: true,
+            category: true,
           },
         }),
       ]);
 
     const medicationStock = {
       totalTypes: medications.length,
+      nonMedicineTypes: medications.filter((m) => m.category === "supply").length,
       tablets: 0,
       liquids: 0,
       ointments: 0,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import {
   Pill,
   Plus,
@@ -7,6 +8,8 @@ import {
   Edit3,
   ArrowDownUp,
   DownloadCloud,
+  Users,
+  History,
 } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
@@ -16,12 +19,32 @@ import { useToast } from "../components/common/useToast";
 import {
   adjustMedication,
   createMedication,
+  getMedicationDetail,
   importMedicationsFromStudents,
   listMedications,
   updateMedication,
   type MedicationInput,
 } from "../services/visitsService";
-import type { Medication } from "../types";
+import {
+  MED_CATEGORY_OPTIONS,
+  MED_SOURCE_OPTIONS,
+  MED_UNIT_OPTIONS,
+} from "../constants/studentOptions";
+import type { Medication, MedicationDetail } from "../types";
+
+function formatDateTime(value: string) {
+  try {
+    return new Date(value).toLocaleString("th-TH", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return value;
+  }
+}
 
 export default function MedicationStockPage() {
   const role = useAppSelector((s) => s.auth.user?.role);
@@ -35,8 +58,33 @@ export default function MedicationStockPage() {
   const [editing, setEditing] = useState<Medication | null>(null);
   const [adjusting, setAdjusting] = useState<Medication | null>(null);
   const [importing, setImporting] = useState(false);
+  const [detail, setDetail] = useState<MedicationDetail | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 100;
+
+  async function openDetail(id: string) {
+    setDetailOpen(true);
+    setDetail(null);
+    setDetailLoading(true);
+    try {
+      setDetail(await getMedicationDetail(id));
+    } catch {
+      toast("โหลดรายละเอียดยาไม่สำเร็จ", "error");
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  async function patchMedication(m: Medication, patch: Partial<MedicationInput>) {
+    try {
+      await updateMedication(m.id, patch);
+      await load();
+    } catch {
+      toast("อัปเดตไม่สำเร็จ", "error");
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -171,7 +219,8 @@ export default function MedicationStockPage() {
                 <th>ลำดับ</th>
                 <th>รหัส</th>
                 <th>ชื่อยา</th>
-                <th>ประเภท</th>
+                <th>ที่มาของยา</th>
+                <th>ประเภทเวชภัณฑ์</th>
                 <th>หน่วย</th>
                 <th>คงเหลือ</th>
                 <th>ขั้นต่ำ</th>
@@ -183,7 +232,7 @@ export default function MedicationStockPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={10} className="text-center py-6">
+                  <td colSpan={11} className="text-center py-6">
                     <Loader2 className="inline h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
@@ -193,13 +242,54 @@ export default function MedicationStockPage() {
                   const isEntered = m.entryStatus === "entered";
                   const isLow = isEntered && m.stockQty <= m.minStock;
                   return (
-                    <tr key={m.id}>
+                    <tr
+                      key={m.id}
+                      onClick={() => openDetail(m.id)}
+                      className="cursor-pointer transition-colors hover:bg-ksp-blue-50/40"
+                    >
                       <td className="font-semibold text-ksp-gray">
                         {(page - 1) * pageSize + index + 1}
                       </td>
                       <td className="font-mono text-xs">{m.drugCode}</td>
-                      <td className="font-medium">{m.drugName}</td>
-                      <td>{m.drugType ?? "-"}</td>
+                      <td className="font-medium text-ksp-blue-700">{m.drugName}</td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {isAdmin ? (
+                          <select
+                            className="rounded-lg border border-ksp-blue-100 bg-white px-2 py-1.5 text-xs"
+                            value={m.source}
+                            onChange={(e) => patchMedication(m, { source: e.target.value })}
+                          >
+                            {MED_SOURCE_OPTIONS.map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          m.source
+                        )}
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {isAdmin ? (
+                          <select
+                            className={`rounded-lg border px-2 py-1.5 text-xs font-semibold ${
+                              m.category === "supply"
+                                ? "border-violet-200 bg-violet-50 text-violet-700"
+                                : "border-ksp-blue-100 bg-ksp-blue-50 text-ksp-blue-700"
+                            }`}
+                            value={m.category}
+                            onChange={(e) =>
+                              patchMedication(m, { category: e.target.value as "medicine" | "supply" })
+                            }
+                          >
+                            {MED_CATEGORY_OPTIONS.map((c) => (
+                              <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className={m.category === "supply" ? "chip-slate" : "chip-blue"}>
+                            {m.category === "supply" ? "มิใช่ยา" : "ยา"}
+                          </span>
+                        )}
+                      </td>
                       <td>{m.unit ?? "-"}</td>
                       <td className="font-semibold">
                         {isEntered ? m.stockQty : <span className="text-ksp-gray">-</span>}
@@ -216,7 +306,7 @@ export default function MedicationStockPage() {
                           <span className="chip-emerald">ปกติ</span>
                         )}
                       </td>
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         {isAdmin ? (
                           <select
                             className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
@@ -241,7 +331,7 @@ export default function MedicationStockPage() {
                           <span className="chip-rose">ยังไม่ได้ลงข้อมูล</span>
                         )}
                       </td>
-                      <td className="text-right">
+                      <td className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex gap-1">
                           <button
                             type="button"
@@ -362,7 +452,105 @@ export default function MedicationStockPage() {
           />
         )}
       </Modal>
+
+      <Modal
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        title="รายละเอียดยา / เวชภัณฑ์"
+        size="lg"
+      >
+        {detailLoading || !detail ? (
+          <div className="grid min-h-40 place-items-center">
+            <Loader2 className="h-7 w-7 animate-spin text-ksp-blue-600" />
+          </div>
+        ) : (
+          <MedicationDetailView detail={detail} />
+        )}
+      </Modal>
     </>
+  );
+}
+
+function MedicationDetailView({ detail }: { detail: MedicationDetail }) {
+  const { medication: m, movements, students } = detail;
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-gradient-to-r from-ksp-blue-50 to-sky-50 px-4 py-3">
+        <h2 className="text-xl font-bold text-ksp-navy">{m.drugName}</h2>
+        <p className="text-sm text-ksp-blue-700">
+          {m.drugCode} · {m.source} · {m.category === "supply" ? "มิใช่ยา" : "ยา"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {[
+          { label: "คงเหลือ", value: `${m.stockQty} ${m.unit ?? ""}` },
+          { label: "ขั้นต่ำ", value: `${m.minStock}` },
+          { label: "หน่วย", value: m.unit ?? "-" },
+          { label: "สถานะ", value: m.entryStatus === "entered" ? "ลงข้อมูลแล้ว" : "ยังไม่ได้ลงข้อมูล" },
+        ].map((it) => (
+          <div key={it.label} className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2">
+            <p className="text-[11px] font-semibold text-ksp-gray">{it.label}</p>
+            <p className="mt-0.5 text-sm font-bold text-ksp-navy">{it.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <h3 className="mb-3 flex items-center gap-2 font-semibold text-ksp-navy">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-50 text-emerald-600">
+            <History className="h-4 w-4" />
+          </span>
+          ประวัติรับเข้า / จ่ายออก
+        </h3>
+        {movements.length === 0 ? (
+          <p className="text-sm text-ksp-gray">ยังไม่มีประวัติการเคลื่อนไหว</p>
+        ) : (
+          <ul className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+            {movements.map((mv) => (
+              <li key={mv.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
+                <div>
+                  <span className={`font-bold ${mv.delta >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                    {mv.delta >= 0 ? `+${mv.delta}` : mv.delta}
+                  </span>
+                  {mv.reason && <span className="ml-2 text-ksp-gray">{mv.reason}</span>}
+                </div>
+                <div className="text-right text-xs text-ksp-gray">
+                  คงเหลือ {mv.balanceAfter} · {formatDateTime(mv.createdAt)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <h3 className="mb-3 flex items-center gap-2 font-semibold text-ksp-navy">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-ksp-blue-50 text-ksp-blue-700">
+            <Users className="h-4 w-4" />
+          </span>
+          นักเรียนที่ใช้ยานี้ ({students.length} คน)
+        </h3>
+        {students.length === 0 ? (
+          <p className="text-sm text-ksp-gray">ไม่พบนักเรียนที่ใช้ยานี้</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {students.map((s) => (
+              <Link
+                key={s.id}
+                to={`/patients/${s.id}`}
+                className="rounded-lg border border-ksp-blue-100 bg-ksp-blue-50/50 px-3 py-1.5 text-sm font-medium text-ksp-blue-700 hover:bg-ksp-blue-50"
+              >
+                {s.name}
+                <span className="ml-1 text-xs text-ksp-gray">
+                  {[s.classRoom, s.dormitory].filter(Boolean).join(" · ")}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -379,6 +567,8 @@ function MedicationForm({
     drugCode: initial?.drugCode ?? "",
     drugName: initial?.drugName ?? "",
     drugType: initial?.drugType ?? "",
+    source: initial?.source ?? "เรือนพยาบาล",
+    category: initial?.category ?? "medicine",
     unit: initial?.unit ?? "",
     stockQty: initial?.stockQty ?? 0,
     minStock: initial?.minStock ?? 0,
@@ -417,26 +607,44 @@ function MedicationForm({
           />
         </div>
         <div>
-          <label className="label">ประเภท</label>
-          <input
+          <label className="label">ที่มาของยา</label>
+          <select
             className="input"
-            value={form.drugType ?? ""}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, drugType: e.target.value || null }))
-            }
-            placeholder="เช่น แก้ปวด/ลดไข้"
-          />
+            value={form.source ?? "เรือนพยาบาล"}
+            onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
+          >
+            {MED_SOURCE_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">ประเภทเวชภัณฑ์</label>
+          <select
+            className="input"
+            value={form.category ?? "medicine"}
+            onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as "medicine" | "supply" }))}
+          >
+            {MED_CATEGORY_OPTIONS.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="label">หน่วย</label>
-          <input
+          <select
             className="input"
             value={form.unit ?? ""}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, unit: e.target.value || null }))
-            }
-            placeholder="เช่น เม็ด, ขวด, ซอง"
-          />
+            onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value || null }))}
+          >
+            <option value="">ไม่ระบุ</option>
+            {MED_UNIT_OPTIONS.map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+            {form.unit && !MED_UNIT_OPTIONS.includes(form.unit as never) && (
+              <option value={form.unit}>{form.unit}</option>
+            )}
+          </select>
         </div>
         <div>
           <label className="label">คงเหลือ</label>

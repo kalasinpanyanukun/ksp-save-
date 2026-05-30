@@ -170,6 +170,8 @@ model Medication {
   drugCode  String   @unique @map("drug_code") @db.VarChar(20)
   drugName  String   @map("drug_name") @db.VarChar(200)
   drugType  String?  @map("drug_type") @db.VarChar(50)
+  source    String   @default("เรือนพยาบาล") @db.VarChar(40) // ที่มาของยา: เรือนพยาบาล | ยาประจำตัวนักเรียน
+  category  String   @default("medicine") @db.VarChar(20)     // ประเภทเวชภัณฑ์: medicine (ยา) | supply (มิใช่ยา)
   unit      String?  @db.VarChar(20)
   stockQty  Int      @default(0) @map("stock_qty")
   minStock  Int      @default(0) @map("min_stock")
@@ -178,7 +180,25 @@ model Medication {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  movements MedicationMovement[]
+
   @@map("medications")
+}
+
+// ───── ประวัติการรับเข้า/จ่ายออกของคลังยา ─────
+model MedicationMovement {
+  id           String   @id @default(uuid())
+  medicationId String   @map("medication_id")
+  delta        Int
+  balanceAfter Int      @map("balance_after")
+  reason       String?
+  recordedById String?  @map("recorded_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@index([medicationId, createdAt])
+  @@map("medication_movements")
 }
 
 // ───── PM 2.5 ─────

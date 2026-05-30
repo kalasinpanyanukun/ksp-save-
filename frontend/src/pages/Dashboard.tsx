@@ -147,6 +147,13 @@ export default function DashboardPage() {
       loading,
     },
     {
+      label: "เวชภัณฑ์มิใช่ยา",
+      value: stats?.medicationStock.nonMedicineTypes ?? 0,
+      Icon: Package,
+      tone: "violet",
+      loading,
+    },
+    {
       label: "ยาเม็ด",
       value: stats?.medicationStock.tablets ?? 0,
       Icon: Tablet,

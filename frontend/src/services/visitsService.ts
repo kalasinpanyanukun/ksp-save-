@@ -151,6 +151,8 @@ export interface MedicationInput {
   drugCode: string;
   drugName: string;
   drugType?: string | null;
+  source?: string;
+  category?: "medicine" | "supply";
   unit?: string | null;
   stockQty: number;
   minStock: number;
@@ -211,6 +213,15 @@ export async function importMedicationsFromStudents(): Promise<{
 }> {
   const { data } = await api.post<{ created: number; skipped: number }>(
     "/medications/import-from-students",
+  );
+  return data;
+}
+
+export async function getMedicationDetail(
+  id: string,
+): Promise<import("../types").MedicationDetail> {
+  const { data } = await api.get<import("../types").MedicationDetail>(
+    `/medications/${id}/detail`,
   );
   return data;
 }

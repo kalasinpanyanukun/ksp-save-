@@ -111,6 +111,8 @@ export interface Medication {
   drugCode: string;
   drugName: string;
   drugType: string | null;
+  source: string;
+  category: "medicine" | "supply";
   unit: string | null;
   stockQty: number;
   minStock: number;
@@ -118,6 +120,22 @@ export interface Medication {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface MedicationMovement {
+  id: string;
+  medicationId: string;
+  delta: number;
+  balanceAfter: number;
+  reason: string | null;
+  recordedById: string | null;
+  createdAt: string;
+}
+
+export interface MedicationDetail {
+  medication: Medication;
+  movements: MedicationMovement[];
+  students: { id: string; name: string; classRoom: string | null; dormitory: string | null }[];
 }
 
 export type AqiLevel =

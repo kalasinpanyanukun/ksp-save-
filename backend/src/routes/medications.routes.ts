@@ -13,6 +13,8 @@ const medicationSchema = z.object({
   drugCode: z.string().trim().min(1).max(20),
   drugName: z.string().trim().min(1).max(200),
   drugType: z.string().trim().max(50).optional().nullable(),
+  source: z.string().trim().max(40).optional(),
+  category: z.enum(["medicine", "supply"]).optional(),
   unit: z.string().trim().max(20).optional().nullable(),
   stockQty: z.number().int().nonnegative().default(0),
   minStock: z.number().int().nonnegative().default(0),
@@ -130,6 +132,8 @@ router.post("/", requireAdmin, async (req, res, next) => {
       drugCode: body.drugCode,
       drugName: body.drugName,
       drugType: body.drugType,
+      source: body.source ?? "เรือนพยาบาล",
+      category: body.category ?? "medicine",
       unit: body.unit,
       stockQty: body.stockQty,
       minStock: body.minStock,
@@ -227,18 +231,81 @@ const adjustSchema = z.object({
 
 router.post("/:id/adjust", async (req, res, next) => {
   try {
-    const { delta } = adjustSchema.parse(req.body);
+    const { delta, reason } = adjustSchema.parse(req.body);
     const existing = await prisma.medication.findUnique({
       where: { id: req.params.id },
     });
     if (!existing) throw new HttpError(404, "ไม่พบยานี้");
     const newQty = existing.stockQty + delta;
     if (newQty < 0) throw new HttpError(400, "จำนวนยาคงเหลือไม่พอ");
-    const med = await prisma.medication.update({
-      where: { id: req.params.id },
-      data: { stockQty: newQty },
-    });
+    const [med] = await prisma.$transaction([
+      prisma.medication.update({
+        where: { id: req.params.id },
+        data: { stockQty: newQty },
+      }),
+      prisma.medicationMovement.create({
+        data: {
+          medicationId: req.params.id,
+          delta,
+          balanceAfter: newQty,
+          reason: reason || null,
+          recordedById: req.user?.sub ?? null,
+        },
+      }),
+    ]);
     res.json({ medication: med });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// รายละเอียดยา: ข้อมูล + ประวัติรับเข้า/จ่ายออก + นักเรียนที่ใช้ยานี้
+router.get("/:id/detail", async (req, res, next) => {
+  try {
+    const medication = await prisma.medication.findUnique({
+      where: { id: req.params.id },
+    });
+    if (!medication) throw new HttpError(404, "ไม่พบยานี้");
+
+    const movements = await prisma.medicationMovement.findMany({
+      where: { medicationId: medication.id },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+
+    const drugKey = normalizeDrugName(medication.drugName).toLowerCase();
+    const firstWord = drugKey.split(" ")[0] ?? "";
+    const students = await prisma.student.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        classRoom: true,
+        dormitory: true,
+        regularMedication: true,
+        medicationData: true,
+      },
+    });
+    const usedBy = students
+      .filter((student) =>
+        extractStudentMedicationNames(student).some((name) => {
+          const n = name.toLowerCase();
+          return (
+            n.includes(drugKey) ||
+            drugKey.includes(n) ||
+            (firstWord.length >= 4 && n.includes(firstWord))
+          );
+        }),
+      )
+      .map((s) => ({
+        id: s.id,
+        name: `${s.firstName} ${s.lastName}`,
+        classRoom: s.classRoom,
+        dormitory: s.dormitory,
+      }));
+
+    res.json({ medication, movements, students: usedBy });
   } catch (err) {
     next(err);
   }

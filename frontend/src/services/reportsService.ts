@@ -52,6 +52,7 @@ export interface DashboardStats {
   studentsWithMedication: number;
   medicationStock: {
     totalTypes: number;
+    nonMedicineTypes: number;
     tablets: number;
     liquids: number;
     ointments: number;
