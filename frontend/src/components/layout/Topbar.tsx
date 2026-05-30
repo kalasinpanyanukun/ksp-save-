@@ -83,7 +83,7 @@ export default function Topbar() {
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 hover:bg-ksp-blue-50"
         >
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-ksp-blue-500 text-sm font-semibold text-white">
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-ksp-blue-400 to-ksp-blue-600 text-sm font-semibold text-white shadow-sm ring-2 ring-white">
             {user?.fullName?.charAt(0) ?? "?"}
           </div>
           <div className="hidden text-left sm:block">

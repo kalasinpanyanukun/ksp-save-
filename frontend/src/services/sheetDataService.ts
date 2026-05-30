@@ -48,3 +48,14 @@ export async function importStudentsFromSheets(): Promise<SheetImportResult> {
   const { data } = await api.post<SheetImportResult>("/sheet-data/import-students");
   return data;
 }
+
+export async function updateSheetTeacher(
+  dormitory: string,
+  teacher: string,
+): Promise<{ dormitory: string; teacher: string }> {
+  const { data } = await api.put<{ dormitory: string; teacher: string }>(
+    "/sheet-data/teacher",
+    { dormitory, teacher },
+  );
+  return data;
+}

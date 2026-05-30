@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ExternalLink,
   HeartPulse,
@@ -6,22 +6,21 @@ import {
   Pill,
   RefreshCw,
   Search,
-  UserRound,
-  IdCard,
-  School,
-  Phone,
   Edit3,
-  Stethoscope,
+  UserCog,
+  Check,
+  X,
 } from "lucide-react";
-import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
 import PatientForm from "../components/patients/PatientForm";
+import StudentDetailBody from "../components/patients/StudentDetailBody";
 import { useToast } from "../components/common/useToast";
 import { useAppSelector } from "../store";
 import {
   getSheetData,
   listSheetDormitories,
+  updateSheetTeacher,
   type DormitoryOption,
   type SheetDataKind,
   type SheetRow,
@@ -96,6 +95,9 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(false);
+  const [teacherDraft, setTeacherDraft] = useState("");
+  const [savingTeacher, setSavingTeacher] = useState(false);
 
   useEffect(() => {
     listSheetDormitories()
@@ -160,8 +162,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
       await updateStudent(selectedStudent.id, data);
       toast("อัปเดตข้อมูลเรียบร้อย ระบบจะซิงก์ทุกเมนูให้อัตโนมัติ", "success");
       setEditOpen(false);
-      const refreshed = await getStudent(selectedStudent.id);
-      setSelectedStudent(refreshed);
+      setSelectedStudent(await getStudent(selectedStudent.id));
       await load();
     } catch (err) {
       const message =
@@ -173,31 +174,108 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
     }
   }
 
+  async function saveTeacher() {
+    if (!sheet) return;
+    setSavingTeacher(true);
+    try {
+      await updateSheetTeacher(activeDormitory, teacherDraft.trim());
+      toast("บันทึกชื่อครูพยาบาลเรียบร้อย", "success");
+      setEditingTeacher(false);
+      await load();
+    } catch {
+      toast("บันทึกไม่สำเร็จ", "error");
+    } finally {
+      setSavingTeacher(false);
+    }
+  }
+
   return (
     <div className="relative left-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 lg:w-[calc(100vw-18rem-2rem)]">
-      <PageHeader
-        title={copy.title}
-        description={copy.description}
-        actions={
-          <>
-            {sheet?.sourceUrl && (
-              <a
-                href={sheet.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-outline"
-              >
-                <ExternalLink className="h-4 w-4" /> เปิดชีตต้นทาง
-              </a>
-            )}
-            <button type="button" className="btn-outline" onClick={load}>
-              <RefreshCw className="h-4 w-4" /> โหลดใหม่
-            </button>
-          </>
-        }
-      />
+      {/* Header with dorm meta moved up next to the title */}
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="grid h-11 w-11 place-items-center rounded-xl bg-ksp-blue-50 text-ksp-blue-700">
+            <Icon className="h-5.5 w-5.5" size={22} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-ksp-navy">
+              {copy.title}
+            </h1>
+            <p className="text-sm text-ksp-gray">{copy.description}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-ksp-navy shadow-card ring-1 ring-ksp-blue-50">
+            เรือนนอน{sheet?.dormitory ?? activeDormitory} ·{" "}
+            <span className="text-ksp-blue-600">
+              {filteredRows.length.toLocaleString("th-TH")} รายการ
+            </span>
+          </span>
+          {sheet?.sourceUrl && (
+            <a href={sheet.sourceUrl} target="_blank" rel="noreferrer" className="btn-outline">
+              <ExternalLink className="h-4 w-4" /> เปิดชีตต้นทาง
+            </a>
+          )}
+          <button type="button" className="btn-outline" onClick={load}>
+            <RefreshCw className="h-4 w-4" /> โหลดใหม่
+          </button>
+        </div>
+      </div>
 
-      <div className="mb-3 flex flex-col gap-3 rounded-md border border-ksp-blue-100 bg-white px-3 py-3 lg:flex-row lg:items-center lg:justify-between">
+      {/* Teacher strip (medication only) */}
+      {kind === "medication" && (
+        <div className="mb-3 flex flex-col gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+          {editingTeacher ? (
+            <div className="flex w-full items-center gap-2">
+              <UserCog className="h-4 w-4 shrink-0 text-ksp-blue-600" />
+              <input
+                className="input py-1.5 text-sm"
+                value={teacherDraft}
+                onChange={(e) => setTeacherDraft(e.target.value)}
+                placeholder="ชื่อครูพยาบาล · เบอร์โทร"
+                autoFocus
+              />
+              <button
+                type="button"
+                className="btn-primary px-2.5 py-1.5"
+                onClick={saveTeacher}
+                disabled={savingTeacher}
+              >
+                {savingTeacher ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              </button>
+              <button
+                type="button"
+                className="btn-outline px-2.5 py-1.5"
+                onClick={() => setEditingTeacher(false)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="flex items-center gap-2 text-sm text-ksp-navy">
+                <UserCog className="h-4 w-4 text-ksp-blue-600" />
+                <span className="font-semibold">ครูพยาบาลผู้รับผิดชอบ:</span>{" "}
+                {sheet?.teacher || "—"}
+              </p>
+              {isAdmin && (
+                <button
+                  type="button"
+                  className="btn-outline self-start px-3 py-1.5 text-xs sm:self-auto"
+                  onClick={() => {
+                    setTeacherDraft(sheet?.teacher ?? "");
+                    setEditingTeacher(true);
+                  }}
+                >
+                  <Edit3 className="h-3.5 w-3.5" /> แก้ไขครู
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="mb-3 flex flex-col gap-3 rounded-xl border border-ksp-blue-100 bg-white px-3 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1.5">
           {dormitories.map((item) => (
             <button
@@ -205,8 +283,8 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
               type="button"
               className={
                 activeDormitory === item.name
-                  ? "rounded-md border border-ksp-blue-600 bg-ksp-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm"
-                  : "rounded-md border border-ksp-blue-200 bg-white px-3 py-2 text-xs font-semibold text-ksp-blue-700 hover:bg-ksp-blue-50"
+                  ? "rounded-lg border border-ksp-blue-600 bg-ksp-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm"
+                  : "rounded-lg border border-ksp-blue-200 bg-white px-3 py-2 text-xs font-semibold text-ksp-blue-700 hover:bg-ksp-blue-50"
               }
               onClick={() => setActiveDormitory(item.name)}
             >
@@ -225,48 +303,28 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-card">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-ksp-blue-50 text-ksp-blue-700">
-              <Icon className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-ksp-navy">
-                เรือนนอน{sheet?.dormitory ?? activeDormitory}
-              </h2>
-              <p className="text-xs text-ksp-gray">
-                {filteredRows.length.toLocaleString("th-TH")} รายการ
-              </p>
-              {kind === "medication" && sheet?.teacher && (
-                <p className="mt-0.5 text-xs font-medium text-ksp-blue-700">
-                  ครูพยาบาลผู้รับผิดชอบ: {sheet.teacher}
-                </p>
-              )}
-            </div>
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card">
+        {loading && (
+          <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-2 text-xs text-ksp-gray">
+            <Loader2 className="h-4 w-4 animate-spin text-ksp-blue-500" /> กำลังโหลด…
           </div>
-          {loading && <Loader2 className="h-5 w-5 animate-spin text-ksp-blue-500" />}
-        </div>
-
+        )}
         {!loading && filteredRows.length === 0 ? (
           <div className="p-6">
-            <EmptyState
-              title="ยังไม่มีข้อมูล"
-              description="ยังไม่พบข้อมูลของเรือนนอนนี้"
-            />
+            <EmptyState title="ยังไม่มีข้อมูล" description="ยังไม่พบข้อมูลของเรือนนอนนี้" />
           </div>
         ) : (
-          <div className="max-h-[calc(100vh-17rem)] overflow-auto">
-            <table className="w-full border-collapse text-left text-xs">
+          <div className="max-h-[calc(100vh-15rem)] overflow-auto">
+            <table className="w-full border-collapse text-center text-xs">
               <thead className="sticky top-0 z-10">
                 <tr>
-                  <th className="sticky left-0 z-20 border-b border-r border-slate-200 bg-slate-100 px-3 py-2.5 font-semibold text-ksp-navy">
+                  <th className="sticky left-0 z-20 border-b border-r border-slate-200 bg-slate-100 px-3 py-2.5 text-center font-semibold text-ksp-navy">
                     ลำดับ
                   </th>
                   {sheet?.headers.map((header, index) => (
                     <th
                       key={`${header}-${index}`}
-                      className={`whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 font-semibold text-ksp-navy last:border-r-0 ${tintFor(index).head}`}
+                      className={`whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 text-center font-semibold text-ksp-navy last:border-r-0 ${tintFor(index).head}`}
                     >
                       {header}
                     </th>
@@ -290,26 +348,29 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
                       row.studentId ? "cursor-pointer" : ""
                     }`}
                   >
-                    <td className="sticky left-0 z-10 whitespace-nowrap border-b border-r border-slate-100 bg-white px-3 py-2.5 font-semibold text-ksp-navy">
+                    <td className="sticky left-0 z-10 whitespace-nowrap border-b border-r border-slate-100 bg-white px-3 py-2.5 text-center font-semibold text-ksp-navy">
                       {row.rowNumber}
                     </td>
-                    {sheet?.headers.map((header, index) => (
-                      <td
-                        key={`${row.rowNumber}-${header}-${index}`}
-                        className={`border-b border-r border-slate-100 px-3 py-2.5 last:border-r-0 ${tintFor(index).body} ${
-                          isLongColumn(header)
-                            ? "min-w-[16rem] max-w-[28rem] whitespace-normal align-top leading-relaxed"
-                            : "whitespace-nowrap"
-                        } ${
-                          header === "ชื่อ-สกุล"
-                            ? "font-semibold text-ksp-blue-700"
-                            : "text-ksp-navy/85"
-                        }`}
-                        title={row.cells[index] ?? ""}
-                      >
-                        <CellValue header={header} value={row.cells[index] ?? ""} />
-                      </td>
-                    ))}
+                    {sheet?.headers.map((header, index) => {
+                      const long = isLongColumn(header);
+                      return (
+                        <td
+                          key={`${row.rowNumber}-${header}-${index}`}
+                          className={`border-b border-r border-slate-100 px-3 py-2.5 last:border-r-0 ${tintFor(index).body} ${
+                            long
+                              ? "min-w-[18rem] max-w-[30rem] whitespace-normal text-left align-top leading-relaxed"
+                              : "whitespace-nowrap text-center align-middle"
+                          } ${header === "ชื่อ-สกุล" ? "font-semibold text-ksp-blue-700" : "text-ksp-navy/85"}`}
+                          title={header === "รายการยา" ? undefined : row.cells[index] ?? ""}
+                        >
+                          {header === "รายการยา" ? (
+                            <MedicationCell value={row.cells[index] ?? ""} />
+                          ) : (
+                            <CellValue header={header} value={row.cells[index] ?? ""} />
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -318,32 +379,38 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
         )}
       </section>
 
-      <Modal
-        open={Boolean(selectedRow)}
-        onClose={closeDetail}
-        title="รายละเอียดนักเรียน"
-        size="xl"
-      >
+      <Modal open={Boolean(selectedRow)} onClose={closeDetail} title="รายละเอียดนักเรียน" size="xl">
         {detailLoading ? (
           <div className="grid min-h-48 place-items-center">
             <Loader2 className="h-7 w-7 animate-spin text-ksp-blue-600" />
           </div>
         ) : selectedRow ? (
-          <StudentSheetPreview
-            student={selectedStudent}
-            row={selectedRow}
-            canEdit={isAdmin && Boolean(selectedStudent)}
-            onEdit={() => setEditOpen(true)}
-          />
+          <div className="space-y-4">
+            <div className="flex flex-col justify-between gap-3 rounded-2xl bg-gradient-to-r from-ksp-blue-50 to-sky-50 px-4 py-3 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-ksp-navy">
+                  {selectedStudent
+                    ? `${selectedStudent.firstName} ${selectedStudent.lastName}`
+                    : rowValue(selectedRow, "ชื่อ-สกุล")}
+                </h2>
+                <p className="text-sm text-ksp-blue-700">
+                  {(selectedStudent?.studentCode ?? rowValue(selectedRow, "รหัสนักเรียน"))} ·{" "}
+                  {(selectedStudent?.classRoom ?? rowValue(selectedRow, "ชั้นเรียน"))} ·{" "}
+                  {(selectedStudent?.dormitory ?? rowValue(selectedRow, "เรือนนอน"))}
+                </p>
+              </div>
+              {isAdmin && selectedStudent && (
+                <button type="button" className="btn-primary self-start px-3 py-2 sm:self-auto" onClick={() => setEditOpen(true)}>
+                  <Edit3 className="h-4 w-4" /> แก้ไขข้อมูล
+                </button>
+              )}
+            </div>
+            {selectedStudent && <StudentDetailBody student={selectedStudent} showStatusBadge />}
+          </div>
         ) : null}
       </Modal>
 
-      <Modal
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        title="แก้ไขข้อมูลนักเรียน"
-        size="lg"
-      >
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="แก้ไขข้อมูลนักเรียน" size="lg">
         {selectedStudent && (
           <PatientForm
             initial={selectedStudent}
@@ -377,16 +444,34 @@ function CellValue({ header, value }: { header: string; value: string }) {
       </span>
     );
   }
-
   if (!value) return <span className="text-ksp-gray">-</span>;
   return <span>{value}</span>;
 }
 
-const studentStatusLabel = {
-  resident: "ประจำ",
-  infirmary: "ป่วย(นอนเรือนบาล)",
-  home_leave: "ลากลับบ้าน",
-} as const;
+/** แสดงคอลัมน์รายการยาเป็นลิสต์: ชื่อยา (สีน้ำเงิน) อยู่หน้า เวลากิน (สีเขียว) อยู่หลัง */
+function MedicationCell({ value }: { value: string }) {
+  if (!value) return <span className="text-ksp-gray">-</span>;
+  const items = value
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item, index) => {
+        const open = item.indexOf("(");
+        const name = open >= 0 ? item.slice(0, open).trim() : item;
+        const schedule =
+          open >= 0 ? item.slice(open).replace(/^\(/, "").replace(/\)$/, "").trim() : "";
+        return (
+          <li key={index} className="flex flex-wrap items-baseline gap-x-1.5">
+            <span className="font-semibold text-ksp-blue-700">{name}</span>
+            {schedule && <span className="text-emerald-600">({schedule})</span>}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 function rowValue(row: SheetRow, ...keys: string[]) {
   for (const key of keys) {
@@ -394,241 +479,4 @@ function rowValue(row: SheetRow, ...keys: string[]) {
     if (value) return value;
   }
   return "-";
-}
-
-function DetailItem({ label, value }: { label: string; value: string | null | undefined }) {
-  return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-      <p className="text-[11px] font-semibold text-ksp-gray">{label}</p>
-      <p className="mt-1 break-words text-sm font-semibold text-ksp-navy">
-        {value || "-"}
-      </p>
-    </div>
-  );
-}
-
-function DetailCard({
-  title,
-  icon,
-  tone = "blue",
-  children,
-}: {
-  title: string;
-  icon: ReactNode;
-  tone?: "blue" | "rose" | "emerald";
-  children: ReactNode;
-}) {
-  const toneClass = {
-    blue: "bg-ksp-blue-50 text-ksp-blue-700",
-    rose: "bg-rose-50 text-rose-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-  }[tone];
-  return (
-    <section className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2 text-ksp-navy">
-        <span className={`grid h-8 w-8 place-items-center rounded-lg ${toneClass}`}>
-          {icon}
-        </span>
-        <h3 className="font-semibold">{title}</h3>
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{children}</div>
-    </section>
-  );
-}
-
-function medText(med: Record<string, unknown>, ...keys: string[]) {
-  for (const key of keys) {
-    const value = med[key];
-    if (value !== null && value !== undefined && String(value).trim() && String(value).trim() !== "-") {
-      return String(value).trim();
-    }
-  }
-  return "";
-}
-
-function MedicationDetail({ student }: { student: StudentDetail }) {
-  const data = student.medicationData;
-  const rows =
-    data && typeof data === "object" && Array.isArray((data as Record<string, unknown>)["รายการยา"])
-      ? ((data as Record<string, unknown>)["รายการยา"] as Record<string, unknown>[])
-      : [];
-
-  if (rows.length === 0) {
-    return (
-      <DetailCard title="รายละเอียดยาประจำตัว" icon={<Pill className="h-4 w-4" />}>
-        <p className="text-sm text-ksp-gray sm:col-span-2">ยังไม่มีข้อมูลยาประจำตัว</p>
-      </DetailCard>
-    );
-  }
-
-  const schedule = (med: Record<string, unknown>) =>
-    [
-      ["เช้า", medText(med, "เช้า", "การรับประทาน เช้า")],
-      ["เที่ยง", medText(med, "เที่ยง", "การรับประทาน เที่ยง")],
-      ["เย็น", medText(med, "เย็น", "การรับประทาน เย็น")],
-      ["ก่อนนอน", medText(med, "ก่อนนอน", "การรับประทาน ก่อนนอน")],
-      ["นอกเวลา", medText(med, "นอกเวลา")],
-    ].filter(([, value]) => value);
-
-  return (
-    <section className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2 text-ksp-navy">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-ksp-blue-50 text-ksp-blue-700">
-          <Pill className="h-4 w-4" />
-        </span>
-        <h3 className="font-semibold">รายละเอียดยาประจำตัว</h3>
-        <span className="chip-blue ml-auto">{rows.length} ชนิด</span>
-      </div>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        {rows.map((med, index) => {
-          const name = medText(med, "ชื่อยา", "ข้อมูลยา ชื่อยา") || `ยาที่ ${index + 1}`;
-          const secondary = medText(med, "ชื่อรอง", "ข้อมูลยา ชื่อรอง");
-          const strength = medText(med, "ขนาดยา", "ข้อมูลยา ขนาดยา");
-          const amount = medText(med, "จำนวน", "ข้อมูลยา จำนวน (หน่วย)", "จำนวน (หน่วย)");
-          const note = medText(med, "หมายเหตุ");
-          const times = schedule(med);
-          return (
-            <div
-              key={index}
-              className="rounded-lg border border-ksp-blue-50 bg-ksp-bg/40 p-3"
-            >
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="font-semibold text-ksp-navy">{name}</span>
-                {secondary && <span className="text-xs text-ksp-gray">({secondary})</span>}
-                {strength && (
-                  <span className="rounded bg-white px-1.5 py-0.5 text-[11px] font-semibold text-ksp-blue-700 ring-1 ring-ksp-blue-100">
-                    {strength}
-                  </span>
-                )}
-              </div>
-              {times.length > 0 ? (
-                <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-2">
-                  {times.map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="rounded-md bg-white px-2 py-1.5 ring-1 ring-slate-100"
-                    >
-                      <p className="text-[10px] font-semibold uppercase text-ksp-gray">
-                        {label}
-                      </p>
-                      <p className="text-xs font-medium text-ksp-navy">{value}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-1 text-xs text-ksp-gray">ไม่ได้ระบุเวลา</p>
-              )}
-              {(amount || note) && (
-                <p className="mt-2 text-[11px] text-ksp-gray">
-                  {amount && <>จำนวน {amount}</>}
-                  {amount && note && " · "}
-                  {note && <>หมายเหตุ: {note}</>}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function StudentSheetPreview({
-  student,
-  row,
-  canEdit,
-  onEdit,
-}: {
-  student: StudentDetail | null;
-  row: SheetRow;
-  canEdit: boolean;
-  onEdit: () => void;
-}) {
-  const fullName = student
-    ? `${student.firstName} ${student.lastName}`
-    : rowValue(row, "ชื่อ-สกุล");
-  const studentCode = student?.studentCode ?? rowValue(row, "รหัสนักเรียน");
-  const classRoom = student?.classRoom ?? rowValue(row, "ชั้นเรียน");
-  const dormitory = student?.dormitory ?? rowValue(row, "เรือนนอน");
-  const idCard = rowValue(row, "รหัสบัตรประชาชน", "เลขบัตรประชาชน");
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-col justify-between gap-3 rounded-xl bg-gradient-to-r from-ksp-blue-50 to-sky-50 px-4 py-3 sm:flex-row sm:items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-ksp-navy">{fullName}</h2>
-          <p className="text-sm text-ksp-blue-700">
-            {studentCode} · {classRoom} · {dormitory}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-fit rounded-full bg-white px-3 py-1 text-sm font-semibold text-ksp-blue-700 ring-1 ring-ksp-blue-100">
-            {student ? studentStatusLabel[student.studentStatus] : "ประจำ"}
-          </span>
-          {canEdit && (
-            <button type="button" className="btn-primary px-3 py-2" onClick={onEdit}>
-              <Edit3 className="h-4 w-4" /> แก้ไขข้อมูล
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <DetailCard title="ข้อมูลพื้นฐาน" icon={<UserRound className="h-4 w-4" />}>
-          <DetailItem label="รหัสนักเรียน" value={studentCode} />
-          <DetailItem label="รหัสบัตรประชาชน" value={idCard} />
-          <DetailItem label="ชั้นเรียน" value={classRoom} />
-          <DetailItem label="เรือนนอน" value={dormitory} />
-        </DetailCard>
-
-        <DetailCard title="ข้อมูลสุขภาพ" tone="rose" icon={<Stethoscope className="h-4 w-4" />}>
-          <DetailItem
-            label="โรคประจำตัว"
-            value={student?.congenitalDisease ?? rowValue(row, "โรคประจำตัว")}
-          />
-          <DetailItem
-            label="แพ้ยา/อาหาร"
-            value={student?.drugAllergy ?? rowValue(row, "แพ้ยา/อาหาร")}
-          />
-          <DetailItem
-            label="ยาประจำตัว"
-            value={student?.regularMedication ?? rowValue(row, "ยาประจำตัว", "รายการยา")}
-          />
-          <DetailItem label="กรุ๊ปเลือด" value={student?.bloodType ?? rowValue(row, "กรุปเลือด")} />
-        </DetailCard>
-
-        <DetailCard title="ผู้ปกครอง" tone="emerald" icon={<Phone className="h-4 w-4" />}>
-          <DetailItem
-            label="ผู้ปกครอง"
-            value={student?.parentName ?? rowValue(row, "ผู้ปกครอง")}
-          />
-          <DetailItem
-            label="เบอร์โทร"
-            value={student?.parentPhone ?? rowValue(row, "เบอร์โทร")}
-          />
-          <DetailItem label="ครูประจำชั้น" value={student?.homeroomTeacher ?? "-"} />
-          <DetailItem label="จำนวนประวัติ OPD" value={student ? `${student.opdVisits.length} ครั้ง` : "-"} />
-        </DetailCard>
-      </div>
-
-      {student && <MedicationDetail student={student} />}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DetailCard title="ข้อมูลจากตาราง" icon={<IdCard className="h-4 w-4" />}>
-          {Object.entries(row.record)
-            .filter(([, value]) => value && value !== "-")
-            .slice(0, 12)
-            .map(([key, value]) => (
-              <DetailItem key={key} label={key} value={value} />
-            ))}
-        </DetailCard>
-        <DetailCard title="ประวัติการใช้งาน" tone="emerald" icon={<School className="h-4 w-4" />}>
-          <DetailItem label="OPD" value={student ? `${student.opdVisits.length} ครั้ง` : "-"} />
-          <DetailItem label="Admit" value={student ? `${student.admissions.length} รายการ` : "-"} />
-          <DetailItem label="ส่งต่อโรงพยาบาล" value={student ? `${student.referrals.length} รายการ` : "-"} />
-          <DetailItem label="ที่พัก" value={dormitory} />
-        </DetailCard>
-      </div>
-    </div>
-  );
 }

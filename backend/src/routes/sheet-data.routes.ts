@@ -202,6 +202,7 @@ function buildStoredResponse(
   kind: SheetKind,
   dormitory: DormitorySheet,
   records: StoredRecord[],
+  teacher?: string,
 ) {
   const baseHeaders =
     kind === "health"
@@ -236,7 +237,7 @@ function buildStoredResponse(
 
   return {
     dormitory: dormitory.name,
-    teacher: kind === "medication" ? dormitory.teacher : undefined,
+    teacher: kind === "medication" ? teacher ?? dormitory.teacher : undefined,
     headers,
     rows: records.map((record, rowIndex) => ({
       rowNumber: rowIndex + 1,
@@ -259,6 +260,14 @@ function medicationList(student: { medicationData: Prisma.JsonValue }) {
 function isFromHealthSheet(student: { healthData: Prisma.JsonValue }) {
   const healthRecord = jsonRecord(student.healthData);
   return healthRecord["แหล่งข้อมูล"] === "ข้อมูลสุขภาพนักเรียน";
+}
+
+/** ดึงชื่อครูพยาบาล: ใช้ค่าที่แก้ไขในระบบก่อน ไม่มีค่อย fallback ค่าคงที่จากชีต */
+async function resolveTeacher(dormitory: DormitorySheet) {
+  const override = await prisma.dormTeacher.findUnique({
+    where: { dormitory: dormitory.name },
+  });
+  return override?.teacher ?? dormitory.teacher;
 }
 
 async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
@@ -325,7 +334,8 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
     }
   }
 
-  return buildStoredResponse(kind, dormitory, records);
+  const teacher = kind === "medication" ? await resolveTeacher(dormitory) : undefined;
+  return buildStoredResponse(kind, dormitory, records, teacher);
 }
 
 function normalizeName(name: string) {
@@ -633,6 +643,28 @@ async function importMedicationSheets(studentCodesByName: Map<string, string>) {
 
 router.get("/dormitories", (_req, res) => {
   res.json({ data: dormitorySheets.map(({ key, name }) => ({ key, name })) });
+});
+
+// แก้ไขชื่อครูพยาบาลผู้รับผิดชอบประจำเรือนนอน
+router.put("/teacher", requireAdmin, async (req, res, next) => {
+  try {
+    const body = z
+      .object({ dormitory: z.string().min(1), teacher: z.string().trim().max(200) })
+      .parse(req.body);
+    const dormitory = dormitorySheets.find((item) => item.name === body.dormitory);
+    if (!dormitory) {
+      res.status(404).json({ message: "ไม่พบเรือนนอน" });
+      return;
+    }
+    const saved = await prisma.dormTeacher.upsert({
+      where: { dormitory: body.dormitory },
+      create: { dormitory: body.dormitory, teacher: body.teacher },
+      update: { teacher: body.teacher },
+    });
+    res.json({ dormitory: saved.dormitory, teacher: saved.teacher });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.get("/:kind", async (req, res, next) => {

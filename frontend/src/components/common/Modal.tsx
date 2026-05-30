@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import clsx from "clsx";
 
@@ -41,16 +42,16 @@ export default function Modal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ksp-navy/40 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ksp-navy/40 px-4 py-6 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
         className={clsx(
-          "card w-full max-h-[90vh] overflow-hidden flex flex-col",
+          "card flex max-h-[calc(100vh-3rem)] w-full flex-col overflow-hidden",
           sizes[size],
         )}
       >
@@ -74,6 +75,7 @@ export default function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -221,3 +221,12 @@ model AuditLog {
   @@index([entity, entityId])
   @@map("audit_logs")
 }
+
+// ───── ครูพยาบาลผู้รับผิดชอบจัดยาประจำเรือนนอน (แก้ไขได้ในระบบ) ─────
+model DormTeacher {
+  dormitory String   @id @db.VarChar(50)
+  teacher   String   @db.VarChar(200)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("dorm_teachers")
+}

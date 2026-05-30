@@ -12,6 +12,16 @@ router.use(authMiddleware);
 const bloodTypes = ["A", "B", "AB", "O", "unknown"] as const;
 const studentStatuses = ["resident", "infirmary", "home_leave"] as const;
 
+const medicationEntrySchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  morning: z.string().trim().max(100).optional().default(""),
+  noon: z.string().trim().max(100).optional().default(""),
+  evening: z.string().trim().max(100).optional().default(""),
+  bedtime: z.string().trim().max(100).optional().default(""),
+});
+
+type MedicationEntryInput = z.infer<typeof medicationEntrySchema>;
+
 const studentSchema = z.object({
   studentCode: z.string().trim().min(1, "กรุณากรอกรหัสนักเรียน").max(20),
   firstName: z.string().trim().min(1, "กรุณากรอกชื่อ").max(100),
@@ -27,7 +37,40 @@ const studentSchema = z.object({
   parentPhone: z.string().trim().max(20).optional().nullable(),
   studentStatus: z.enum(studentStatuses).optional(),
   isActive: z.boolean().optional(),
+  medications: z.array(medicationEntrySchema).optional(),
 });
+
+/** สร้าง medicationData (JSON) + regularMedication (สรุปข้อความ) จากรายการยาที่กรอกในฟอร์ม */
+function buildMedicationFields(
+  entries: MedicationEntryInput[] | undefined,
+  dormitory?: string | null,
+) {
+  if (!entries) return null;
+  const list = entries
+    .filter((m) => m.name.trim())
+    .map((m) => {
+      const entry: Record<string, string> = { ชื่อยา: m.name.trim() };
+      if (m.morning?.trim()) entry["เช้า"] = m.morning.trim();
+      if (m.noon?.trim()) entry["เที่ยง"] = m.noon.trim();
+      if (m.evening?.trim()) entry["เย็น"] = m.evening.trim();
+      if (m.bedtime?.trim()) entry["ก่อนนอน"] = m.bedtime.trim();
+      return entry;
+    });
+  const summary = list
+    .map((m) => {
+      const schedule = (["เช้า", "เที่ยง", "เย็น", "ก่อนนอน"] as const)
+        .filter((k) => m[k])
+        .map((k) => `${k} ${m[k]}`)
+        .join(", ");
+      return schedule ? `${m["ชื่อยา"]} (${schedule})` : m["ชื่อยา"];
+    })
+    .filter(Boolean)
+    .join("; ");
+  return {
+    medicationData: { เรือนนอน: dormitory ?? "", รายการยา: list } as Prisma.InputJsonObject,
+    regularMedication: summary || null,
+  };
+}
 
 router.get("/", async (req, res, next) => {
   try {
@@ -151,6 +194,7 @@ router.get("/:id", async (req, res, next) => {
 router.post("/", requireAdmin, async (req, res, next) => {
   try {
     const body = studentSchema.parse(req.body);
+    const meds = buildMedicationFields(body.medications, body.dormitory);
     const student = await prisma.student.create({
       data: {
         studentCode: body.studentCode,
@@ -162,10 +206,11 @@ router.post("/", requireAdmin, async (req, res, next) => {
         bloodType: body.bloodType ?? "unknown",
         congenitalDisease: body.congenitalDisease || null,
         drugAllergy: body.drugAllergy || null,
-        regularMedication: body.regularMedication || null,
+        regularMedication: meds ? meds.regularMedication : body.regularMedication || null,
         parentName: body.parentName || null,
         parentPhone: body.parentPhone || null,
         studentStatus: body.studentStatus ?? "resident",
+        ...(meds ? { medicationData: meds.medicationData } : {}),
       },
     });
     res.status(201).json({ student });
@@ -177,10 +222,12 @@ router.post("/", requireAdmin, async (req, res, next) => {
 router.put("/:id", requireAdmin, async (req, res, next) => {
   try {
     const body = studentSchema.partial().parse(req.body);
+    const { medications, ...rest } = body;
+    const meds = buildMedicationFields(medications, body.dormitory);
     const student = await prisma.student.update({
       where: { id: req.params.id },
       data: {
-        ...body,
+        ...rest,
         classRoom: body.classRoom === "" ? null : body.classRoom,
         dormitory: body.dormitory === "" ? null : body.dormitory,
         homeroomTeacher:
@@ -188,10 +235,14 @@ router.put("/:id", requireAdmin, async (req, res, next) => {
         congenitalDisease:
           body.congenitalDisease === "" ? null : body.congenitalDisease,
         drugAllergy: body.drugAllergy === "" ? null : body.drugAllergy,
-        regularMedication:
-          body.regularMedication === "" ? null : body.regularMedication,
+        regularMedication: meds
+          ? meds.regularMedication
+          : body.regularMedication === ""
+            ? null
+            : body.regularMedication,
         parentName: body.parentName === "" ? null : body.parentName,
         parentPhone: body.parentPhone === "" ? null : body.parentPhone,
+        ...(meds ? { medicationData: meds.medicationData } : {}),
       },
     });
     res.json({ student });

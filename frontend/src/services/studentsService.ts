@@ -1,6 +1,14 @@
 import { api } from "./api";
 import type { Admission, OpdVisit, PageResult, Referral, Student } from "../types";
 
+export interface MedicationEntryInput {
+  name: string;
+  morning?: string;
+  noon?: string;
+  evening?: string;
+  bedtime?: string;
+}
+
 export interface StudentInput {
   studentCode: string;
   firstName: string;
@@ -15,6 +23,7 @@ export interface StudentInput {
   parentName?: string | null;
   parentPhone?: string | null;
   studentStatus?: Student["studentStatus"];
+  medications?: MedicationEntryInput[];
 }
 
 export interface ListStudentsParams {

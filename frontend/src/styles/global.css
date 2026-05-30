@@ -25,30 +25,30 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold tracking-tight transition-all duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100;
   }
   .btn-primary {
-    @apply btn bg-ksp-blue-500 text-white shadow-sm hover:bg-ksp-blue-600 active:bg-ksp-blue-700;
+    @apply btn bg-gradient-to-b from-ksp-blue-500 to-ksp-blue-600 text-white shadow-sm ring-1 ring-inset ring-white/10 hover:from-ksp-blue-600 hover:to-ksp-blue-700 hover:shadow-md;
   }
   .btn-outline {
-    @apply btn border border-ksp-blue-200 bg-white text-ksp-blue-700 hover:bg-ksp-blue-50;
+    @apply btn border border-ksp-blue-200 bg-white text-ksp-blue-700 shadow-sm hover:border-ksp-blue-300 hover:bg-ksp-blue-50;
   }
   .btn-ghost {
     @apply btn text-ksp-blue-700 hover:bg-ksp-blue-50;
   }
   .btn-danger {
-    @apply btn bg-rose-600 text-white hover:bg-rose-700;
+    @apply btn bg-gradient-to-b from-rose-500 to-rose-600 text-white shadow-sm hover:from-rose-600 hover:to-rose-700;
   }
 
   .input {
-    @apply block w-full rounded-lg border border-ksp-blue-100 bg-white px-3.5 py-2.5 text-sm text-ksp-navy placeholder:text-ksp-gray/70 focus:border-ksp-blue-400 focus:ring-0;
+    @apply block w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ksp-navy shadow-[0_1px_2px_rgba(13,43,69,0.04)] transition-colors placeholder:text-ksp-gray/60 focus:border-ksp-blue-400 focus:ring-0;
   }
   .label {
-    @apply block text-sm font-medium text-ksp-navy mb-1.5;
+    @apply mb-1.5 block text-sm font-medium text-ksp-navy;
   }
 
   .card {
-    @apply rounded-lg bg-white shadow-card border border-ksp-blue-50;
+    @apply rounded-2xl border border-slate-100 bg-white shadow-card;
   }
   .card-pad {
     @apply card p-5 sm:p-6;
@@ -77,12 +77,32 @@
     @apply w-full text-left text-sm;
   }
   .table-base thead th {
-    @apply bg-ksp-blue-50/60 px-4 py-3 font-semibold text-ksp-navy text-xs uppercase tracking-wider;
+    @apply bg-gradient-to-b from-ksp-blue-50/80 to-ksp-blue-50/40 px-4 py-3 text-xs font-semibold tracking-wide text-ksp-navy;
   }
   .table-base tbody td {
-    @apply border-t border-ksp-blue-50 px-4 py-3 text-ksp-navy/90;
+    @apply border-t border-slate-100 px-4 py-3 text-ksp-navy/90;
+  }
+  .table-base tbody tr {
+    @apply transition-colors;
   }
   .table-base tbody tr:hover td {
     @apply bg-ksp-blue-50/40;
+  }
+}
+
+@layer base {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(112, 122, 186, 0.3);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(112, 122, 186, 0.5);
+    background-clip: content-box;
   }
 }

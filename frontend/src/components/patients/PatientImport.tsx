@@ -16,7 +16,7 @@ interface PatientImportProps {
   onCompleted?: () => void;
 }
 
-const FIELD_ALIASES: Record<keyof StudentInput, string[]> = {
+const FIELD_ALIASES: Record<Exclude<keyof StudentInput, "medications">, string[]> = {
   studentCode: ["studentCode", "รหัสนักเรียน", "รหัส", "รหัสประจำตัว"],
   firstName: ["firstName", "ชื่อ", "ชื่อจริง"],
   lastName: ["lastName", "นามสกุล", "สกุล"],
