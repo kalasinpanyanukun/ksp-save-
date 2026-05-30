@@ -9,13 +9,31 @@ export interface MedicationEntryInput {
   bedtime?: string;
 }
 
+export interface GuardianInput {
+  name: string;
+  phone: string;
+}
+
+export interface HealthExtraInput {
+  weight?: string;
+  height?: string;
+  bmi?: string;
+  bmiResult?: string;
+  healthRight?: string;
+  vaccineBasic?: string;
+  vaccineFlu?: string;
+  vaccineCovid?: string;
+}
+
 export interface StudentInput {
   studentCode: string;
   firstName: string;
   lastName: string;
+  nickname?: string | null;
   classRoom?: string | null;
   dormitory?: string | null;
   homeroomTeacher?: string | null;
+  homeroomTeacherPhone?: string | null;
   bloodType?: Student["bloodType"];
   congenitalDisease?: string | null;
   drugAllergy?: string | null;
@@ -24,6 +42,8 @@ export interface StudentInput {
   parentPhone?: string | null;
   studentStatus?: Student["studentStatus"];
   medications?: MedicationEntryInput[];
+  guardians?: GuardianInput[];
+  healthExtra?: HealthExtraInput;
 }
 
 export interface ListStudentsParams {

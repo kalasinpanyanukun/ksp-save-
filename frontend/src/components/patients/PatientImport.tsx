@@ -16,16 +16,21 @@ interface PatientImportProps {
   onCompleted?: () => void;
 }
 
-const FIELD_ALIASES: Record<Exclude<keyof StudentInput, "medications">, string[]> = {
+const FIELD_ALIASES: Record<
+  Exclude<keyof StudentInput, "medications" | "guardians" | "healthExtra">,
+  string[]
+> = {
   studentCode: ["studentCode", "รหัสนักเรียน", "รหัส", "รหัสประจำตัว"],
   firstName: ["firstName", "ชื่อ", "ชื่อจริง"],
   lastName: ["lastName", "นามสกุล", "สกุล"],
+  nickname: ["nickname", "ชื่อเล่น"],
   classRoom: ["classRoom", "ชั้นเรียน", "ชั้น", "ระดับชั้น"],
   dormitory: ["dormitory", "เรือนนอน"],
   homeroomTeacher: ["homeroomTeacher", "ครูประจำชั้น", "ครูที่ปรึกษา"],
+  homeroomTeacherPhone: ["homeroomTeacherPhone", "เบอร์ครูประจำชั้น", "เบอร์โทรครูประจำชั้น"],
   bloodType: ["bloodType", "กรุปเลือด", "หมู่เลือด", "กรุ๊ปเลือด"],
   congenitalDisease: ["congenitalDisease", "โรคประจำตัว"],
-  drugAllergy: ["drugAllergy", "การแพ้ยา", "แพ้ยา"],
+  drugAllergy: ["drugAllergy", "การแพ้ยา", "แพ้ยา", "แพ้ยา/อาหาร"],
   regularMedication: ["regularMedication", "ยาประจำตัว"],
   parentName: ["parentName", "ผู้ปกครอง", "ชื่อผู้ปกครอง"],
   parentPhone: ["parentPhone", "เบอร์ผู้ปกครอง", "เบอร์โทร", "เบอร์โทรศัพท์"],
@@ -72,19 +77,24 @@ function parseRows(rows: Record<string, unknown>[]): StudentInput[] {
       const firstName = pick(row, FIELD_ALIASES.firstName);
       const lastName = pick(row, FIELD_ALIASES.lastName);
       if (!studentCode || !firstName || !lastName) return null;
+      const parentName = pick(row, FIELD_ALIASES.parentName) ?? null;
+      const parentPhone = pick(row, FIELD_ALIASES.parentPhone) ?? null;
       const item: StudentInput = {
         studentCode,
         firstName,
         lastName,
+        nickname: pick(row, FIELD_ALIASES.nickname) ?? null,
         classRoom: pick(row, FIELD_ALIASES.classRoom) ?? null,
         dormitory: pick(row, FIELD_ALIASES.dormitory) ?? null,
         homeroomTeacher: pick(row, FIELD_ALIASES.homeroomTeacher) ?? null,
+        homeroomTeacherPhone: pick(row, FIELD_ALIASES.homeroomTeacherPhone) ?? null,
         bloodType: normalizeBlood(pick(row, FIELD_ALIASES.bloodType)),
         congenitalDisease: pick(row, FIELD_ALIASES.congenitalDisease) ?? null,
         drugAllergy: pick(row, FIELD_ALIASES.drugAllergy) ?? null,
         regularMedication: pick(row, FIELD_ALIASES.regularMedication) ?? null,
-        parentName: pick(row, FIELD_ALIASES.parentName) ?? null,
-        parentPhone: pick(row, FIELD_ALIASES.parentPhone) ?? null,
+        parentName,
+        parentPhone,
+        guardians: parentName || parentPhone ? [{ name: parentName ?? "", phone: parentPhone ?? "" }] : [],
         studentStatus: normalizeStudentStatus(pick(row, FIELD_ALIASES.studentStatus)),
       };
       return item;

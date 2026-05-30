@@ -1,15 +1,11 @@
 import {
   User,
-  Phone,
   Calendar,
   Stethoscope,
   BedDouble,
   Send,
   ClipboardList,
   Pill,
-  Ruler,
-  FileCheck2,
-  Syringe,
   Activity,
   Home,
   NotebookText,
@@ -264,122 +260,85 @@ export default function StudentDetailBody({
 }) {
   const record = isPlainObject(student.healthData) ? student.healthData : {};
 
-  interface RegistryItem {
-    label: string;
-    value: string;
-    wide?: boolean;
-  }
-  const registrySections: {
-    title: string;
-    Icon: typeof ClipboardList;
-    tone: "blue" | "emerald" | "violet" | "amber";
-    items: RegistryItem[];
-  }[] = [
-    {
-      title: "ข้อมูลทะเบียน",
-      Icon: ClipboardList,
-      tone: "blue" as const,
-      items: [
-        { label: "เลขบัตรประชาชน", value: valueFrom(record, ["เลขบัตรประชาชน"]) },
-        { label: "ชื่อเล่น", value: valueFrom(record, ["ชื่อเล่น"]) },
-        { label: "ประเภทความพิการ", value: valueFrom(record, ["ประเภท ความพิการ", "ประเภท"]) },
-        { label: "เด็กเก่า/ใหม่", value: valueFrom(record, ["เด็กเก่า/ใหม่"]) },
-        { label: "วันเดือนปีเกิด", value: valueFrom(record, ["วันเดือนปีเกิด"]) },
-        { label: "วันรายงานตัว", value: valueFrom(record, ["วันและเวลา มารายงานตัว", "วันและเวลา"]) },
-      ],
-    },
-    {
-      title: "ที่อยู่และผู้ปกครอง",
-      Icon: Home,
-      tone: "emerald" as const,
-      items: [
-        { label: "ชื่อผู้ปกครอง", value: valueFrom(record, ["ชื่อผู้ปกครอง"]) },
-        { label: "เบอร์โทร 1", value: valueFrom(record, ["เบอร์โทร 1"]) },
-        { label: "เบอร์โทร 2", value: valueFrom(record, ["เบอร์โทร 2"]) },
-        { label: "ที่อยู่", value: valueFrom(record, ["ที่อยู่"]), wide: true },
-      ],
-    },
-    {
-      title: "สัดส่วนและ BMI",
-      Icon: Ruler,
-      tone: "violet" as const,
-      items: [
-        { label: "น้ำหนัก", value: valueFrom(record, ["น้ำหนัก (กิโลกรัม)", "น้ำหนัก"]) },
-        { label: "ส่วนสูง", value: valueFrom(record, ["ส่วนสูง (เซนติเมตร)", "ส่วนสูง"]) },
-        { label: "คะแนน BMI", value: valueFrom(record, ["คะแนน BMI", "คะแนน"]) },
-        { label: "แปลผล BMI", value: valueFrom(record, ["แปลผล BMI", "แปลผล"]) },
-      ],
-    },
-    {
-      title: "สิทธิและวัคซีน",
-      Icon: FileCheck2,
-      tone: "amber" as const,
-      items: [
-        { label: "สิทธิ", value: valueFrom(record, ["สิทธิ"]) },
-        { label: "ฝากบัตรประชาชน", value: valueFrom(record, ["ฝากบัตรประชาชน กด ✓", "ฝากบัตรประชาชน"]) },
-        { label: "ฝากบัตรคนพิการ", value: valueFrom(record, ["ฝากบัตรคนพิการ กด ✓", "ฝากบัตรคนพิการ"]) },
-        {
-          label: "วัคซีนพื้นฐาน",
-          value: valueFrom(record, ["ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", "ได้รับวัคซีนพื้นฐาน(สมุดชมพู)"]),
-        },
-        { label: "ไข้หวัดใหญ่", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", "ป้องกันไข้หวัดใหญ่ (ปี)"]) },
-        { label: "โควิด", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันโควิค (ปี)", "ป้องกันโควิค (ปี)"]) },
-      ],
-    },
+  const guardians =
+    Array.isArray(student.guardians) && student.guardians.length > 0
+      ? student.guardians
+      : student.parentName || student.parentPhone
+        ? [{ name: student.parentName ?? "", phone: student.parentPhone ?? "" }]
+        : [];
+
+  const healthItems: { label: string; value: string; wide?: boolean }[] = [
+    { label: "โรคประจำตัว", value: student.congenitalDisease ?? "-", wide: true },
+    { label: "แพ้ยา/อาหาร", value: student.drugAllergy ?? "-", wide: true },
+    { label: "กรุ๊ปเลือด", value: student.bloodType === "unknown" ? "-" : student.bloodType },
+    { label: "น้ำหนัก", value: valueFrom(record, ["น้ำหนัก (กิโลกรัม)", "น้ำหนัก"]) },
+    { label: "ส่วนสูง", value: valueFrom(record, ["ส่วนสูง (เซนติเมตร)", "ส่วนสูง"]) },
+    { label: "คะแนน BMI", value: valueFrom(record, ["คะแนน BMI", "คะแนน"]) },
+    { label: "แปลผล BMI", value: valueFrom(record, ["แปลผล BMI", "แปลผล"]) },
+    { label: "สิทธิการรักษา", value: valueFrom(record, ["สิทธิ"]) },
+    { label: "วัคซีนพื้นฐาน", value: valueFrom(record, ["ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", "ได้รับวัคซีนพื้นฐาน(สมุดชมพู)"]) },
+    { label: "วัคซีนไข้หวัดใหญ่", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", "ป้องกันไข้หวัดใหญ่ (ปี)"]) },
+    { label: "วัคซีนโควิด", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันโควิค (ปี)", "ป้องกันโควิค (ปี)"]) },
+    { label: "ผลตรวจร่างกาย", value: valueFrom(record, ["ผลตรวจร่างกาย"]) },
   ];
 
   const noteValue = valueFrom(record, ["หมายเหตุ"]);
 
   return (
     <div className="space-y-4">
-      {/* Summary */}
+      {/* 1. ข้อมูลพื้นฐาน + ผู้ปกครอง */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <SectionCard title="ข้อมูลพื้นฐาน" Icon={User} tone="blue">
           <Field label="รหัสนักเรียน" value={student.studentCode} />
-          <Field label="ชั้นเรียน" value={student.classRoom} />
-          <Field label="เรือนนอน" value={student.dormitory} />
-          <Field label="ครูประจำชั้น" value={student.homeroomTeacher} />
-          {showStatusBadge && (
-            <Field label="สถานะ" value={studentStatusLabel[student.studentStatus]} />
-          )}
-          <Field
-            label="กรุ๊ปเลือด"
-            value={student.bloodType === "unknown" ? "ไม่ระบุ" : student.bloodType}
-          />
+          <Field label="เลขบัตรประชาชน" value={valueFrom(record, ["เลขบัตรประชาชน"])} />
+          <Field label="ชื่อเล่น" value={student.nickname ?? valueFrom(record, ["ชื่อเล่น"])} />
+          {showStatusBadge && <Field label="สถานะ" value={studentStatusLabel[student.studentStatus]} />}
+          <Field label="วันเดือนปีเกิด" value={valueFrom(record, ["วันเดือนปีเกิด"])} />
+          <Field label="ประเภทความพิการ" value={valueFrom(record, ["ประเภท ความพิการ", "ประเภท"])} />
+          <Field label="เด็กเก่า/ใหม่" value={valueFrom(record, ["เด็กเก่า/ใหม่"])} />
+          <Field label="วันรายงานตัว" value={valueFrom(record, ["วันและเวลา มารายงานตัว", "วันและเวลา"])} />
         </SectionCard>
 
-        <SectionCard title="สุขภาพและการแพ้" Icon={HeartPulse} tone="rose">
-          <Field label="โรคประจำตัว" value={student.congenitalDisease} wide />
-          <Field label="แพ้ยา/อาหาร" value={student.drugAllergy} wide />
-          <Field
-            label="ผู้ปกครอง"
-            value={student.parentName}
-          />
-          <Field label="เบอร์โทร" value={student.parentPhone} />
+        <SectionCard title="ผู้ปกครองและที่อยู่" Icon={Home} tone="emerald">
+          <div className="sm:col-span-2 space-y-2">
+            {guardians.length === 0 ? (
+              <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลผู้ปกครอง</p>
+            ) : (
+              guardians.map((g, i) => (
+                <div key={i} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3.5 py-2.5">
+                  <span className="text-sm font-semibold text-ksp-navy">{g.name || "-"}</span>
+                  <span className="text-sm text-ksp-blue-700">{g.phone || "-"}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <Field label="ที่อยู่" value={valueFrom(record, ["ที่อยู่"])} wide />
         </SectionCard>
       </div>
 
-      {/* Medication list */}
+      {/* 2. ข้อมูลชั้นเรียน */}
+      <SectionCard title="ข้อมูลชั้นเรียน" Icon={ClipboardList} tone="violet">
+        <Field label="ชั้นเรียน" value={student.classRoom} />
+        <Field label="เรือนนอน" value={student.dormitory} />
+        <Field label="ครูประจำชั้น" value={student.homeroomTeacher} />
+        <Field label="เบอร์โทรครูประจำชั้น" value={student.homeroomTeacherPhone} />
+      </SectionCard>
+
+      {/* 3. ข้อมูลสุขภาพ */}
+      <SectionCard title="ข้อมูลสุขภาพ" Icon={HeartPulse} tone="rose">
+        {healthItems
+          .filter((i) => i.value && i.value !== "-")
+          .map((item) => (
+            <Field key={item.label} label={item.label} value={item.value} wide={item.wide} />
+          ))}
+      </SectionCard>
+
+      {/* รายละเอียดยาประจำตัว */}
       <SectionCard title="รายละเอียดยาประจำตัว" Icon={Pill} tone="blue">
         <div className="sm:col-span-2">
           <MedicationList data={student.medicationData} />
         </div>
       </SectionCard>
-
-      {/* Registry detail */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {registrySections.map((section) => {
-          const visible = section.items.filter((i) => i.value && i.value !== "-");
-          if (visible.length === 0) return null;
-          return (
-            <SectionCard key={section.title} title={section.title} Icon={section.Icon} tone={section.tone}>
-              {visible.map((item) => (
-                <Field key={item.label} label={item.label} value={item.value} wide={item.wide} />
-              ))}
-            </SectionCard>
-          );
-        })}
-      </div>
 
       {noteValue !== "-" && (
         <SectionCard title="หมายเหตุ" Icon={NotebookText} tone="amber">
@@ -387,7 +346,7 @@ export default function StudentDetailBody({
         </SectionCard>
       )}
 
-      {/* History */}
+      {/* 4. ข้อมูลการใช้งานเรือนพยาบาล */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <TimelineCard
           title="ประวัติ OPD"

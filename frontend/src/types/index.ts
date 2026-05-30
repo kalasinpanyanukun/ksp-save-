@@ -16,20 +16,28 @@ export interface LoginResponse {
 export type BloodType = "A" | "B" | "AB" | "O" | "unknown";
 export type StudentStatus = "resident" | "infirmary" | "home_leave";
 
+export interface Guardian {
+  name: string;
+  phone: string;
+}
+
 export interface Student {
   id: string;
   studentCode: string;
   firstName: string;
   lastName: string;
+  nickname: string | null;
   classRoom: string | null;
   dormitory: string | null;
   homeroomTeacher: string | null;
+  homeroomTeacherPhone: string | null;
   bloodType: BloodType;
   congenitalDisease: string | null;
   drugAllergy: string | null;
   regularMedication: string | null;
   healthData: Record<string, unknown>;
   medicationData: Record<string, unknown>;
+  guardians: Guardian[];
   parentName: string | null;
   parentPhone: string | null;
   studentStatus: StudentStatus;
