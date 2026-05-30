@@ -95,7 +95,7 @@ function MiniStat({
 const shortcuts = [
   { to: "/opd", label: "บันทึก OPD", Icon: Stethoscope, cls: "from-ksp-blue-500 to-ksp-blue-600" },
   { to: "/admissions", label: "รับ admit ใหม่", Icon: BedDouble, cls: "from-orange-500 to-orange-600" },
-  { to: "/patients", label: "ค้นหานักเรียน", Icon: Search, cls: "from-emerald-500 to-emerald-600" },
+  { to: "/medications", label: "เบิกยา", Icon: Pill, cls: "from-emerald-500 to-emerald-600" },
 ];
 
 export default function DashboardPage() {

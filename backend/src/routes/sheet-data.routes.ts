@@ -38,6 +38,58 @@ const dormitorySheets: DormitorySheet[] = [
   { key: "mahat", name: "มะหาด", code: "MH", healthGid: "2076571431", medicationGid: "1194470351", teacher: "ครูฤทธิเกียรติ นามเกษ (ครูเบส) · 090-9109777" },
 ];
 
+// ลำดับคอลัมน์อ้างอิงชีทต้นทาง (ใช้จัดเรียงหัวตารางในเมนู)
+const HEALTH_COLUMN_ORDER = [
+  "รหัสนักเรียน",
+  "รหัสบัตรประชาชน",
+  "เลขบัตรประชาชน",
+  "ชื่อ-สกุล",
+  "ชื่อเล่น",
+  "ชั้นเรียน",
+  "เรือนนอน",
+  "ประเภท",
+  "เด็กเก่า/ใหม่",
+  "วันเดือนปีเกิด",
+  "วันและเวลา",
+  "ผู้ปกครอง",
+  "ชื่อผู้ปกครอง",
+  "เบอร์โทร",
+  "ที่อยู่",
+  "น้ำหนัก",
+  "ส่วนสูง",
+  "คะแนน BMI",
+  "แปลผล BMI",
+  "สิทธิ",
+  "ฝากบัตรประชาชน",
+  "ฝากบัตรคนพิการ",
+  "ได้รับวัคซีน",
+  "ป้องกันไข้หวัดใหญ่",
+  "ฉีดวัคซีน",
+  "ป้องกันโควิค",
+  "กรุปเลือด",
+  "โรคประจำตัว",
+  "ยาประจำตัว",
+  "แพ้ยา",
+  "อาการแสดงการแพ้",
+  "ผลตรวจร่างกาย",
+  "หมายเหตุ",
+];
+
+const MEDICATION_COLUMN_ORDER = [
+  "รหัสนักเรียน",
+  "รหัสบัตรประชาชน",
+  "ชื่อ-สกุล",
+  "ชื่อเล่น",
+  "ชั้นเรียน",
+  "เรือนนอน",
+  "เบอร์โทร",
+  "โรงพยาบาล",
+  "นัดถัดไป",
+  "จำนวนชนิดยา",
+  "รายการยา",
+  "หมายเหตุ",
+];
+
 function sheetUrl(kind: SheetKind, dormitory: DormitorySheet) {
   const spreadsheetId =
     kind === "health" ? healthSpreadsheetId : medicationSpreadsheetId;
@@ -234,6 +286,19 @@ function buildStoredResponse(
       if (!headers.includes(key)) headers.push(key);
     }
   }
+
+  // จัดลำดับคอลัมน์ให้ใกล้เคียงชีทต้นทาง
+  const order = kind === "health" ? HEALTH_COLUMN_ORDER : MEDICATION_COLUMN_ORDER;
+  const rank = (header: string) => {
+    const idx = order.findIndex((key) => header === key || header.startsWith(key));
+    return idx === -1 ? order.length + 1 : idx;
+  };
+  headers.sort((a, b) => {
+    const ra = rank(a);
+    const rb = rank(b);
+    if (ra !== rb) return ra - rb;
+    return 0;
+  });
 
   return {
     dormitory: dormitory.name,

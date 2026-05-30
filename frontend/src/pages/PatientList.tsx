@@ -42,6 +42,17 @@ const studentStatusClass: Record<Student["studentStatus"], string> = {
   home_leave: "bg-sky-50 text-sky-700 ring-sky-100",
 };
 
+function healthField(s: Student, ...keys: string[]) {
+  const d = s.healthData as Record<string, unknown> | undefined;
+  if (!d) return "";
+  for (const k of keys) {
+    const v = d[k];
+    const t = v === null || v === undefined ? "" : String(v).trim();
+    if (t && t !== "-") return t;
+  }
+  return "";
+}
+
 export default function PatientListPage() {
   const role = useAppSelector((s) => s.auth.user?.role);
   const isAdmin = role === "super_admin" || role === "admin";
@@ -51,11 +62,13 @@ export default function PatientListPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(100);
+  const [pageSize] = useState(500);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [classFilter, setClassFilter] = useState("");
   const [dormFilter, setDormFilter] = useState("");
+  const [ageFilter, setAgeFilter] = useState("");
+  const [disabilityFilter, setDisabilityFilter] = useState("");
   const [classrooms, setClassrooms] = useState<string[]>([]);
   const [dormitories, setDormitories] = useState<string[]>([]);
 
@@ -134,9 +147,24 @@ export default function PatientListPage() {
     }
   }
 
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(total / pageSize)),
-    [total, pageSize],
+  const disabilityOptions = useMemo(() => {
+    const set = new Set<string>();
+    students.forEach((s) => {
+      const v = healthField(s, "ประเภท ความพิการ", "ประเภท");
+      if (v) set.add(v);
+    });
+    return [...set].sort();
+  }, [students]);
+
+  const filteredStudents = useMemo(
+    () =>
+      students.filter((s) => {
+        if (ageFilter && healthField(s, "เด็กเก่า/ใหม่") !== ageFilter) return false;
+        if (disabilityFilter && healthField(s, "ประเภท ความพิการ", "ประเภท") !== disabilityFilter)
+          return false;
+        return true;
+      }),
+    [students, ageFilter, disabilityFilter],
   );
 
   return (
@@ -200,7 +228,7 @@ export default function PatientListPage() {
       />
 
       <div className="card-pad mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
           <div className="relative md:col-span-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ksp-gray" />
             <input
@@ -243,6 +271,21 @@ export default function PatientListPage() {
               </option>
             ))}
           </select>
+          <select className="input" value={ageFilter} onChange={(e) => setAgeFilter(e.target.value)}>
+            <option value="">เด็กเก่า/ใหม่ (ทั้งหมด)</option>
+            <option value="เก่า">เก่า</option>
+            <option value="ใหม่">ใหม่</option>
+          </select>
+          <select
+            className="input"
+            value={disabilityFilter}
+            onChange={(e) => setDisabilityFilter(e.target.value)}
+          >
+            <option value="">ประเภทความพิการ (ทั้งหมด)</option>
+            {disabilityOptions.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -254,38 +297,39 @@ export default function PatientListPage() {
                 <th>ลำดับ</th>
                 <th>รหัส</th>
                 <th>ชื่อ-นามสกุล</th>
+                <th>ชื่อเล่น</th>
+                <th>ประเภทความพิการ</th>
                 <th>ชั้นเรียน</th>
                 <th>เรือนนอน</th>
                 <th>สถานะ</th>
-                <th>กรุปเลือด</th>
-                <th>แพ้ยา</th>
+                <th>เด็กเก่า/ใหม่</th>
                 <th className="text-right">การจัดการ</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={9} className="text-center py-10">
+                  <td colSpan={10} className="text-center py-10">
                     <Loader2 className="inline-block h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
               )}
               {!loading &&
-                students.map((s, index) => (
+                filteredStudents.map((s, index) => (
                   <tr
                     key={s.id}
                     onClick={() => navigate(`/patients/${s.id}`)}
                     className="cursor-pointer transition-colors hover:bg-ksp-blue-50/40"
                   >
-                    <td className="font-semibold text-ksp-gray">
-                      {(page - 1) * pageSize + index + 1}
-                    </td>
+                    <td className="font-semibold text-ksp-gray">{index + 1}</td>
                     <td className="font-mono text-xs">{s.studentCode}</td>
                     <td>
                       <span className="font-medium text-ksp-blue-700">
                         {s.firstName} {s.lastName}
                       </span>
                     </td>
+                    <td>{s.nickname || "-"}</td>
+                    <td>{healthField(s, "ประเภท ความพิการ", "ประเภท") || "-"}</td>
                     <td>{s.classRoom ?? "-"}</td>
                     <td>{s.dormitory ?? "-"}</td>
                     <td>
@@ -295,16 +339,7 @@ export default function PatientListPage() {
                         {studentStatusLabel[s.studentStatus ?? "resident"]}
                       </span>
                     </td>
-                    <td>
-                      <span className="chip-blue">
-                        {s.bloodType === "unknown" ? "—" : s.bloodType}
-                      </span>
-                    </td>
-                    <td className="max-w-[16ch] truncate" title={s.drugAllergy ?? ""}>
-                      {s.drugAllergy || (
-                        <span className="text-ksp-gray">ไม่มี</span>
-                      )}
-                    </td>
+                    <td>{healthField(s, "เด็กเก่า/ใหม่") || "-"}</td>
                     <td className="text-right">
                       {isAdmin && (
                         <div className="inline-flex gap-1">
@@ -339,42 +374,23 @@ export default function PatientListPage() {
             </tbody>
           </table>
         </div>
-        {!loading && students.length === 0 && (
+        {!loading && filteredStudents.length === 0 && (
           <div className="p-6">
             <EmptyState
               icon={<Users className="h-7 w-7" />}
-              title="ยังไม่มีรายชื่อนักเรียน"
+              title="ไม่พบรายชื่อนักเรียน"
               description={
                 isAdmin
-                  ? "เริ่มจากกด 'เพิ่มนักเรียน' หรือ 'นำเข้า Excel/CSV'"
-                  : "ติดต่อครูเรือนพยาบาลเพื่อเพิ่มรายชื่อ"
+                  ? "ลองปรับตัวกรอง หรือกด 'เพิ่มนักเรียน' / 'นำเข้า Excel/CSV'"
+                  : "ลองปรับตัวกรอง หรือติดต่อครูเรือนพยาบาล"
               }
             />
           </div>
         )}
-        {!loading && students.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-3 border-t border-ksp-blue-50 text-sm">
-            <div className="text-ksp-gray">
-              หน้า {page} / {totalPages}
-            </div>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                className="btn-outline px-3 py-1.5 text-xs"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                ก่อนหน้า
-              </button>
-              <button
-                type="button"
-                className="btn-outline px-3 py-1.5 text-xs"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                ถัดไป
-              </button>
-            </div>
+        {!loading && filteredStudents.length > 0 && (
+          <div className="border-t border-ksp-blue-50 px-4 py-3 text-sm text-ksp-gray">
+            แสดง {filteredStudents.length.toLocaleString("th-TH")} จากทั้งหมด{" "}
+            {total.toLocaleString("th-TH")} คน
           </div>
         )}
       </div>

@@ -251,6 +251,28 @@ function dischargeDescription(a: Admission) {
 
 /* ───────────────── Main shared body ───────────────── */
 
+function DocHeader({ title }: { title: string }) {
+  return (
+    <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-ksp-navy">
+      <span className="h-4 w-1.5 rounded-full bg-ksp-blue-500" />
+      {title}
+    </h3>
+  );
+}
+
+function DocDivider() {
+  return <hr className="my-5 border-slate-200" />;
+}
+
+function Line({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div className="flex flex-col gap-0.5 border-b border-slate-50 py-1.5 sm:flex-row sm:items-baseline sm:gap-4">
+      <span className="w-48 shrink-0 text-sm text-ksp-gray">{label}</span>
+      <span className="break-words text-sm font-semibold text-ksp-navy">{value || "-"}</span>
+    </div>
+  );
+}
+
 export default function StudentDetailBody({
   student,
   showStatusBadge = false,
@@ -284,69 +306,102 @@ export default function StudentDetailBody({
 
   const noteValue = valueFrom(record, ["หมายเหตุ"]);
 
-  return (
-    <div className="space-y-4">
-      {/* 1. ข้อมูลพื้นฐาน + ผู้ปกครอง */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <SectionCard title="ข้อมูลพื้นฐาน" Icon={User} tone="blue">
-          <Field label="รหัสนักเรียน" value={student.studentCode} />
-          <Field label="เลขบัตรประชาชน" value={valueFrom(record, ["เลขบัตรประชาชน"])} />
-          <Field label="ชื่อเล่น" value={student.nickname ?? valueFrom(record, ["ชื่อเล่น"])} />
-          {showStatusBadge && <Field label="สถานะ" value={studentStatusLabel[student.studentStatus]} />}
-          <Field label="วันเดือนปีเกิด" value={valueFrom(record, ["วันเดือนปีเกิด"])} />
-          <Field label="ประเภทความพิการ" value={valueFrom(record, ["ประเภท ความพิการ", "ประเภท"])} />
-          <Field label="เด็กเก่า/ใหม่" value={valueFrom(record, ["เด็กเก่า/ใหม่"])} />
-          <Field label="วันรายงานตัว" value={valueFrom(record, ["วันและเวลา มารายงานตัว", "วันและเวลา"])} />
-        </SectionCard>
+  // รวมเบอร์โทรสำรองจากชีตสุขภาพ (เบอร์โทร 1/2/3) ที่ไม่ซ้ำกับผู้ปกครอง
+  const guardianPhones = new Set(guardians.map((g) => g.phone).filter(Boolean));
+  const backupPhones = ["เบอร์โทร 1", "เบอร์โทร 2", "เบอร์โทร 3"]
+    .map((k) => valueFrom(record, [k]))
+    .filter((v) => v && v !== "-" && !guardianPhones.has(v));
 
-        <SectionCard title="ผู้ปกครองและที่อยู่" Icon={Home} tone="emerald">
-          <div className="sm:col-span-2 space-y-2">
-            {guardians.length === 0 ? (
-              <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลผู้ปกครอง</p>
-            ) : (
-              guardians.map((g, i) => (
-                <div key={i} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3.5 py-2.5">
-                  <span className="text-sm font-semibold text-ksp-navy">{g.name || "-"}</span>
-                  <span className="text-sm text-ksp-blue-700">{g.phone || "-"}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <Field label="ที่อยู่" value={valueFrom(record, ["ที่อยู่"])} wide />
-        </SectionCard>
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      {/* ข้อมูลพื้นฐาน — คอลัมน์เดียว */}
+      <DocHeader title="ข้อมูลพื้นฐาน" />
+      <div>
+        <Line label="รหัสนักเรียน" value={student.studentCode} />
+        <Line label="เลขบัตรประชาชน" value={valueFrom(record, ["เลขบัตรประชาชน"])} />
+        <Line label="ชื่อ-สกุล" value={`${student.firstName} ${student.lastName}`} />
+        <Line label="ชื่อเล่น" value={student.nickname ?? valueFrom(record, ["ชื่อเล่น"])} />
+        {showStatusBadge && <Line label="สถานะ" value={studentStatusLabel[student.studentStatus]} />}
+        <Line label="วันเดือนปีเกิด" value={valueFrom(record, ["วันเดือนปีเกิด"])} />
+        <Line label="ประเภทความพิการ" value={valueFrom(record, ["ประเภท ความพิการ", "ประเภท"])} />
+        <Line label="เด็กเก่า/ใหม่" value={valueFrom(record, ["เด็กเก่า/ใหม่"])} />
+        <Line label="วันรายงานตัว" value={valueFrom(record, ["วันและเวลา มารายงานตัว", "วันและเวลา"])} />
       </div>
 
-      {/* 2. ข้อมูลชั้นเรียน */}
-      <SectionCard title="ข้อมูลชั้นเรียน" Icon={ClipboardList} tone="violet">
-        <Field label="ชั้นเรียน" value={student.classRoom} />
-        <Field label="เรือนนอน" value={student.dormitory} />
-        <Field label="ครูประจำชั้น" value={student.homeroomTeacher} />
-        <Field label="เบอร์โทรครูประจำชั้น" value={student.homeroomTeacherPhone} />
-      </SectionCard>
+      <DocDivider />
+      <DocHeader title="ข้อมูลชั้นเรียน" />
+      <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+        <Line label="ชั้นเรียน" value={student.classRoom} />
+        <Line label="เรือนนอน" value={student.dormitory} />
+        <Line label="ครูประจำชั้น" value={student.homeroomTeacher} />
+        <Line label="เบอร์โทรครูประจำชั้น" value={student.homeroomTeacherPhone} />
+      </div>
 
-      {/* 3. ข้อมูลสุขภาพ */}
-      <SectionCard title="ข้อมูลสุขภาพ" Icon={HeartPulse} tone="rose">
+      <DocDivider />
+      <DocHeader title="ผู้ปกครองและที่อยู่" />
+      <div className="space-y-2">
+        {guardians.length === 0 ? (
+          <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลผู้ปกครอง</p>
+        ) : (
+          guardians.map((g, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3.5 py-2.5"
+            >
+              <span className="text-sm font-semibold text-ksp-navy">{g.name || "-"}</span>
+              <span className="text-sm font-medium text-ksp-blue-700">{g.phone || "-"}</span>
+            </div>
+          ))
+        )}
+        {backupPhones.length > 0 && (
+          <Line label="เบอร์โทรติดต่อสำรอง" value={backupPhones.join(" · ")} />
+        )}
+        <Line label="ที่อยู่" value={valueFrom(record, ["ที่อยู่"])} />
+      </div>
+
+      <DocDivider />
+      <DocHeader title="ข้อมูลสุขภาพ" />
+      <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
         {healthItems
           .filter((i) => i.value && i.value !== "-")
-          .map((item) => (
-            <Field key={item.label} label={item.label} value={item.value} wide={item.wide} />
-          ))}
-      </SectionCard>
+          .map((item) =>
+            item.wide ? (
+              <div key={item.label} className="sm:col-span-2">
+                <Line label={item.label} value={item.value} />
+              </div>
+            ) : (
+              <Line key={item.label} label={item.label} value={item.value} />
+            ),
+          )}
+      </div>
 
-      {/* รายละเอียดยาประจำตัว */}
-      <SectionCard title="รายละเอียดยาประจำตัว" Icon={Pill} tone="blue">
-        <div className="sm:col-span-2">
-          <MedicationList data={student.medicationData} />
-        </div>
-      </SectionCard>
+      <DocDivider />
+      <DocHeader title="รายละเอียดยาประจำตัว" />
+      <MedicationList data={student.medicationData} />
 
       {noteValue !== "-" && (
-        <SectionCard title="หมายเหตุ" Icon={NotebookText} tone="amber">
-          <Field label="หมายเหตุ" value={noteValue} wide />
-        </SectionCard>
+        <>
+          <DocDivider />
+          <DocHeader title="หมายเหตุ" />
+          <p className="text-sm text-ksp-navy">{noteValue}</p>
+        </>
       )}
 
-      {/* 4. ข้อมูลการใช้งานเรือนพยาบาล */}
+      <DocDivider />
+      <DocHeader title="ประวัติการใช้งานเรือนพยาบาล" />
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {[
+          { label: "OPD", value: `${student.opdVisits.length} ครั้ง` },
+          { label: "นอนพักรักษา", value: `${student.admissions.length} รายการ` },
+          { label: "ส่งต่อโรงพยาบาล", value: `${student.referrals.length} รายการ` },
+          { label: "ที่พัก", value: student.dormitory ?? "-" },
+        ].map((it) => (
+          <div key={it.label} className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-center">
+            <p className="text-[11px] text-ksp-gray">{it.label}</p>
+            <p className="text-sm font-bold text-ksp-navy">{it.value}</p>
+          </div>
+        ))}
+      </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <TimelineCard
           title="ประวัติ OPD"
@@ -384,12 +439,6 @@ export default function StudentDetailBody({
             recordedBy: r.recordedBy?.fullName,
           }))}
         />
-        <SectionCard title="สรุปการใช้งาน" Icon={Activity} tone="emerald">
-          <Field label="OPD" value={`${student.opdVisits.length} ครั้ง`} />
-          <Field label="นอนพักรักษา" value={`${student.admissions.length} รายการ`} />
-          <Field label="ส่งต่อโรงพยาบาล" value={`${student.referrals.length} รายการ`} />
-          <Field label="ที่พัก" value={student.dormitory} />
-        </SectionCard>
       </div>
     </div>
   );

@@ -62,6 +62,9 @@ export default function MedicationStockPage() {
   const [detail, setDetail] = useState<MedicationDetail | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 100;
 
@@ -114,14 +117,28 @@ export default function MedicationStockPage() {
   const lowStockCount = items.filter(
     (m) => m.entryStatus === "entered" && m.stockQty <= m.minStock,
   ).length;
+  const filteredItems = useMemo(
+    () =>
+      items.filter(
+        (m) =>
+          (!sourceFilter || m.source === sourceFilter) &&
+          (!categoryFilter || m.category === categoryFilter) &&
+          (!statusFilter || m.entryStatus === statusFilter),
+      ),
+    [items, sourceFilter, categoryFilter, statusFilter],
+  );
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(items.length / pageSize)),
-    [items.length],
+    () => Math.max(1, Math.ceil(filteredItems.length / pageSize)),
+    [filteredItems.length],
   );
   const visibleItems = useMemo(
-    () => items.slice((page - 1) * pageSize, page * pageSize),
-    [items, page],
+    () => filteredItems.slice((page - 1) * pageSize, page * pageSize),
+    [filteredItems, page],
   );
+
+  useEffect(() => {
+    setPage(1);
+  }, [sourceFilter, categoryFilter, statusFilter]);
 
   useEffect(() => {
     setPage((current) => Math.min(current, totalPages));
@@ -225,11 +242,28 @@ export default function MedicationStockPage() {
       <div className="card-pad mb-4">
         <div className="flex flex-wrap items-center gap-3">
           <input
-            className="input max-w-[280px]"
+            className="input max-w-[240px]"
             placeholder="ค้นหารหัส / ชื่อยา"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
+          <select className="input w-auto" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+            <option value="">ทุกที่มา</option>
+            {MED_SOURCE_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <select className="input w-auto" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option value="">ทุกประเภท</option>
+            {MED_CATEGORY_OPTIONS.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+          <select className="input w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">ทุกสถานะ</option>
+            <option value="entered">ลงข้อมูลแล้ว</option>
+            <option value="not_entered">ยังไม่ได้ลงข้อมูล</option>
+          </select>
           <label className="flex items-center gap-2 text-sm text-ksp-navy">
             <input
               type="checkbox"
@@ -237,14 +271,14 @@ export default function MedicationStockPage() {
               checked={showLowOnly}
               onChange={(e) => setShowLowOnly(e.target.checked)}
             />
-            แสดงเฉพาะรายการ stock ต่ำ
+            stock ต่ำ
           </label>
         </div>
       </div>
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table-base">
+          <table className="table-base [&_td]:border [&_td]:border-slate-100 [&_th]:border [&_th]:border-slate-200">
             <thead>
               <tr>
                 <th>ลำดับ</th>
@@ -286,7 +320,11 @@ export default function MedicationStockPage() {
                       <td onClick={(e) => e.stopPropagation()}>
                         {isAdmin ? (
                           <select
-                            className="rounded-lg border border-ksp-blue-100 bg-white px-2 py-1.5 text-xs"
+                            className={`rounded-lg border px-2 py-1.5 text-xs font-semibold ${
+                              m.source === "ยาประจำตัวนักเรียน"
+                                ? "border-ksp-blue-200 bg-ksp-blue-50 text-ksp-blue-700"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            }`}
                             value={m.source}
                             onChange={(e) => patchMedication(m, { source: e.target.value })}
                           >
@@ -295,7 +333,9 @@ export default function MedicationStockPage() {
                             ))}
                           </select>
                         ) : (
-                          m.source
+                          <span className={m.source === "ยาประจำตัวนักเรียน" ? "text-ksp-blue-700" : "text-emerald-700"}>
+                            {m.source}
+                          </span>
                         )}
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
@@ -393,20 +433,20 @@ export default function MedicationStockPage() {
             </tbody>
           </table>
         </div>
-        {!loading && items.length === 0 && (
+        {!loading && filteredItems.length === 0 && (
           <div className="p-6">
             <EmptyState
               icon={<Pill className="h-7 w-7" />}
-              title="ยังไม่มีรายการยา"
-              description="กดปุ่ม 'เพิ่มยา' เพื่อเริ่มเพิ่มคลังยา"
+              title="ไม่พบรายการ"
+              description="ลองปรับตัวกรอง หรือกดปุ่ม 'เพิ่มยา' เพื่อเริ่มเพิ่มคลังยา"
             />
           </div>
         )}
-        {!loading && items.length > 0 && (
+        {!loading && filteredItems.length > 0 && (
           <div className="flex flex-col gap-2 border-t border-ksp-blue-50 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="text-ksp-gray">
               หน้า {page} / {totalPages} · แสดง {visibleItems.length.toLocaleString("th-TH")} จาก{" "}
-              {items.length.toLocaleString("th-TH")} รายการ
+              {filteredItems.length.toLocaleString("th-TH")} รายการ
             </div>
             <div className="flex gap-1">
               <button

@@ -148,7 +148,7 @@ router.get("/", async (req, res, next) => {
     const dormitory = String(req.query.dormitory ?? "").trim();
     const includeInactive = req.query.includeInactive === "true";
     const page = Math.max(1, Number(req.query.page ?? 1));
-    const pageSize = Math.min(100, Math.max(5, Number(req.query.pageSize ?? 20)));
+    const pageSize = Math.min(1000, Math.max(5, Number(req.query.pageSize ?? 20)));
 
     const where: Prisma.StudentWhereInput = {
       NOT: { studentCode: { contains: "-MED-" } },

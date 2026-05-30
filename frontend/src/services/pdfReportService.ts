@@ -5,20 +5,20 @@ import jsPDF from "jspdf";
  * พร้อมหัวกระดาษโรงเรียน ชื่อรายงาน และวันที่/เวลาที่พิมพ์
  */
 
-const SARABUN_REGULAR =
-  "https://cdn.jsdelivr.net/gh/google/fonts/ofl/sarabun/Sarabun-Regular.ttf";
-const SARABUN_BOLD =
-  "https://cdn.jsdelivr.net/gh/google/fonts/ofl/sarabun/Sarabun-Bold.ttf";
+// ฟอนต์ Sarabun แบบ static (วางในโฟลเดอร์ public/fonts โหลด same-origin จึงไม่ติด CORS/CSP)
+const SARABUN_REGULAR = "/fonts/Sarabun-Regular.ttf";
+const SARABUN_BOLD = "/fonts/Sarabun-Bold.ttf";
 
 const ORG_NAME = "โรงเรียนกาฬสินธุ์ปัญญานุกูล จังหวัดกาฬสินธุ์";
 const SYSTEM_NAME = "ระบบบริหารเรือนพยาบาล KSP SAVE+";
 
 function bufferToBase64(buffer: ArrayBuffer): string {
-  let binary = "";
   const bytes = new Uint8Array(buffer);
-  const chunk = 0x8000;
+  let binary = "";
+  const chunk = 1024;
   for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    const slice = bytes.subarray(i, i + chunk);
+    for (let j = 0; j < slice.length; j++) binary += String.fromCharCode(slice[j]!);
   }
   return btoa(binary);
 }

@@ -14,7 +14,6 @@ import {
   Settings,
   ShieldCheck,
 } from "lucide-react";
-import Brand from "./Brand";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { setSidebar } from "../../store/uiSlice";
 
@@ -58,12 +57,20 @@ export default function Sidebar() {
       )}
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ksp-blue-800 text-white shadow-2xl transition-transform lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex h-screen w-64 flex-col bg-ksp-blue-800 text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex items-center justify-center border-b border-white/10 px-4 py-5">
-          <Brand variant="white" size="lg" />
+        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-4">
+          <img
+            src="/logo3.png"
+            alt="KSP SAVE+"
+            className="h-12 w-12 shrink-0 object-contain"
+          />
+          <div className="leading-tight">
+            <p className="text-sm font-bold text-white">ระบบบริหารจัดการเรือนพยาบาล</p>
+            <p className="text-[11px] text-white/70">โรงเรียนกาฬสินธุ์ปัญญานุกูลฯ</p>
+          </div>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems
