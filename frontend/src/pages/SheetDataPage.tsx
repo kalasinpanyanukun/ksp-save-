@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ExternalLink,
   HeartPulse,
   Loader2,
   Pill,
-  RefreshCw,
   Search,
   Edit3,
   UserCog,
@@ -50,14 +48,14 @@ const pageCopy = {
   },
 } satisfies Record<SheetDataKind, unknown>;
 
-// โทนพาสเทลแนวโรงพยาบาล (จาง ๆ) ไล่ตามคอลัมน์เพื่อให้อ่านง่าย
+// โทนพาสเทลแนวโรงพยาบาล — หัวตารางทึบ (อ่านง่าย ไม่ทับกัน) เนื้อหาจาง ๆ
 const COLUMN_TINTS = [
-  { head: "bg-sky-100/70", body: "bg-sky-50/40" },
-  { head: "bg-emerald-100/60", body: "bg-emerald-50/40" },
-  { head: "bg-violet-100/55", body: "bg-violet-50/35" },
-  { head: "bg-amber-100/60", body: "bg-amber-50/35" },
-  { head: "bg-rose-100/55", body: "bg-rose-50/35" },
-  { head: "bg-teal-100/55", body: "bg-teal-50/35" },
+  { head: "bg-sky-100", body: "bg-sky-50/40" },
+  { head: "bg-emerald-100", body: "bg-emerald-50/40" },
+  { head: "bg-violet-100", body: "bg-violet-50/35" },
+  { head: "bg-amber-100", body: "bg-amber-50/35" },
+  { head: "bg-rose-100", body: "bg-rose-50/35" },
+  { head: "bg-teal-100", body: "bg-teal-50/35" },
 ];
 const tintFor = (index: number) =>
   COLUMN_TINTS[index % COLUMN_TINTS.length] ?? COLUMN_TINTS[0]!;
@@ -191,7 +189,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
 
   return (
     <div className="relative left-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 lg:w-[calc(100vw-18rem-2rem)]">
-      {/* Header with dorm meta moved up next to the title */}
+      {/* Header: count becomes the subtitle; teacher (medication) sits on the right */}
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-xl bg-ksp-blue-50 text-ksp-blue-700">
@@ -201,79 +199,56 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             <h1 className="text-2xl font-bold tracking-tight text-ksp-navy">
               {copy.title}
             </h1>
-            <p className="text-sm text-ksp-gray">{copy.description}</p>
+            <p className="text-sm text-ksp-gray">
+              เรือนนอน{sheet?.dormitory ?? activeDormitory} ·{" "}
+              <span className="font-semibold text-ksp-blue-600">
+                {filteredRows.length.toLocaleString("th-TH")} รายการ
+              </span>
+            </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-ksp-navy shadow-card ring-1 ring-ksp-blue-50">
-            เรือนนอน{sheet?.dormitory ?? activeDormitory} ·{" "}
-            <span className="text-ksp-blue-600">
-              {filteredRows.length.toLocaleString("th-TH")} รายการ
-            </span>
-          </span>
-          {sheet?.sourceUrl && (
-            <a href={sheet.sourceUrl} target="_blank" rel="noreferrer" className="btn-outline">
-              <ExternalLink className="h-4 w-4" /> เปิดชีตต้นทาง
-            </a>
-          )}
-          <button type="button" className="btn-outline" onClick={load}>
-            <RefreshCw className="h-4 w-4" /> โหลดใหม่
-          </button>
-        </div>
-      </div>
-
-      {/* Teacher strip (medication only) */}
-      {kind === "medication" && (
-        <div className="mb-3 flex flex-col gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-          {editingTeacher ? (
-            <div className="flex w-full items-center gap-2">
-              <UserCog className="h-4 w-4 shrink-0 text-ksp-blue-600" />
-              <input
-                className="input py-1.5 text-sm"
-                value={teacherDraft}
-                onChange={(e) => setTeacherDraft(e.target.value)}
-                placeholder="ชื่อครูพยาบาล · เบอร์โทร"
-                autoFocus
-              />
-              <button
-                type="button"
-                className="btn-primary px-2.5 py-1.5"
-                onClick={saveTeacher}
-                disabled={savingTeacher}
-              >
-                {savingTeacher ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-              </button>
-              <button
-                type="button"
-                className="btn-outline px-2.5 py-1.5"
-                onClick={() => setEditingTeacher(false)}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <>
-              <p className="flex items-center gap-2 text-sm text-ksp-navy">
-                <UserCog className="h-4 w-4 text-ksp-blue-600" />
-                <span className="font-semibold">ครูพยาบาลผู้รับผิดชอบ:</span>{" "}
-                {sheet?.teacher || "—"}
-              </p>
-              {isAdmin && (
-                <button
-                  type="button"
-                  className="btn-outline self-start px-3 py-1.5 text-xs sm:self-auto"
-                  onClick={() => {
-                    setTeacherDraft(sheet?.teacher ?? "");
-                    setEditingTeacher(true);
-                  }}
-                >
-                  <Edit3 className="h-3.5 w-3.5" /> แก้ไขครู
+        {kind === "medication" && (
+          <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-3 py-2">
+            {editingTeacher ? (
+              <>
+                <UserCog className="h-4 w-4 shrink-0 text-ksp-blue-600" />
+                <input
+                  className="input min-w-[14rem] py-1.5 text-sm"
+                  value={teacherDraft}
+                  onChange={(e) => setTeacherDraft(e.target.value)}
+                  placeholder="ชื่อครูพยาบาล · เบอร์โทร"
+                  autoFocus
+                />
+                <button type="button" className="btn-primary px-2.5 py-1.5" onClick={saveTeacher} disabled={savingTeacher}>
+                  {savingTeacher ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
+                <button type="button" className="btn-outline px-2.5 py-1.5" onClick={() => setEditingTeacher(false)}>
+                  <X className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <UserCog className="h-4 w-4 shrink-0 text-ksp-blue-600" />
+                <span className="text-sm text-ksp-navy">
+                  <span className="font-semibold">ครูพยาบาลผู้รับผิดชอบ:</span> {sheet?.teacher || "—"}
+                </span>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="btn-outline px-2.5 py-1.5 text-xs"
+                    onClick={() => {
+                      setTeacherDraft(sheet?.teacher ?? "");
+                      setEditingTeacher(true);
+                    }}
+                  >
+                    <Edit3 className="h-3.5 w-3.5" /> แก้ไขครู
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="mb-3 flex flex-col gap-3 rounded-xl border border-ksp-blue-100 bg-white px-3 py-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1.5">
@@ -316,15 +291,15 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
         ) : (
           <div className="max-h-[calc(100vh-15rem)] overflow-auto">
             <table className="w-full border-collapse text-center text-xs">
-              <thead className="sticky top-0 z-10">
+              <thead>
                 <tr>
-                  <th className="sticky left-0 z-20 border-b border-r border-slate-200 bg-slate-100 px-3 py-2.5 text-center font-semibold text-ksp-navy">
+                  <th className="sticky left-0 top-0 z-30 border-b-2 border-r border-slate-300 bg-slate-200 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm">
                     ลำดับ
                   </th>
                   {sheet?.headers.map((header, index) => (
                     <th
                       key={`${header}-${index}`}
-                      className={`whitespace-nowrap border-b border-r border-slate-200 px-3 py-2.5 text-center font-semibold text-ksp-navy last:border-r-0 ${tintFor(index).head}`}
+                      className={`sticky top-0 z-20 whitespace-nowrap border-b-2 border-r border-slate-300 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm last:border-r-0 ${tintFor(index).head}`}
                     >
                       {header}
                     </th>

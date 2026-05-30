@@ -62,11 +62,8 @@ export default function Sidebar() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="border-b border-white/10 px-5 py-5">
-          <Brand variant="white" size="md" withTagline />
-          <p className="mt-2 whitespace-nowrap text-[11px] font-medium tracking-wide text-white/70">
-            ระบบบริหารเรือนพยาบาล
-          </p>
+        <div className="flex items-center justify-center border-b border-white/10 px-4 py-5">
+          <Brand variant="white" size="lg" />
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems

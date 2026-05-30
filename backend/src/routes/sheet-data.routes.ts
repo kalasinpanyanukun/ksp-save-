@@ -309,9 +309,21 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
         "ผู้ปกครอง": student.parentName ?? "",
         "เบอร์โทร": student.parentPhone ?? "",
       };
+      const extraNotes: string[] = [];
       for (const [key, value] of Object.entries(healthRecord)) {
         if (shouldSkipStoredKey(kind, key)) continue;
+        // คอลัมน์ไร้ชื่อ (เช่น "คอลัมน์ 38") ให้ยุบไปรวมที่หมายเหตุแทน
+        if (/^คอลัมน์\s*\d+$/.test(key)) {
+          const text = displayValue(value);
+          if (text) extraNotes.push(text);
+          continue;
+        }
         addRecordValue(record, key, value);
+      }
+      if (extraNotes.length) {
+        record["หมายเหตุ"] = [record["หมายเหตุ"], ...extraNotes]
+          .filter(Boolean)
+          .join(" · ");
       }
       records.push(record);
     } else {
