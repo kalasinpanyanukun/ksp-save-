@@ -439,10 +439,10 @@ function MedicationDetailSections({ data }: { data: Record<string, unknown> }) {
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-ksp-blue-50 text-ksp-blue-700">
           <Pill className="h-4 w-4" />
         </span>
-        รายละเอียดยาประจำตัวจากเรือนนอน
+        รายละเอียดยาประจำตัว
       </h3>
       {medicationRows.length === 0 ? (
-        <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลยาประจำตัวจากชีตต้นทาง</p>
+        <p className="text-sm text-ksp-gray">ยังไม่มีข้อมูลยาประจำตัว</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {medicationRows.map((row, index) => (

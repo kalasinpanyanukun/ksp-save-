@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   Plus,
@@ -45,6 +45,7 @@ export default function PatientListPage() {
   const role = useAppSelector((s) => s.auth.user?.role);
   const isAdmin = role === "super_admin" || role === "admin";
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [students, setStudents] = useState<Student[]>([]);
   const [total, setTotal] = useState(0);
@@ -240,18 +241,19 @@ export default function PatientListPage() {
               )}
               {!loading &&
                 students.map((s, index) => (
-                  <tr key={s.id}>
+                  <tr
+                    key={s.id}
+                    onClick={() => navigate(`/patients/${s.id}`)}
+                    className="cursor-pointer transition-colors hover:bg-ksp-blue-50/40"
+                  >
                     <td className="font-semibold text-ksp-gray">
                       {(page - 1) * pageSize + index + 1}
                     </td>
                     <td className="font-mono text-xs">{s.studentCode}</td>
                     <td>
-                      <Link
-                        to={`/patients/${s.id}`}
-                        className="font-medium text-ksp-blue-700 hover:underline"
-                      >
+                      <span className="font-medium text-ksp-blue-700">
                         {s.firstName} {s.lastName}
-                      </Link>
+                      </span>
                     </td>
                     <td>{s.classRoom ?? "-"}</td>
                     <td>{s.dormitory ?? "-"}</td>
@@ -278,7 +280,8 @@ export default function PatientListPage() {
                           <button
                             type="button"
                             className="btn-ghost px-2 py-1.5"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setEditing(s);
                               setFormOpen(true);
                             }}
@@ -289,7 +292,10 @@ export default function PatientListPage() {
                           <button
                             type="button"
                             className="btn-ghost px-2 py-1.5 text-rose-600 hover:bg-rose-50"
-                            onClick={() => setDeleting(s)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleting(s);
+                            }}
                             title="ลบข้อมูล"
                           >
                             <Trash2 className="h-4 w-4" />

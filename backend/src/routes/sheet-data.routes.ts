@@ -440,16 +440,31 @@ async function importHealthSheets() {
   return { created, updated, studentCodesByName };
 }
 
+function medValue(med: Record<string, string>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = clean(med[key]);
+    if (value && value !== "-") return value;
+  }
+  return "";
+}
+
 function medicationSummary(medications: Record<string, string>[]) {
   return medications
     .map((med) => {
-      const name = med["ข้อมูลยา ชื่อยา"] || med["ชื่อยา"] || "";
-      const strength = med["ข้อมูลยา ขนาดยา"] || med["ขนาดยา"] || "";
-      const morning = med["การรับประทาน เช้า"] || "";
-      const noon = med["การรับประทาน เที่ยง"] || "";
-      const evening = med["การรับประทาน เย็น"] || "";
-      const bedtime = med["การรับประทาน ก่อนนอน"] || "";
-      return [name, strength, morning, noon, evening, bedtime].filter(Boolean).join(" ");
+      const name = medValue(med, "ชื่อยา", "ข้อมูลยา ชื่อยา");
+      const strength = medValue(med, "ขนาดยา", "ข้อมูลยา ขนาดยา");
+      const schedule = [
+        ["เช้า", medValue(med, "เช้า", "การรับประทาน เช้า")],
+        ["เที่ยง", medValue(med, "เที่ยง", "การรับประทาน เที่ยง")],
+        ["เย็น", medValue(med, "เย็น", "การรับประทาน เย็น")],
+        ["ก่อนนอน", medValue(med, "ก่อนนอน", "การรับประทาน ก่อนนอน")],
+        ["นอกเวลา", medValue(med, "นอกเวลา", "การรับประทาน นอกเวลา")],
+      ]
+        .filter(([, value]) => value)
+        .map(([label, value]) => `${label} ${value}`)
+        .join(", ");
+      const head = [name, strength].filter(Boolean).join(" ");
+      return schedule ? `${head} (${schedule})` : head;
     })
     .filter(Boolean)
     .join("; ");
@@ -474,6 +489,39 @@ interface MedicationBlock {
   classRoom: string | null;
   phone: string | null;
   medications: Record<string, string>[];
+}
+
+function joinParts(...values: (string | undefined)[]) {
+  return values.map(clean).filter(Boolean).join(" ");
+}
+
+/**
+ * แปลงแถวจากชีตยา (อ้างอิงตำแหน่งคอลัมน์) เป็นรายการยา 1 รายการ
+ * คอลัมน์มื้อ (เช้า/เที่ยง/เย็น) แบ่งเป็น 2 ช่อง: มื้อ(ก่อน/หลังอาหาร) + จำนวน
+ */
+function buildMedicationEntry(cells: string[], dormName: string) {
+  const entry: Record<string, string> = {
+    "ชื่อยา": clean(cells[12]),
+    "ชื่อรอง": clean(cells[13]),
+    "ชนิดยา": clean(cells[14]),
+    "ขนาดยา": clean(cells[15]),
+    "จำนวน": joinParts(cells[16], cells[17]),
+    "โรงพยาบาล": clean(cells[9]),
+    "นัดถัดไป": clean(cells[10]),
+    "เช้า": joinParts(cells[18], cells[19]),
+    "เที่ยง": joinParts(cells[20], cells[21]),
+    "เย็น": joinParts(cells[22], cells[23]),
+    "ก่อนนอน": clean(cells[24]),
+    "นอกเวลา": clean(cells[25]),
+    "หมายเหตุ": clean(cells[28]),
+    "เรือนนอน": dormName,
+    "แหล่งข้อมูล": "ข้อมูลยาประจำตัวนักเรียน",
+  };
+  // ตัดช่องที่ว่างออกเพื่อให้ JSON สะอาด (เว้นชื่อยาไว้เสมอ)
+  for (const key of Object.keys(entry)) {
+    if (key !== "ชื่อยา" && !entry[key]) delete entry[key];
+  }
+  return entry;
 }
 
 async function importMedicationSheets(studentCodesByName: Map<string, string>) {
@@ -511,11 +559,7 @@ async function importMedicationSheets(studentCodesByName: Map<string, string>) {
       if (!current) continue;
       // นับเป็นรายการยาเฉพาะแถวที่มีชื่อยาจริง (กันแถวว่าง/แถวสูตรคำนวณ)
       if (!clean(item.cells[12])) continue;
-      current.medications.push({
-        ...item.record,
-        เรือนนอน: dormitory.name,
-        แหล่งข้อมูล: "ข้อมูลยาประจำตัวนักเรียน",
-      });
+      current.medications.push(buildMedicationEntry(item.cells, dormitory.name));
     }
 
     // กุญแจจับคู่กับนักเรียนจากชีตสุขภาพ (ชื่อปกติ + ชุดอักษร)
