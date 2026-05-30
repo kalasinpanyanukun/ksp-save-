@@ -175,6 +175,11 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
               <p className="text-xs text-ksp-gray">
                 {filteredRows.length.toLocaleString("th-TH")} รายการ
               </p>
+              {kind === "medication" && sheet?.teacher && (
+                <p className="mt-0.5 text-xs font-medium text-ksp-blue-700">
+                  ครูพยาบาลผู้รับผิดชอบ: {sheet.teacher}
+                </p>
+              )}
             </div>
           </div>
           {loading && <Loader2 className="h-5 w-5 animate-spin text-ksp-blue-500" />}

@@ -16,6 +16,7 @@ export interface SheetRow {
 
 export interface SheetDataResponse {
   dormitory: string;
+  teacher?: string;
   headers: string[];
   rows: SheetRow[];
   sourceUrl: string;
