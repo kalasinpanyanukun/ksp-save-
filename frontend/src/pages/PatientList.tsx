@@ -16,6 +16,7 @@ import Modal from "../components/common/Modal";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import PatientForm from "../components/patients/PatientForm";
 import PatientImport from "../components/patients/PatientImport";
+import PdfExportButton from "../components/common/PdfExportButton";
 import { useAppSelector } from "../store";
 import { useToast } from "../components/common/useToast";
 import {
@@ -144,8 +145,37 @@ export default function PatientListPage() {
         title="ข้อมูลนักเรียน"
         description={`ทั้งหมด ${total.toLocaleString("th-TH")} คน`}
         actions={
-          isAdmin && (
-            <>
+          <>
+            <PdfExportButton
+              getReport={() => ({
+                title: "รายงานข้อมูลนักเรียน",
+                subtitle: `ทั้งหมด ${total.toLocaleString("th-TH")} คน`,
+                orientation: "l",
+                fontSize: 13,
+                columns: [
+                  { header: "ลำดับ", weight: 0.5 },
+                  { header: "รหัส", weight: 1.2 },
+                  { header: "ชื่อ-นามสกุล", weight: 2 },
+                  { header: "ชั้นเรียน", weight: 0.9 },
+                  { header: "เรือนนอน", weight: 1 },
+                  { header: "สถานะ", weight: 1 },
+                  { header: "กรุ๊ปเลือด", weight: 0.8 },
+                  { header: "แพ้ยา", weight: 1.6 },
+                ],
+                rows: students.map((s, i) => [
+                  i + 1,
+                  s.studentCode,
+                  `${s.firstName} ${s.lastName}`,
+                  s.classRoom ?? "-",
+                  s.dormitory ?? "-",
+                  studentStatusLabel[s.studentStatus ?? "resident"],
+                  s.bloodType === "unknown" ? "-" : s.bloodType,
+                  s.drugAllergy || "-",
+                ]),
+              })}
+            />
+            {isAdmin && (
+              <>
               <button
                 type="button"
                 className="btn-outline"
@@ -163,8 +193,9 @@ export default function PatientListPage() {
               >
                 <Plus className="h-4 w-4" /> เพิ่มนักเรียน
               </button>
-            </>
-          )
+              </>
+            )}
+          </>
         }
       />
 

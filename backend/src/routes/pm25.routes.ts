@@ -82,6 +82,27 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put("/:id", async (req, res, next) => {
+  try {
+    const body = pm25Schema.parse(req.body);
+    const aqi = body.aqiLevel ?? aqiFromValue(body.pm25Value);
+    const record = await prisma.pm25Record.update({
+      where: { id: req.params.id },
+      data: {
+        recordDate: new Date(body.recordDate),
+        recordTime: body.recordTime,
+        pm25Value: new Prisma.Decimal(body.pm25Value),
+        aqiLevel: aqi,
+        notes: body.notes ?? null,
+      },
+      include: { recordedBy: { select: { fullName: true } } },
+    });
+    res.json({ record });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete("/:id", async (req, res, next) => {
   try {
     await prisma.pm25Record.delete({ where: { id: req.params.id } });

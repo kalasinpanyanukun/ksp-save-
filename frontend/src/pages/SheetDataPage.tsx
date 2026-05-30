@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
+import PdfExportButton from "../components/common/PdfExportButton";
 import PatientForm from "../components/patients/PatientForm";
 import StudentDetailBody from "../components/patients/StudentDetailBody";
 import { useToast } from "../components/common/useToast";
@@ -207,6 +208,25 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             </p>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <PdfExportButton
+          getReport={() => ({
+            title: kind === "health" ? "รายงานข้อมูลสุขภาพนักเรียน" : "รายงานข้อมูลยาประจำตัวนักเรียน",
+            subtitle: `เรือนนอน${sheet?.dormitory ?? activeDormitory} · ${filteredRows.length} รายการ${
+              kind === "medication" && sheet?.teacher ? ` · ครูพยาบาล: ${sheet.teacher}` : ""
+            }`,
+            orientation: "l",
+            fontSize: 10,
+            columns: [
+              { header: "ลำดับ", weight: 0.5 },
+              ...(sheet?.headers ?? []).map((h) => ({
+                header: h,
+                weight: h === "รายการยา" || h.includes("ที่อยู่") ? 2.4 : 1,
+              })),
+            ],
+            rows: filteredRows.map((row) => [row.rowNumber, ...(sheet?.headers ?? []).map((_, i) => row.cells[i] ?? "-")]),
+          })}
+        />
         {kind === "medication" && (
           <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-3 py-2">
             {editingTeacher ? (
@@ -248,6 +268,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             )}
           </div>
         )}
+        </div>
       </div>
 
       <div className="mb-3 flex flex-col gap-3 rounded-xl border border-ksp-blue-100 bg-white px-3 py-3 lg:flex-row lg:items-center lg:justify-between">

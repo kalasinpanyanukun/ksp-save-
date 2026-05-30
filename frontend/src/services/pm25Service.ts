@@ -20,6 +20,14 @@ export async function createPm25(payload: Pm25Input): Promise<Pm25Record> {
   return data.record;
 }
 
+export async function updatePm25(
+  id: string,
+  payload: Pm25Input,
+): Promise<Pm25Record> {
+  const { data } = await api.put<{ record: Pm25Record }>(`/pm25/${id}`, payload);
+  return data.record;
+}
+
 export async function deletePm25(id: string): Promise<void> {
   await api.delete(`/pm25/${id}`);
 }

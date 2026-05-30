@@ -14,6 +14,7 @@ import {
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
+import PdfExportButton from "../components/common/PdfExportButton";
 import { useAppSelector } from "../store";
 import { useToast } from "../components/common/useToast";
 import {
@@ -161,8 +162,37 @@ export default function MedicationStockPage() {
         title="คลังยา / เวชภัณฑ์"
         description={`ทั้งหมด ${items.length} รายการ · stock ต่ำ ${lowStockCount} รายการ`}
         actions={
-          isAdmin && (
-            <>
+          <>
+            <PdfExportButton
+              getReport={() => ({
+                title: "รายงานคลังยา / เวชภัณฑ์",
+                subtitle: `ทั้งหมด ${items.length} รายการ`,
+                orientation: "l",
+                fontSize: 12,
+                columns: [
+                  { header: "รหัส", weight: 1.2 },
+                  { header: "ชื่อยา", weight: 2.2 },
+                  { header: "ที่มาของยา", weight: 1.4 },
+                  { header: "ประเภท", weight: 0.9 },
+                  { header: "หน่วย", weight: 0.8 },
+                  { header: "คงเหลือ", weight: 0.8 },
+                  { header: "ขั้นต่ำ", weight: 0.8 },
+                  { header: "สถานะ", weight: 1.2 },
+                ],
+                rows: items.map((m) => [
+                  m.drugCode,
+                  m.drugName,
+                  m.source,
+                  m.category === "supply" ? "มิใช่ยา" : "ยา",
+                  m.unit ?? "-",
+                  m.entryStatus === "entered" ? m.stockQty : "-",
+                  m.entryStatus === "entered" ? m.minStock : "-",
+                  m.entryStatus === "entered" ? "ลงข้อมูลแล้ว" : "ยังไม่ได้ลงข้อมูล",
+                ]),
+              })}
+            />
+            {isAdmin && (
+              <>
               <button
                 type="button"
                 className="btn-outline"
@@ -186,8 +216,9 @@ export default function MedicationStockPage() {
               >
                 <Plus className="h-4 w-4" /> เพิ่มยา
               </button>
-            </>
-          )
+              </>
+            )}
+          </>
         }
       />
 

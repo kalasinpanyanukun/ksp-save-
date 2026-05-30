@@ -4,6 +4,8 @@ import {
   Plus,
   Loader2,
   AlertTriangle,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -18,8 +20,16 @@ import {
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import PdfExportButton from "../components/common/PdfExportButton";
 import { useToast } from "../components/common/useToast";
-import { createPm25, listPm25, type Pm25Input } from "../services/pm25Service";
+import {
+  createPm25,
+  deletePm25,
+  listPm25,
+  updatePm25,
+  type Pm25Input,
+} from "../services/pm25Service";
 import type { AqiLevel, Pm25Record } from "../types";
 import { chartPalette } from "../theme/colors";
 
@@ -62,6 +72,8 @@ export default function PM25Page() {
   const [records, setRecords] = useState<Pm25Record[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Pm25Record | null>(null);
+  const [deleting, setDeleting] = useState<Pm25Record | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -103,13 +115,41 @@ export default function PM25Page() {
         title="PM 2.5"
         description="บันทึกและติดตามค่าฝุ่นละอองรายวัน (30 วันล่าสุด)"
         actions={
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => setOpen(true)}
-          >
-            <Plus className="h-4 w-4" /> บันทึกค่าใหม่
-          </button>
+          <>
+            <PdfExportButton
+              getReport={() => ({
+                title: "รายงานค่าฝุ่น PM 2.5",
+                subtitle: "ข้อมูล 30 วันล่าสุด",
+                fontSize: 14,
+                columns: [
+                  { header: "วันที่", weight: 1.2 },
+                  { header: "เวลา", weight: 0.8 },
+                  { header: "ค่า PM2.5", weight: 1 },
+                  { header: "ระดับ AQI", weight: 1.6 },
+                  { header: "หมายเหตุ", weight: 2 },
+                  { header: "ผู้บันทึก", weight: 1.4 },
+                ],
+                rows: records.map((r) => [
+                  new Date(r.recordDate).toLocaleDateString("th-TH"),
+                  r.recordTime,
+                  Number(r.pm25Value).toFixed(2),
+                  aqiInfo[r.aqiLevel].label,
+                  r.notes ?? "-",
+                  r.recordedBy?.fullName ?? "-",
+                ]),
+              })}
+            />
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => {
+                setEditing(null);
+                setOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> บันทึกค่าใหม่
+            </button>
+          </>
         }
       />
 
@@ -187,12 +227,13 @@ export default function PM25Page() {
                 <th>ระดับ AQI</th>
                 <th>หมายเหตุ</th>
                 <th>ผู้บันทึก</th>
+                <th className="text-right">การจัดการ</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={6} className="text-center py-6">
+                  <td colSpan={7} className="text-center py-6">
                     <Loader2 className="inline h-5 w-5 animate-spin text-ksp-blue-500" />
                   </td>
                 </tr>
@@ -211,6 +252,29 @@ export default function PM25Page() {
                       <td className="max-w-[24ch] truncate">{r.notes ?? "-"}</td>
                       <td className="text-xs text-ksp-gray">
                         {r.recordedBy?.fullName ?? "-"}
+                      </td>
+                      <td className="text-right">
+                        <div className="inline-flex gap-1">
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-1.5"
+                            onClick={() => {
+                              setEditing(r);
+                              setOpen(true);
+                            }}
+                            title="แก้ไข"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-1.5 text-rose-600 hover:bg-rose-50"
+                            onClick={() => setDeleting(r)}
+                            title="ลบ"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -231,17 +295,26 @@ export default function PM25Page() {
 
       <Modal
         open={open}
-        onClose={() => setOpen(false)}
-        title="บันทึกค่า PM 2.5"
+        onClose={() => {
+          setOpen(false);
+          setEditing(null);
+        }}
+        title={editing ? "แก้ไขค่า PM 2.5" : "บันทึกค่า PM 2.5"}
         size="md"
       >
         <PM25Form
-          onCancel={() => setOpen(false)}
+          initial={editing}
+          onCancel={() => {
+            setOpen(false);
+            setEditing(null);
+          }}
           onSubmit={async (payload) => {
             try {
-              await createPm25(payload);
-              toast("บันทึกค่า PM 2.5 เรียบร้อย", "success");
+              if (editing) await updatePm25(editing.id, payload);
+              else await createPm25(payload);
+              toast(editing ? "แก้ไขค่า PM 2.5 เรียบร้อย" : "บันทึกค่า PM 2.5 เรียบร้อย", "success");
               setOpen(false);
+              setEditing(null);
               await load();
             } catch (err) {
               const m =
@@ -252,21 +325,49 @@ export default function PM25Page() {
           }}
         />
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(deleting)}
+        title="ยืนยันการลบ"
+        message={`ต้องการลบบันทึก PM 2.5 วันที่ ${deleting ? new Date(deleting.recordDate).toLocaleDateString("th-TH") : ""} เวลา ${deleting?.recordTime ?? ""}?`}
+        danger
+        confirmLabel="ลบ"
+        onConfirm={async () => {
+          if (!deleting) return;
+          try {
+            await deletePm25(deleting.id);
+            toast("ลบเรียบร้อย", "success");
+            await load();
+          } catch {
+            toast("ลบไม่สำเร็จ", "error");
+          } finally {
+            setDeleting(null);
+          }
+        }}
+        onClose={() => setDeleting(null)}
+      />
     </>
   );
 }
 
+function isoDate(value: string) {
+  const d = new Date(value);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function PM25Form({
+  initial,
   onSubmit,
   onCancel,
 }: {
+  initial?: Pm25Record | null;
   onSubmit: (payload: Pm25Input) => Promise<void> | void;
   onCancel: () => void;
 }) {
-  const [recordDate, setRecordDate] = useState(todayDate());
-  const [recordTime, setRecordTime] = useState(nowTime());
-  const [pm25Value, setPm25Value] = useState<number>(0);
-  const [notes, setNotes] = useState("");
+  const [recordDate, setRecordDate] = useState(initial ? isoDate(initial.recordDate) : todayDate());
+  const [recordTime, setRecordTime] = useState(initial?.recordTime ?? nowTime());
+  const [pm25Value, setPm25Value] = useState<number>(initial ? Number(initial.pm25Value) : 0);
+  const [notes, setNotes] = useState(initial?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
 
   async function handle(e: FormEvent) {
