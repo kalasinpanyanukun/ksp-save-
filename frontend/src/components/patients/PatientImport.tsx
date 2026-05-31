@@ -79,6 +79,16 @@ function parseRows(rows: Record<string, unknown>[]): StudentInput[] {
       if (!studentCode || !firstName || !lastName) return null;
       const parentName = pick(row, FIELD_ALIASES.parentName) ?? null;
       const parentPhone = pick(row, FIELD_ALIASES.parentPhone) ?? null;
+      const healthExtra = {
+        idCard: pick(row, ["เลขบัตรประชาชน", "idCard"]),
+        disabilityType: pick(row, ["ประเภทความพิการ", "ความพิการ", "disabilityType"]),
+        ageType: pick(row, ["เด็กเก่า/ใหม่", "เด็กเก่าใหม่", "ageType"]),
+        address: pick(row, ["ที่อยู่", "address"]),
+        weight: pick(row, ["น้ำหนัก", "weight"]),
+        height: pick(row, ["ส่วนสูง", "height"]),
+        healthRight: pick(row, ["สิทธิ", "สิทธิการรักษา", "healthRight"]),
+      };
+      const hasHealthExtra = Object.values(healthExtra).some(Boolean);
       const item: StudentInput = {
         studentCode,
         firstName,
@@ -96,6 +106,7 @@ function parseRows(rows: Record<string, unknown>[]): StudentInput[] {
         parentPhone,
         guardians: parentName || parentPhone ? [{ name: parentName ?? "", phone: parentPhone ?? "" }] : [],
         studentStatus: normalizeStudentStatus(pick(row, FIELD_ALIASES.studentStatus)),
+        ...(hasHealthExtra ? { healthExtra } : {}),
       };
       return item;
     })

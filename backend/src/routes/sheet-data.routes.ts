@@ -490,6 +490,7 @@ async function importHealthSheets() {
       const data = {
         firstName,
         lastName,
+        nickname: clean(item.cells[2]) || null,
         classRoom: classRoomFromHealth(item.cells),
         dormitory: dormitory.name,
         homeroomTeacher: null,

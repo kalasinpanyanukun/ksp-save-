@@ -37,6 +37,10 @@ const healthExtraSchema = z.object({
   vaccineBasic: z.string().trim().max(60).optional(),
   vaccineFlu: z.string().trim().max(60).optional(),
   vaccineCovid: z.string().trim().max(60).optional(),
+  disabilityType: z.string().trim().max(100).optional(),
+  ageType: z.string().trim().max(20).optional(),
+  idCard: z.string().trim().max(30).optional(),
+  address: z.string().trim().max(300).optional(),
 });
 type HealthExtraInput = z.infer<typeof healthExtraSchema>;
 
@@ -104,6 +108,10 @@ function mergeHealthExtra(
   set("ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", extra.vaccineBasic);
   set("ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", extra.vaccineFlu);
   set("ฉีดวัคซีน ป้องกันโควิค (ปี)", extra.vaccineCovid);
+  set("ประเภท ความพิการ", extra.disabilityType);
+  set("เด็กเก่า/ใหม่", extra.ageType);
+  set("เลขบัตรประชาชน", extra.idCard);
+  set("ที่อยู่", extra.address);
   // ให้เมนูสุขภาพมองเห็นว่ามาจากชีตสุขภาพ
   if (!data["แหล่งข้อมูล"]) data["แหล่งข้อมูล"] = "ข้อมูลสุขภาพนักเรียน";
   return data as Prisma.InputJsonObject;

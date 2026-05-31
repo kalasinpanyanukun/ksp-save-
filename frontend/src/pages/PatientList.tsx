@@ -53,6 +53,22 @@ function healthField(s: Student, ...keys: string[]) {
   return "";
 }
 
+// ข้อมูลชุดเดียวกัน: ใช้คอลัมน์ Student ก่อน ถ้าไม่มีค่อย fallback ไป healthData ของชีต
+function nicknameOf(s: Student) {
+  return s.nickname || healthField(s, "ชื่อเล่น");
+}
+function disabilityOf(s: Student) {
+  return healthField(s, "ประเภท ความพิการ", "ประเภท");
+}
+function ageTypeOf(s: Student) {
+  return healthField(s, "เด็กเก่า/ใหม่");
+}
+function disabilityCodes(s: Student): string[] {
+  return disabilityOf(s).match(/\d+/g) ?? [];
+}
+
+const DISABILITY_TYPES = ["1", "2", "3", "4", "5", "6", "7"];
+
 export default function PatientListPage() {
   const role = useAppSelector((s) => s.auth.user?.role);
   const isAdmin = role === "super_admin" || role === "admin";
@@ -68,7 +84,8 @@ export default function PatientListPage() {
   const [classFilter, setClassFilter] = useState("");
   const [dormFilter, setDormFilter] = useState("");
   const [ageFilter, setAgeFilter] = useState("");
-  const [disabilityFilter, setDisabilityFilter] = useState("");
+  const [disability1, setDisability1] = useState("");
+  const [disability2, setDisability2] = useState("");
   const [classrooms, setClassrooms] = useState<string[]>([]);
   const [dormitories, setDormitories] = useState<string[]>([]);
 
@@ -147,24 +164,18 @@ export default function PatientListPage() {
     }
   }
 
-  const disabilityOptions = useMemo(() => {
-    const set = new Set<string>();
-    students.forEach((s) => {
-      const v = healthField(s, "ประเภท ความพิการ", "ประเภท");
-      if (v) set.add(v);
-    });
-    return [...set].sort();
-  }, [students]);
-
   const filteredStudents = useMemo(
     () =>
       students.filter((s) => {
-        if (ageFilter && healthField(s, "เด็กเก่า/ใหม่") !== ageFilter) return false;
-        if (disabilityFilter && healthField(s, "ประเภท ความพิการ", "ประเภท") !== disabilityFilter)
-          return false;
+        if (ageFilter && ageTypeOf(s) !== ageFilter) return false;
+        if (disability1 || disability2) {
+          const codes = disabilityCodes(s);
+          if (disability1 && !codes.includes(disability1)) return false;
+          if (disability2 && !codes.includes(disability2)) return false;
+        }
         return true;
       }),
-    [students, ageFilter, disabilityFilter],
+    [students, ageFilter, disability1, disability2],
   );
 
   return (
@@ -177,28 +188,30 @@ export default function PatientListPage() {
             <PdfExportButton
               getReport={() => ({
                 title: "รายงานข้อมูลนักเรียน",
-                subtitle: `ทั้งหมด ${total.toLocaleString("th-TH")} คน`,
+                subtitle: `แสดง ${filteredStudents.length} จากทั้งหมด ${total.toLocaleString("th-TH")} คน`,
                 orientation: "l",
                 fontSize: 13,
                 columns: [
-                  { header: "ลำดับ", weight: 0.5 },
-                  { header: "รหัส", weight: 1.2 },
-                  { header: "ชื่อ-นามสกุล", weight: 2 },
-                  { header: "ชั้นเรียน", weight: 0.9 },
+                  { header: "ลำดับ", weight: 0.4 },
+                  { header: "รหัส", weight: 1.3 },
+                  { header: "ชื่อ-สกุล", weight: 1.8 },
+                  { header: "ชื่อเล่น", weight: 0.9 },
+                  { header: "ประเภทความพิการ", weight: 1.4 },
+                  { header: "ชั้นเรียน", weight: 0.8 },
                   { header: "เรือนนอน", weight: 1 },
                   { header: "สถานะ", weight: 1 },
-                  { header: "กรุ๊ปเลือด", weight: 0.8 },
-                  { header: "แพ้ยา", weight: 1.6 },
+                  { header: "เด็กเก่า/ใหม่", weight: 0.8 },
                 ],
-                rows: students.map((s, i) => [
+                rows: filteredStudents.map((s, i) => [
                   i + 1,
                   s.studentCode,
                   `${s.firstName} ${s.lastName}`,
+                  nicknameOf(s) || "-",
+                  disabilityOf(s) || "-",
                   s.classRoom ?? "-",
                   s.dormitory ?? "-",
                   studentStatusLabel[s.studentStatus ?? "resident"],
-                  s.bloodType === "unknown" ? "-" : s.bloodType,
-                  s.drugAllergy || "-",
+                  ageTypeOf(s) || "-",
                 ]),
               })}
             />
@@ -228,8 +241,8 @@ export default function PatientListPage() {
       />
 
       <div className="card-pad mb-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
-          <div className="relative md:col-span-1">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="relative sm:col-span-2 lg:col-span-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ksp-gray" />
             <input
               className="input pl-9"
@@ -276,14 +289,16 @@ export default function PatientListPage() {
             <option value="เก่า">เก่า</option>
             <option value="ใหม่">ใหม่</option>
           </select>
-          <select
-            className="input"
-            value={disabilityFilter}
-            onChange={(e) => setDisabilityFilter(e.target.value)}
-          >
-            <option value="">ประเภทความพิการ (ทั้งหมด)</option>
-            {disabilityOptions.map((d) => (
-              <option key={d} value={d}>{d}</option>
+          <select className="input" value={disability1} onChange={(e) => setDisability1(e.target.value)}>
+            <option value="">ความพิการประเภทที่ 1</option>
+            {DISABILITY_TYPES.map((d) => (
+              <option key={d} value={d}>ประเภท {d}</option>
+            ))}
+          </select>
+          <select className="input" value={disability2} onChange={(e) => setDisability2(e.target.value)}>
+            <option value="">ความพิการประเภทที่ 2</option>
+            {DISABILITY_TYPES.map((d) => (
+              <option key={d} value={d}>ประเภท {d}</option>
             ))}
           </select>
         </div>
@@ -328,8 +343,8 @@ export default function PatientListPage() {
                         {s.firstName} {s.lastName}
                       </span>
                     </td>
-                    <td>{s.nickname || "-"}</td>
-                    <td>{healthField(s, "ประเภท ความพิการ", "ประเภท") || "-"}</td>
+                    <td>{nicknameOf(s) || "-"}</td>
+                    <td>{disabilityOf(s) || "-"}</td>
                     <td>{s.classRoom ?? "-"}</td>
                     <td>{s.dormitory ?? "-"}</td>
                     <td>
@@ -339,7 +354,23 @@ export default function PatientListPage() {
                         {studentStatusLabel[s.studentStatus ?? "resident"]}
                       </span>
                     </td>
-                    <td>{healthField(s, "เด็กเก่า/ใหม่") || "-"}</td>
+                    <td>
+                      {(() => {
+                        const a = ageTypeOf(s);
+                        if (!a) return <span className="text-ksp-gray">-</span>;
+                        return (
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
+                              a === "ใหม่"
+                                ? "bg-sky-50 text-sky-700 ring-sky-100"
+                                : "bg-amber-50 text-amber-700 ring-amber-100"
+                            }`}
+                          >
+                            {a}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="text-right">
                       {isAdmin && (
                         <div className="inline-flex gap-1">

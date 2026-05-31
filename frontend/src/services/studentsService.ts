@@ -23,6 +23,10 @@ export interface HealthExtraInput {
   vaccineBasic?: string;
   vaccineFlu?: string;
   vaccineCovid?: string;
+  disabilityType?: string;
+  ageType?: string;
+  idCard?: string;
+  address?: string;
 }
 
 export interface StudentInput {

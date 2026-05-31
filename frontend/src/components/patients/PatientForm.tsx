@@ -196,6 +196,10 @@ function healthExtraFromInitial(initial?: Partial<Student>): HealthExtraInput {
     vaccineBasic: pickHealth(d, "ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", "ได้รับวัคซีนพื้นฐาน(สมุดชมพู)"),
     vaccineFlu: pickHealth(d, "ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", "ป้องกันไข้หวัดใหญ่ (ปี)"),
     vaccineCovid: pickHealth(d, "ฉีดวัคซีน ป้องกันโควิค (ปี)", "ป้องกันโควิค (ปี)"),
+    disabilityType: pickHealth(d, "ประเภท ความพิการ", "ประเภท"),
+    ageType: pickHealth(d, "เด็กเก่า/ใหม่"),
+    idCard: pickHealth(d, "เลขบัตรประชาชน"),
+    address: pickHealth(d, "ที่อยู่"),
   };
 }
 
@@ -337,6 +341,22 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
             <label className="label">ชื่อเล่น</label>
             <input className="input" value={form.nickname ?? ""} onChange={(e) => update("nickname", e.target.value)} />
           </div>
+          <div>
+            <label className="label">เลขบัตรประชาชน</label>
+            <input className="input" value={health.idCard ?? ""} onChange={(e) => updateHealth("idCard", e.target.value)} />
+          </div>
+          <div>
+            <label className="label">ประเภทความพิการ</label>
+            <input className="input" value={health.disabilityType ?? ""} onChange={(e) => updateHealth("disabilityType", e.target.value)} placeholder="เช่น 7 (ออทิสติก) หรือ 2,5" />
+          </div>
+          <div>
+            <label className="label">เด็กเก่า/ใหม่</label>
+            <select className="input" value={health.ageType ?? ""} onChange={(e) => updateHealth("ageType", e.target.value)}>
+              <option value="">ไม่ระบุ</option>
+              <option value="เก่า">เก่า</option>
+              <option value="ใหม่">ใหม่</option>
+            </select>
+          </div>
         </div>
 
         <div className="mt-4 rounded-xl border border-slate-100 bg-ksp-bg/40 p-3">
@@ -361,6 +381,10 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
               ))}
             </div>
           )}
+          <div className="mt-3">
+            <label className="label">ที่อยู่</label>
+            <textarea className="input min-h-[56px]" value={health.address ?? ""} onChange={(e) => updateHealth("address", e.target.value)} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
+          </div>
         </div>
       </section>
 

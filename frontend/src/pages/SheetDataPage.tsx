@@ -210,22 +210,35 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
         <PdfExportButton
-          getReport={() => ({
-            title: kind === "health" ? "รายงานข้อมูลสุขภาพนักเรียน" : "รายงานข้อมูลยาประจำตัวนักเรียน",
-            subtitle: `เรือนนอน${sheet?.dormitory ?? activeDormitory} · ${filteredRows.length} รายการ${
-              kind === "medication" && sheet?.teacher ? ` · ครูพยาบาล: ${sheet.teacher}` : ""
-            }`,
-            orientation: "l",
-            fontSize: 10,
-            columns: [
-              { header: "ลำดับ", weight: 0.5 },
-              ...(sheet?.headers ?? []).map((h) => ({
-                header: h,
-                weight: h === "รายการยา" || h.includes("ที่อยู่") ? 2.4 : 1,
-              })),
-            ],
-            rows: filteredRows.map((row) => [row.rowNumber, ...(sheet?.headers ?? []).map((_, i) => row.cells[i] ?? "-")]),
-          })}
+          getReport={() => {
+            const headers = sheet?.headers ?? [];
+            // เลือกเฉพาะคอลัมน์สำคัญ (กันตารางล้นหน้า PDF)
+            const wanted =
+              kind === "health"
+                ? ["รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชื่อเล่น", "ชั้นเรียน", "เรือนนอน", "ประเภท", "เด็กเก่า/ใหม่", "โรคประจำตัว", "ยาประจำตัว", "แพ้ยา"]
+                : ["รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชั้นเรียน", "เรือนนอน", "จำนวนชนิดยา", "รายการยา"];
+            const chosen: { idx: number; header: string }[] = [];
+            wanted.forEach((w) => {
+              const idx = headers.findIndex((h) => h.includes(w));
+              if (idx >= 0 && !chosen.some((c) => c.idx === idx)) chosen.push({ idx, header: headers[idx]! });
+            });
+            return {
+              title: kind === "health" ? "รายงานข้อมูลสุขภาพนักเรียน" : "รายงานข้อมูลยาประจำตัวนักเรียน",
+              subtitle: `เรือนนอน${sheet?.dormitory ?? activeDormitory} · ${filteredRows.length} รายการ${
+                kind === "medication" && sheet?.teacher ? ` · ครูพยาบาล: ${sheet.teacher}` : ""
+              }`,
+              orientation: "l" as const,
+              fontSize: 12,
+              columns: [
+                { header: "ลำดับ", weight: 0.4 },
+                ...chosen.map((c) => ({
+                  header: c.header,
+                  weight: c.header.includes("รายการยา") || c.header.includes("ที่อยู่") ? 2.6 : 1,
+                })),
+              ],
+              rows: filteredRows.map((row) => [row.rowNumber, ...chosen.map((c) => row.cells[c.idx] ?? "-")]),
+            };
+          }}
         />
         {kind === "medication" && (
           <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-3 py-2">
