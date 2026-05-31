@@ -3,19 +3,19 @@ import {
   HeartPulse,
   Loader2,
   Pill,
-  Search,
   Edit3,
   UserCog,
   Check,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
 import PdfExportButton from "../components/common/PdfExportButton";
 import PatientForm from "../components/patients/PatientForm";
-import StudentDetailBody from "../components/patients/StudentDetailBody";
 import { useToast } from "../components/common/useToast";
 import { useAppSelector } from "../store";
+import { useTopbarSearch } from "../components/layout/TopbarSearchContext";
 import {
   getSheetData,
   listSheetDormitories,
@@ -82,6 +82,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
   };
   const Icon = copy.icon;
   const toast = useToast();
+  const navigate = useNavigate();
   const role = useAppSelector((s) => s.auth.user?.role);
   const isAdmin = role === "super_admin" || role === "admin";
   const [dormitories, setDormitories] = useState<DormitoryOption[]>([]);
@@ -97,6 +98,15 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
   const [editingTeacher, setEditingTeacher] = useState(false);
   const [teacherDraft, setTeacherDraft] = useState("");
   const [savingTeacher, setSavingTeacher] = useState(false);
+  const topbarSearch = useMemo(
+    () => ({
+      placeholder: "ค้นหาในตาราง",
+      value: q,
+      onChange: setQ,
+    }),
+    [q],
+  );
+  useTopbarSearch(topbarSearch);
 
   useEffect(() => {
     listSheetDormitories()
@@ -209,37 +219,6 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-        <PdfExportButton
-          getReport={() => {
-            const headers = sheet?.headers ?? [];
-            // เลือกเฉพาะคอลัมน์สำคัญ (กันตารางล้นหน้า PDF)
-            const wanted =
-              kind === "health"
-                ? ["รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชื่อเล่น", "ชั้นเรียน", "เรือนนอน", "ประเภท", "เด็กเก่า/ใหม่", "โรคประจำตัว", "ยาประจำตัว", "แพ้ยา"]
-                : ["รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชั้นเรียน", "เรือนนอน", "จำนวนชนิดยา", "รายการยา"];
-            const chosen: { idx: number; header: string }[] = [];
-            wanted.forEach((w) => {
-              const idx = headers.findIndex((h) => h.includes(w));
-              if (idx >= 0 && !chosen.some((c) => c.idx === idx)) chosen.push({ idx, header: headers[idx]! });
-            });
-            return {
-              title: kind === "health" ? "รายงานข้อมูลสุขภาพนักเรียน" : "รายงานข้อมูลยาประจำตัวนักเรียน",
-              subtitle: `เรือนนอน${sheet?.dormitory ?? activeDormitory} · ${filteredRows.length} รายการ${
-                kind === "medication" && sheet?.teacher ? ` · ครูพยาบาล: ${sheet.teacher}` : ""
-              }`,
-              orientation: "l" as const,
-              fontSize: 12,
-              columns: [
-                { header: "ลำดับ", weight: 0.4 },
-                ...chosen.map((c) => ({
-                  header: c.header,
-                  weight: c.header.includes("รายการยา") || c.header.includes("ที่อยู่") ? 2.6 : 1,
-                })),
-              ],
-              rows: filteredRows.map((row) => [row.rowNumber, ...chosen.map((c) => row.cells[c.idx] ?? "-")]),
-            };
-          }}
-        />
         {kind === "medication" && (
           <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-3 py-2">
             {editingTeacher ? (
@@ -281,34 +260,56 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             )}
           </div>
         )}
+        <PdfExportButton
+          getReport={() => {
+            const headers = sheet?.headers ?? [];
+            // เลือกเฉพาะคอลัมน์สำคัญ (กันตารางล้นหน้า PDF)
+            const wanted =
+              kind === "health"
+                ? ["รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชื่อเล่น", "ชั้นเรียน", "เรือนนอน", "ประเภท", "เด็กเก่า/ใหม่", "โรคประจำตัว", "ยาประจำตัว", "แพ้ยา"]
+                : ["รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชั้นเรียน", "เรือนนอน", "จำนวนชนิดยา", "รายการยา"];
+            const chosen: { idx: number; header: string }[] = [];
+            wanted.forEach((w) => {
+              const idx = headers.findIndex((h) => h.includes(w));
+              if (idx >= 0 && !chosen.some((c) => c.idx === idx)) chosen.push({ idx, header: headers[idx]! });
+            });
+            return {
+              title: kind === "health" ? "รายงานข้อมูลสุขภาพนักเรียน" : "รายงานข้อมูลยาประจำตัวนักเรียน",
+              subtitle: `เรือนนอน${sheet?.dormitory ?? activeDormitory} · ${filteredRows.length} รายการ${
+                kind === "medication" && sheet?.teacher ? ` · ครูพยาบาล: ${sheet.teacher}` : ""
+              }`,
+              orientation: "l" as const,
+              fontSize: 12,
+              columns: [
+                { header: "ลำดับ", weight: 0.4 },
+                ...chosen.map((c) => ({
+                  header: c.header,
+                  weight: c.header.includes("รายการยา") || c.header.includes("ที่อยู่") ? 2.6 : 1,
+                })),
+              ],
+              rows: filteredRows.map((row) => [row.rowNumber, ...chosen.map((c) => row.cells[c.idx] ?? "-")]),
+            };
+          }}
+        />
         </div>
       </div>
 
-      <div className="mb-3 flex flex-col gap-3 rounded-xl border border-ksp-blue-100 bg-white px-3 py-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-1.5">
+      <div className="mb-3 rounded-xl border border-ksp-blue-100 bg-white px-3 py-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-11">
           {dormitories.map((item) => (
             <button
               key={item.key}
               type="button"
               className={
                 activeDormitory === item.name
-                  ? "rounded-lg border border-ksp-blue-600 bg-ksp-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm"
-                  : "rounded-lg border border-ksp-blue-200 bg-white px-3 py-2 text-xs font-semibold text-ksp-blue-700 hover:bg-ksp-blue-50"
+                  ? "min-h-11 rounded-lg border border-ksp-blue-600 bg-ksp-blue-600 px-2 py-2 text-center text-xs font-semibold text-white shadow-sm"
+                  : "min-h-11 rounded-lg border border-ksp-blue-200 bg-white px-2 py-2 text-center text-xs font-semibold text-ksp-blue-700 hover:bg-ksp-blue-50"
               }
               onClick={() => setActiveDormitory(item.name)}
             >
               {item.name}
             </button>
           ))}
-        </div>
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ksp-gray" />
-          <input
-            className="input pl-9"
-            placeholder="ค้นหาในตาราง"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
         </div>
       </div>
 
@@ -390,7 +391,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
         )}
       </section>
 
-      <Modal open={Boolean(selectedRow)} onClose={closeDetail} title="รายละเอียดนักเรียน" size="xl">
+      <Modal open={Boolean(selectedRow)} onClose={closeDetail} title={kind === "medication" ? "ข้อมูลยาประจำตัวนักเรียน" : "ข้อมูลสุขภาพนักเรียน"} size="xl">
         {detailLoading ? (
           <div className="grid min-h-48 place-items-center">
             <Loader2 className="h-7 w-7 animate-spin text-ksp-blue-600" />
@@ -410,13 +411,28 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
                   {(selectedStudent?.dormitory ?? rowValue(selectedRow, "เรือนนอน"))}
                 </p>
               </div>
+            </div>
+            {kind === "medication" ? (
+              <MedicationDetailOnly row={selectedRow} />
+            ) : (
+              <SheetRowDetail row={selectedRow} />
+            )}
+            <div className="flex flex-wrap justify-end gap-2 border-t border-ksp-blue-50 pt-3">
               {isAdmin && selectedStudent && (
-                <button type="button" className="btn-primary self-start px-3 py-2 sm:self-auto" onClick={() => setEditOpen(true)}>
+                <button type="button" className="btn-outline" onClick={() => setEditOpen(true)}>
                   <Edit3 className="h-4 w-4" /> แก้ไขข้อมูล
                 </button>
               )}
+              {selectedStudent && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => navigate(`/patients/${selectedStudent.id}`)}
+                >
+                  ดูข้อมูลเพิ่มเติม
+                </button>
+              )}
             </div>
-            {selectedStudent && <StudentDetailBody student={selectedStudent} showStatusBadge />}
           </div>
         ) : null}
       </Modal>
@@ -496,24 +512,39 @@ function MedicationScheduleTable({
         <tbody>
           {rows.map((row) => {
             const meds = row.medications ?? [];
-            const stack = (render: (m: Record<string, string>, i: number) => ReactNode) => (
+            const stack = (
+              render: (m: Record<string, string>, i: number) => ReactNode,
+              tone?: (m: Record<string, string>) => string,
+            ) => (
               <div className="flex flex-col">
                 {(meds.length ? meds : [{}]).map((m, i) => (
                   <div
                     key={i}
-                    className="flex min-h-[2.1rem] items-center justify-center border-b border-slate-100 px-1 py-1 last:border-b-0"
+                    className={`flex min-h-[2.1rem] items-center justify-center border-b border-slate-100 px-1 py-1 last:border-b-0 ${
+                      tone?.(m as Record<string, string>) ?? ""
+                    }`}
                   >
                     {render(m as Record<string, string>, i)}
                   </div>
                 ))}
               </div>
             );
+            const timeTone = (value: string) =>
+              value ? "bg-orange-50 text-orange-800" : "";
             const r = (key: string) => row.record[key] ?? "-";
             return (
               <tr
                 key={row.rowNumber}
+                role={row.studentId ? "button" : undefined}
+                tabIndex={row.studentId ? 0 : undefined}
                 onClick={() => onRowClick(row)}
-                className="cursor-pointer align-top transition-shadow hover:shadow-[inset_3px_0_0_0_#4B98EC]"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onRowClick(row);
+                  }
+                }}
+                className="cursor-pointer align-top odd:bg-white even:bg-slate-50/80 transition-shadow hover:shadow-[inset_3px_0_0_0_#4B98EC]"
               >
                 <td className="border border-slate-200 px-2 py-2 font-semibold text-ksp-navy">{row.rowNumber}</td>
                 <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{r("รหัสบัตรประชาชน")}</td>
@@ -534,24 +565,105 @@ function MedicationScheduleTable({
                 {TIMES.map((t) => (
                   <Fragment key={t.label}>
                     <td className="border border-slate-200 p-0">
-                      {stack((m) => <span>{splitMeal(medVal(m, t.key, t.alt)).before || ""}</span>)}
+                      {stack(
+                        (m) => <span className="font-semibold">{splitMeal(medVal(m, t.key, t.alt)).before || ""}</span>,
+                        (m) => timeTone(splitMeal(medVal(m, t.key, t.alt)).before),
+                      )}
                     </td>
                     <td className="border border-slate-200 p-0">
-                      {stack((m) => <span className="text-emerald-700">{splitMeal(medVal(m, t.key, t.alt)).after || ""}</span>)}
+                      {stack(
+                        (m) => <span className="font-semibold">{splitMeal(medVal(m, t.key, t.alt)).after || ""}</span>,
+                        (m) => timeTone(splitMeal(medVal(m, t.key, t.alt)).after),
+                      )}
                     </td>
                   </Fragment>
                 ))}
                 <td className="border border-slate-200 p-0">
-                  {stack((m) => <span>{medVal(m, "ก่อนนอน", "การรับประทาน ก่อนนอน") || ""}</span>)}
+                  {stack(
+                    (m) => <span className="font-semibold">{medVal(m, "ก่อนนอน", "การรับประทาน ก่อนนอน") || ""}</span>,
+                    (m) => timeTone(medVal(m, "ก่อนนอน", "การรับประทาน ก่อนนอน")),
+                  )}
                 </td>
                 <td className="border border-slate-200 p-0">
-                  {stack((m) => <span>{medVal(m, "นอกเวลา", "การรับประทาน นอกเวลา") || ""}</span>)}
+                  {stack(
+                    (m) => <span className="font-semibold">{medVal(m, "นอกเวลา", "การรับประทาน นอกเวลา") || ""}</span>,
+                    (m) => timeTone(medVal(m, "นอกเวลา", "การรับประทาน นอกเวลา")),
+                  )}
                 </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function MedicationDetailOnly({ row }: { row: SheetRow }) {
+  const meds = row.medications ?? [];
+  if (meds.length === 0) {
+    return (
+      <EmptyState
+        title="ยังไม่มีรายการยา"
+        description="ยังไม่พบข้อมูลยาประจำตัวในแถวนี้"
+      />
+    );
+  }
+  const timeGroups = [
+    { label: "เช้า", keys: ["เช้า", "การรับประทาน เช้า"] },
+    { label: "กลางวัน", keys: ["เที่ยง", "การรับประทาน เที่ยง"] },
+    { label: "เย็น", keys: ["เย็น", "การรับประทาน เย็น"] },
+    { label: "ก่อนนอน", keys: ["ก่อนนอน", "การรับประทาน ก่อนนอน"] },
+    { label: "นอกเวลา", keys: ["นอกเวลา", "การรับประทาน นอกเวลา"] },
+  ];
+  return (
+    <div className="space-y-3">
+      {meds.map((med, index) => (
+        <div key={index} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div className="font-bold text-ksp-blue-700">
+            {medVal(med, "ชื่อยา", "ข้อมูลยา ชื่อยา") || `รายการยา ${index + 1}`}
+            {medVal(med, "ขนาดยา", "ข้อมูลยา ขนาดยา") && (
+              <span className="ml-1 font-normal text-ksp-gray">
+                {medVal(med, "ขนาดยา", "ข้อมูลยา ขนาดยา")}
+              </span>
+            )}
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-5">
+            {timeGroups.map((group) => {
+              const value = medVal(med, ...group.keys);
+              return (
+                <div
+                  key={group.label}
+                  className={`rounded-xl border px-3 py-2 ${
+                    value
+                      ? "border-orange-200 bg-orange-50 text-orange-900"
+                      : "border-slate-100 bg-slate-50 text-ksp-gray"
+                  }`}
+                >
+                  <div className="text-xs font-semibold">{group.label}</div>
+                  <div className="mt-1 text-sm font-bold">{value || "-"}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SheetRowDetail({ row }: { row: SheetRow }) {
+  const entries = Object.entries(row.record).filter(([, value]) => value && value !== "-");
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      {entries.map(([label, value]) => (
+        <div key={label} className="rounded-xl border border-slate-100 bg-white px-3 py-2.5">
+          <div className="text-xs font-semibold text-ksp-gray">{label}</div>
+          <div className="mt-1 whitespace-pre-wrap text-sm font-medium text-ksp-navy">
+            {value}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

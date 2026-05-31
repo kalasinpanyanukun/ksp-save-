@@ -90,6 +90,25 @@ export interface Admission {
   recordedBy?: { id: string; fullName: string };
 }
 
+export type StudentHandoffType = "check_in" | "check_out";
+
+export interface StudentHandoff {
+  id: string;
+  studentId: string;
+  handoffType: StudentHandoffType;
+  handoffDate: string;
+  handoffTime: string;
+  companionName: string;
+  companionPhone: string | null;
+  nurseName: string;
+  notes: string | null;
+  recordedById: string;
+  createdAt: string;
+  updatedAt: string;
+  student?: Student;
+  recordedBy?: { id: string; fullName: string };
+}
+
 export interface Referral {
   id: string;
   studentId: string;

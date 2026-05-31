@@ -1,10 +1,11 @@
-import { Menu, LogOut, ChevronDown, Search } from "lucide-react";
+import { Menu, LogOut, ChevronDown, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { toggleSidebar } from "../../store/uiSlice";
 import { clearUser } from "../../store/authSlice";
 import { logout } from "../../services/authService";
+import { useTopbarSearchValue } from "./TopbarSearchContext";
 
 export default function Topbar() {
   const dispatch = useAppDispatch();
@@ -12,6 +13,7 @@ export default function Topbar() {
   const user = useAppSelector((s) => s.auth.user);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const pageSearch = useTopbarSearchValue();
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
@@ -52,30 +54,52 @@ export default function Topbar() {
       >
         <Menu className="h-5 w-5" />
       </button>
-      <div className="hidden max-w-md flex-1 items-center gap-4 lg:flex">
-        <button
-          type="button"
-          onClick={() => {
-            const ev = new KeyboardEvent("keydown", {
-              key: "k",
-              ctrlKey: true,
-              metaKey: true,
-            });
-            document.dispatchEvent(ev);
-          }}
-          className="flex w-full items-center gap-2 rounded-lg border border-ksp-blue-100 bg-ksp-bg/70 px-3 py-2 text-sm text-ksp-gray hover:bg-white"
-        >
-          <Search className="h-4 w-4" />
-          <span>ค้นหานักเรียน...</span>
-          <span className="ml-auto flex items-center gap-0.5 text-[11px]">
-            <kbd className="rounded border border-ksp-blue-100 bg-white px-1.5 py-0.5">
-              Ctrl
-            </kbd>
-            <kbd className="rounded border border-ksp-blue-100 bg-white px-1.5 py-0.5">
-              K
-            </kbd>
-          </span>
-        </button>
+      <div className="hidden max-w-xl flex-1 items-center gap-4 lg:flex">
+        {pageSearch ? (
+          <div className="relative w-full">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ksp-gray" />
+            <input
+              className="input h-11 pl-10 pr-10"
+              placeholder={pageSearch.placeholder}
+              value={pageSearch.value}
+              onChange={(event) => pageSearch.onChange(event.target.value)}
+            />
+            {pageSearch.value && (
+              <button
+                type="button"
+                aria-label="ล้างคำค้นหา"
+                className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg text-ksp-gray hover:bg-ksp-blue-50 hover:text-ksp-blue-700"
+                onClick={() => pageSearch.onChange("")}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              const ev = new KeyboardEvent("keydown", {
+                key: "k",
+                ctrlKey: true,
+                metaKey: true,
+              });
+              document.dispatchEvent(ev);
+            }}
+            className="flex w-full items-center gap-2 rounded-lg border border-ksp-blue-100 bg-ksp-bg/70 px-3 py-2 text-sm text-ksp-gray hover:bg-white"
+          >
+            <Search className="h-4 w-4" />
+            <span>ค้นหานักเรียน...</span>
+            <span className="ml-auto flex items-center gap-0.5 text-[11px]">
+              <kbd className="rounded border border-ksp-blue-100 bg-white px-1.5 py-0.5">
+                Ctrl
+              </kbd>
+              <kbd className="rounded border border-ksp-blue-100 bg-white px-1.5 py-0.5">
+                K
+              </kbd>
+            </span>
+          </button>
+        )}
       </div>
       <div className="relative" ref={menuRef}>
         <button

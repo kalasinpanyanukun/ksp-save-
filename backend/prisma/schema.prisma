@@ -34,6 +34,7 @@ model User {
   admissions  Admission[]   @relation("AdmissionRecordedBy")
   referrals   Referral[]    @relation("ReferralRecordedBy")
   pm25Records Pm25Record[]  @relation("Pm25RecordedBy")
+  studentHandoffs StudentHandoff[] @relation("HandoffRecordedBy")
   auditLogs   AuditLog[]
 
   @@map("users")
@@ -81,11 +82,41 @@ model Student {
   opdVisits  OpdVisit[]
   admissions Admission[]
   referrals  Referral[]
+  handoffs   StudentHandoff[]
 
   @@index([firstName, lastName])
   @@index([classRoom])
   @@index([dormitory])
   @@map("students")
+}
+
+// ───── รับนักเรียนเข้าพักประจำ / ลากลับบ้าน ─────
+enum StudentHandoffType {
+  check_in
+  check_out
+}
+
+model StudentHandoff {
+  id             String             @id @default(uuid())
+  studentId      String             @map("student_id")
+  handoffType    StudentHandoffType @map("handoff_type")
+  handoffDate    DateTime           @map("handoff_date") @db.Date
+  handoffTime    String             @map("handoff_time") @db.VarChar(5)
+  companionName  String             @map("companion_name") @db.VarChar(120)
+  companionPhone String?            @map("companion_phone") @db.VarChar(30)
+  nurseName      String             @map("nurse_name") @db.VarChar(120)
+  notes          String?
+  recordedById   String             @map("recorded_by")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  recordedBy User    @relation("HandoffRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([studentId])
+  @@index([handoffDate])
+  @@index([handoffType, handoffDate])
+  @@map("student_handoffs")
 }
 
 // ───── OPD (การเข้าใช้บริการนอกใน) ─────

@@ -16,6 +16,8 @@ import {
   Paintbrush,
   Wind,
   AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
@@ -209,13 +211,29 @@ export default function DashboardPage() {
 
       {/* Stats as a blue grid (gap-px reveals blue grid lines) */}
       <div className="overflow-hidden rounded-2xl bg-ksp-blue-100 shadow-card ring-1 ring-ksp-blue-100">
-        <div className="grid grid-cols-1 gap-px sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-px sm:grid-cols-2 xl:grid-cols-3">
           <StatCard
             label="ผู้ใช้บริการวันนี้"
             value={stats?.opdToday ?? 0}
             hint={`เดือนนี้รวม ${stats?.opdMonth ?? 0}`}
             Icon={Stethoscope}
             tone="blue"
+            loading={loading}
+          />
+          <StatCard
+            label="รับเข้าพักวันนี้"
+            value={stats?.studentCheckInsToday ?? 0}
+            hint={`เดือนนี้รวม ${stats?.studentCheckInsMonth ?? 0}`}
+            Icon={ArrowDownToLine}
+            tone="green"
+            loading={loading}
+          />
+          <StatCard
+            label="ลากลับบ้านวันนี้"
+            value={stats?.studentCheckOutsToday ?? 0}
+            hint={`เดือนนี้รวม ${stats?.studentCheckOutsMonth ?? 0}`}
+            Icon={ArrowUpFromLine}
+            tone="orange"
             loading={loading}
           />
           <StatCard label="กำลัง admit อยู่" value={stats?.activeAdmissions ?? 0} Icon={BedDouble} tone="orange" loading={loading} />

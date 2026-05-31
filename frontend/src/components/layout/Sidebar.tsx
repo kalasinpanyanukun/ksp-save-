@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
   ShieldPlus,
   Syringe,
+  ArrowRightLeft,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { setSidebar } from "../../store/uiSlice";
@@ -32,10 +33,10 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: "/", label: "แดชบอร์ด", Icon: LayoutDashboard },
   { to: "/patients", label: "ข้อมูลนักเรียน", Icon: Users },
+  { to: "/student-handoffs", label: "บันทึกรับ-ส่งนักเรียน", Icon: ArrowRightLeft },
   { to: "/opd", label: "OPD - บันทึกการรักษา", Icon: Stethoscope },
   { to: "/admissions", label: "นอนพักรักษา", Icon: BedDouble },
   { to: "/referrals", label: "ส่งต่อโรงพยาบาล", Icon: Send },
-  { to: "/reports", label: "รายงาน & สถิติ", Icon: FileBarChart2 },
   { to: "/student-health-data", label: "ข้อมูลสุขภาพนักเรียน", Icon: HeartPulse },
   { to: "/student-medication-data", label: "ข้อมูลยาประจำตัวนักเรียน", Icon: Pill },
   { to: "/health-disease", label: "สรุปโรคประจำตัวและการแพ้", Icon: Activity },
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
   { to: "/medications", label: "คลังยา", Icon: Pill },
   { to: "/admin/users", label: "จัดการผู้ใช้", Icon: UserCog, adminOnly: true },
   { to: "/admin/audit", label: "Audit Log", Icon: ShieldCheck, adminOnly: true },
+  { to: "/reports", label: "รายงาน & สถิติ", Icon: FileBarChart2 },
   { to: "/admin/settings", label: "ตั้งค่าระบบ", Icon: Settings, adminOnly: true },
 ];
 
@@ -78,7 +80,7 @@ export default function Sidebar() {
             className="h-12 w-12 shrink-0 object-contain"
           />
           <div className="leading-tight">
-            <p className="text-sm font-bold text-white">ระบบบริหารจัดการเรือนพยาบาล</p>
+            <p className="text-sm font-bold text-white">ระบบบริหารเรือนพยาบาล</p>
             <p className="text-[11px] text-white/70">โรงเรียนกาฬสินธุ์ปัญญานุกูลฯ</p>
           </div>
         </div>

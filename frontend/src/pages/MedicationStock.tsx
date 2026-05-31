@@ -17,6 +17,7 @@ import Modal from "../components/common/Modal";
 import PdfExportButton from "../components/common/PdfExportButton";
 import { useAppSelector } from "../store";
 import { useToast } from "../components/common/useToast";
+import { useTopbarSearch } from "../components/layout/TopbarSearchContext";
 import {
   adjustMedication,
   createMedication,
@@ -67,6 +68,15 @@ export default function MedicationStockPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 100;
+  const topbarSearch = useMemo(
+    () => ({
+      placeholder: "ค้นหารหัส / ชื่อยา",
+      value: q,
+      onChange: setQ,
+    }),
+    [q],
+  );
+  useTopbarSearch(topbarSearch);
 
   async function openDetail(id: string) {
     setDetailOpen(true);
@@ -241,12 +251,6 @@ export default function MedicationStockPage() {
 
       <div className="card-pad mb-4">
         <div className="flex flex-wrap items-center gap-3">
-          <input
-            className="input max-w-[240px]"
-            placeholder="ค้นหารหัส / ชื่อยา"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
           <select className="input w-auto" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
             <option value="">ทุกที่มา</option>
             {MED_SOURCE_OPTIONS.map((s) => (

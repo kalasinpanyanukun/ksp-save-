@@ -49,6 +49,10 @@ export interface DashboardStats {
   residentStudents: number;
   homeLeaveStudents: number;
   infirmaryStudents: number;
+  studentCheckInsToday: number;
+  studentCheckOutsToday: number;
+  studentCheckInsMonth: number;
+  studentCheckOutsMonth: number;
   studentsWithMedication: number;
   medicationStock: {
     totalTypes: number;

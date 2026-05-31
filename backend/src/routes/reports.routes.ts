@@ -373,6 +373,10 @@ router.get("/statistics", async (_req, res, next) => {
       infirmaryStudents,
       studentsWithMedicationRows,
       medications,
+      studentCheckInsToday,
+      studentCheckOutsToday,
+      studentCheckInsMonth,
+      studentCheckOutsMonth,
     ] =
       await Promise.all([
         prisma.opdVisit.count({
@@ -406,6 +410,24 @@ router.get("/statistics", async (_req, res, next) => {
             entryStatus: true,
             category: true,
           },
+        }),
+        prisma.studentHandoff.count({
+          where: {
+            handoffType: "check_in",
+            handoffDate: { gte: startDay, lte: endDay },
+          },
+        }),
+        prisma.studentHandoff.count({
+          where: {
+            handoffType: "check_out",
+            handoffDate: { gte: startDay, lte: endDay },
+          },
+        }),
+        prisma.studentHandoff.count({
+          where: { handoffType: "check_in", handoffDate: { gte: startMonth } },
+        }),
+        prisma.studentHandoff.count({
+          where: { handoffType: "check_out", handoffDate: { gte: startMonth } },
         }),
       ]);
 
@@ -441,6 +463,10 @@ router.get("/statistics", async (_req, res, next) => {
       residentStudents,
       homeLeaveStudents,
       infirmaryStudents,
+      studentCheckInsToday,
+      studentCheckOutsToday,
+      studentCheckInsMonth,
+      studentCheckOutsMonth,
       studentsWithMedication: studentsWithMedicationRows.filter(hasStudentMedication)
         .length,
       medicationStock,

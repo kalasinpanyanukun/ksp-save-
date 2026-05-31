@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Search, Info } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
+import Modal from "../components/common/Modal";
 import PdfExportButton from "../components/common/PdfExportButton";
 import { useToast } from "../components/common/useToast";
+import { useTopbarSearch } from "../components/layout/TopbarSearchContext";
 import {
   getHealthReport,
   type HealthReport,
@@ -68,6 +70,17 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
   const [report, setReport] = useState<HealthReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [selectedRow, setSelectedRow] = useState<HealthReport["rows"][number] | null>(null);
+
+  const topbarSearch = useMemo(
+    () => ({
+      placeholder: "ค้นหาในตาราง",
+      value: q,
+      onChange: setQ,
+    }),
+    [q],
+  );
+  useTopbarSearch(topbarSearch);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,15 +110,25 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
 
   function rowTone(cells: string[]): string {
     if (type === "nutrition" && evalIdx >= 0) return nutritionTone(cells[evalIdx] ?? "");
-    if (type === "injection" && nextIdx >= 0) {
-      const dt = parseThaiDate(cells[nextIdx] ?? "");
-      if (dt) {
-        const days = (dt.getTime() - Date.now()) / 86400000;
-        if (days <= 7) return "bg-orange-100"; // นัดใกล้ถึง/เลยกำหนด
-      }
-    }
     return "";
   }
+
+  function dueSoonCell(cells: string[], index: number): boolean {
+    if (type !== "injection" || index !== nextIdx) return false;
+    const dt = parseThaiDate(cells[index] ?? "");
+    if (!dt) return false;
+    const days = (dt.getTime() - Date.now()) / 86400000;
+    return days <= 30;
+  }
+
+  const summaryChips = report?.summary?.map((s) => (
+    <span
+      key={s.label}
+      className="rounded-xl border border-ksp-blue-200 bg-ksp-blue-50 px-3 py-2 text-sm font-semibold text-ksp-navy shadow-sm"
+    >
+      {s.label}: <span className="text-ksp-blue-700">{s.value}</span>
+    </span>
+  ));
 
   return (
     <div className="relative left-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 lg:w-[calc(100vw-18rem-2rem)]">
@@ -114,42 +137,22 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
         description={`${rows.length.toLocaleString("th-TH")} รายการ`}
         actions={
           report ? (
-            <PdfExportButton
-              getReport={() => ({
-                title: report.title,
-                subtitle: `ทั้งหมด ${rows.length} รายการ`,
-                orientation: "l",
-                fontSize: 12,
-                columns: [{ header: "ลำดับ", weight: 0.4 }, ...report.columns],
-                rows: rows.map((r, i) => [i + 1, ...r.cells]),
-              })}
-            />
+            <>
+              {summaryChips}
+              <PdfExportButton
+                getReport={() => ({
+                  title: report.title,
+                  subtitle: `ทั้งหมด ${rows.length} รายการ`,
+                  orientation: "l",
+                  fontSize: 12,
+                  columns: [{ header: "ลำดับ", weight: 0.4 }, ...report.columns],
+                  rows: rows.map((r, i) => [i + 1, ...r.cells]),
+                })}
+              />
+            </>
           ) : undefined
         }
       />
-
-      {/* แถวสรุป (ด้านหน้า) + ช่องค้นหา (ขวา) */}
-      <div className="mb-3 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {report?.summary?.map((s) => (
-            <span
-              key={s.label}
-              className="rounded-xl border border-ksp-blue-100 bg-white px-3 py-1.5 text-sm font-semibold text-ksp-navy shadow-card"
-            >
-              {s.label}: <span className="text-ksp-blue-600">{s.value}</span>
-            </span>
-          ))}
-        </div>
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ksp-gray" />
-          <input
-            className="input pl-9"
-            placeholder="ค้นหาในตาราง"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </div>
-      </div>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card">
         {loading && (
@@ -183,7 +186,15 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
                 {rows.map((r, idx) => (
                   <tr
                     key={r.studentId + idx}
-                    onClick={() => navigate(`/patients/${r.studentId}`)}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedRow(r)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedRow(r);
+                      }
+                    }}
                     className={`cursor-pointer transition-shadow hover:shadow-[inset_3px_0_0_0_#4B98EC] ${rowTone(r.cells)}`}
                   >
                     <td className="border-b border-r border-slate-100 px-3 py-2.5 font-semibold text-ksp-navy">
@@ -196,7 +207,13 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
                           report?.columns[i] && (report.columns[i]!.weight ?? 1) >= 1.6
                             ? "min-w-[12rem] whitespace-normal text-left align-top leading-relaxed"
                             : "whitespace-nowrap align-middle"
-                        } ${i === 0 || report?.columns[i]?.header.includes("ชื่อ-สกุล") ? "font-semibold text-ksp-blue-700" : "text-ksp-navy/85"}`}
+                        } ${
+                          dueSoonCell(r.cells, i)
+                            ? "bg-amber-100 font-bold text-amber-900"
+                            : i === 0 || report?.columns[i]?.header.includes("ชื่อ-สกุล")
+                              ? "font-semibold text-ksp-blue-700"
+                              : "text-ksp-navy/85"
+                        }`}
                       >
                         {cell || "-"}
                       </td>
@@ -222,6 +239,61 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
           </div>
         </div>
       )}
+
+      <Modal
+        open={Boolean(selectedRow)}
+        onClose={() => setSelectedRow(null)}
+        title={report?.title ?? "รายละเอียด"}
+        size="lg"
+      >
+        {selectedRow && report && (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-ksp-blue-100 bg-ksp-blue-50/60 px-4 py-3">
+              <h2 className="text-xl font-bold text-ksp-navy">
+                {detailValue(report, selectedRow, "ชื่อ-สกุล") || "รายละเอียดนักเรียน"}
+              </h2>
+              <p className="mt-1 text-sm text-ksp-blue-700">
+                {[detailValue(report, selectedRow, "ชั้น"), detailValue(report, selectedRow, "เรือนนอน")]
+                  .filter(Boolean)
+                  .join(" · ") || "ข้อมูลจากรายงานสุขภาพ"}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {report.columns.map((column, index) => (
+                <div
+                  key={`${column.header}-${index}`}
+                  className="rounded-xl border border-slate-100 bg-white px-3 py-2.5"
+                >
+                  <div className="text-xs font-semibold text-ksp-gray">
+                    {column.header}
+                  </div>
+                  <div className="mt-1 whitespace-pre-wrap text-sm font-medium text-ksp-navy">
+                    {selectedRow.cells[index] || "-"}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end border-t border-ksp-blue-50 pt-3">
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => navigate(`/patients/${selectedRow.studentId}`)}
+              >
+                ดูข้อมูลเพิ่มเติม
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
+}
+
+function detailValue(
+  report: HealthReport,
+  row: HealthReport["rows"][number],
+  header: string,
+) {
+  const idx = report.columns.findIndex((column) => column.header.includes(header));
+  return idx >= 0 ? row.cells[idx] : "";
 }

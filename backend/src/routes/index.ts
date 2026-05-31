@@ -13,6 +13,7 @@ import auditRoutes from "./audit.routes.js";
 import sheetDataRoutes from "./sheet-data.routes.js";
 import systemRoutes from "./system.routes.js";
 import healthReportsRoutes from "./health-reports.routes.js";
+import studentHandoffsRoutes from "./student-handoffs.routes.js";
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/audit-logs", auditRoutes);
 router.use("/sheet-data", sheetDataRoutes);
 router.use("/system", systemRoutes);
 router.use("/health-reports", healthReportsRoutes);
+router.use("/student-handoffs", studentHandoffsRoutes);
 
 export default router;

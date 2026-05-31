@@ -17,7 +17,7 @@ export default function PageHeader({ title, description, actions }: PageHeaderPr
           <p className="mt-1 text-sm text-ksp-gray">{description}</p>
         )}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }

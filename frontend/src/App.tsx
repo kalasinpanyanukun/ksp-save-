@@ -13,6 +13,7 @@ import PM25Page from "./pages/PM25";
 import MedicationStockPage from "./pages/MedicationStock";
 import SheetDataPage from "./pages/SheetDataPage";
 import HealthReportPage from "./pages/HealthReportPage";
+import StudentHandoffsPage from "./pages/StudentHandoffs";
 import AdminUsersPage from "./pages/admin/Users";
 import AdminAuditPage from "./pages/admin/AuditLog";
 import AdminSettingsPage from "./pages/admin/Settings";
@@ -52,6 +53,16 @@ export default function App() {
           <ProtectedRoute>
             <Shell>
               <PatientProfilePage />
+            </Shell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student-handoffs"
+        element={
+          <ProtectedRoute>
+            <Shell>
+              <StudentHandoffsPage />
             </Shell>
           </ProtectedRoute>
         }

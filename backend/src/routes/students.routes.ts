@@ -396,6 +396,7 @@ router.delete("/:id", requireAdmin, async (req, res, next) => {
       prisma.opdVisit.deleteMany({ where: { studentId: req.params.id } }),
       prisma.admission.deleteMany({ where: { studentId: req.params.id } }),
       prisma.referral.deleteMany({ where: { studentId: req.params.id } }),
+      prisma.studentHandoff.deleteMany({ where: { studentId: req.params.id } }),
       prisma.student.delete({ where: { id: req.params.id } }),
     ]);
     res.json({ ok: true });
