@@ -250,25 +250,25 @@ export default function MedicationStockPage() {
       />
 
       <div className="card-pad mb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <select className="input w-auto" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[auto_auto_auto_1fr] lg:items-center">
+          <select className="input lg:w-auto" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
             <option value="">ทุกที่มา</option>
             {MED_SOURCE_OPTIONS.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
-          <select className="input w-auto" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+          <select className="input lg:w-auto" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="">ทุกประเภท</option>
             {MED_CATEGORY_OPTIONS.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
-          <select className="input w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select className="input lg:w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="">ทุกสถานะ</option>
             <option value="entered">ลงข้อมูลแล้ว</option>
             <option value="not_entered">ยังไม่ได้ลงข้อมูล</option>
           </select>
-          <label className="flex items-center gap-2 text-sm text-ksp-navy">
+          <label className="flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-ksp-navy lg:border-0 lg:bg-transparent lg:px-0">
             <input
               type="checkbox"
               className="h-4 w-4 rounded border-ksp-blue-200"
@@ -583,14 +583,14 @@ function MedicationDetailView({ detail }: { detail: MedicationDetail }) {
         ) : (
           <ul className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
             {movements.map((mv) => (
-              <li key={mv.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
+              <li key={mv.id} className="flex flex-col gap-1 rounded-lg border border-slate-100 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <span className={`font-bold ${mv.delta >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                     {mv.delta >= 0 ? `+${mv.delta}` : mv.delta}
                   </span>
                   {mv.reason && <span className="ml-2 text-ksp-gray">{mv.reason}</span>}
                 </div>
-                <div className="text-right text-xs text-ksp-gray">
+                <div className="text-left text-xs text-ksp-gray sm:text-right">
                   คงเหลือ {mv.balanceAfter} · {formatDateTime(mv.createdAt)}
                 </div>
               </li>
@@ -762,7 +762,7 @@ function MedicationForm({
           </select>
         </div>
       </div>
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex flex-wrap justify-end gap-2 pt-2 max-sm:[&_button]:w-full">
         <button type="button" className="btn-outline" onClick={onCancel}>
           ยกเลิก
         </button>
@@ -805,7 +805,7 @@ function AdjustForm({
       <div className="rounded-xl bg-ksp-blue-50 px-3 py-2 text-sm">
         คงเหลือปัจจุบัน: <strong>{current}</strong> {unit}
       </div>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"
           onClick={() => setMode("add")}
@@ -849,7 +849,7 @@ function AdjustForm({
           placeholder="เช่น รับเข้าจากเภสัช, หมดอายุ"
         />
       </div>
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex flex-wrap justify-end gap-2 pt-2 max-sm:[&_button]:w-full">
         <button type="button" className="btn-outline" onClick={onCancel}>
           ยกเลิก
         </button>

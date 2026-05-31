@@ -19,6 +19,7 @@ import {
   ShieldPlus,
   Syringe,
   ArrowRightLeft,
+  X,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { setSidebar } from "../../store/uiSlice";
@@ -69,7 +70,7 @@ export default function Sidebar() {
       )}
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-40 flex h-screen w-64 flex-col bg-ksp-blue-800 text-white shadow-2xl transition-transform lg:sticky lg:top-0 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex h-[100svh] w-[min(19rem,86vw)] flex-col bg-ksp-blue-800 text-white shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -79,10 +80,18 @@ export default function Sidebar() {
             alt="KSP SAVE+"
             className="h-12 w-12 shrink-0 object-contain"
           />
-          <div className="leading-tight">
+          <div className="min-w-0 flex-1 leading-tight">
             <p className="text-sm font-bold text-white">ระบบบริหารเรือนพยาบาล</p>
             <p className="text-[11px] text-white/70">โรงเรียนกาฬสินธุ์ปัญญานุกูลฯ</p>
           </div>
+          <button
+            type="button"
+            aria-label="ปิดเมนู"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/75 hover:bg-white/10 hover:text-white lg:hidden"
+            onClick={() => dispatch(setSidebar(false))}
+          >
+            <X className="h-4.5 w-4.5" size={18} />
+          </button>
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems
@@ -99,7 +108,7 @@ export default function Sidebar() {
                 end={to === "/"}
                 className={({ isActive }) =>
                   clsx(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-white/16 text-white shadow-inner"
                       : "text-white/80 hover:bg-white/10 hover:text-white",
@@ -107,7 +116,7 @@ export default function Sidebar() {
                 }
               >
                 <Icon className="h-4.5 w-4.5" size={18} />
-                <span>{label}</span>
+                <span className="min-w-0 truncate">{label}</span>
               </NavLink>
             ))}
         </nav>

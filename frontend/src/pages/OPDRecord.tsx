@@ -84,11 +84,11 @@ export default function OPDRecordPage() {
       />
 
       <div className="card-pad mb-4">
-        <div className="flex items-center gap-3">
-          <Calendar className="h-4 w-4 text-ksp-gray" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[auto_12rem_auto_1fr] sm:items-center">
+          <Calendar className="hidden h-4 w-4 text-ksp-gray sm:block" />
           <input
             type="date"
-            className="input max-w-[200px]"
+            className="input"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
@@ -99,7 +99,7 @@ export default function OPDRecordPage() {
           >
             ทั้งหมด
           </button>
-          <div className="ml-auto text-sm text-ksp-gray">
+          <div className="text-sm text-ksp-gray sm:ml-auto">
             ทั้งหมด {total} รายการ
           </div>
         </div>

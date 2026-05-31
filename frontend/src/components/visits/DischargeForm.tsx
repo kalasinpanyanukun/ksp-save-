@@ -99,7 +99,7 @@ export default function DischargeForm({
           onChange={(e) => setNotes(e.target.value)}
         />
       </div>
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex flex-wrap justify-end gap-2 pt-2 max-sm:[&_button]:w-full">
         {onCancel && (
           <button type="button" className="btn-outline" onClick={onCancel}>
             ยกเลิก

@@ -448,7 +448,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
       {/* 3. ข้อมูลสุขภาพ */}
       <section>
         <SectionTitle Icon={HeartPulse}>ข้อมูลสุขภาพ</SectionTitle>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           <div>
             <label className="label">กรุ๊ปเลือด</label>
             <select className="input" value={form.bloodType ?? "unknown"} onChange={(e) => update("bloodType", e.target.value as BloodType)}>
@@ -578,7 +578,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
                   {MEAL_FIELDS.map((field) => (
                     <div key={field.key}>
                       <label className="mb-1 block text-[11px] font-medium text-ksp-gray">{field.label}</label>
@@ -592,7 +592,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
         )}
       </section>
 
-      <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+      <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3 max-sm:[&_button]:w-full">
         {onCancel && (
           <button type="button" className="btn-outline" onClick={onCancel}>ยกเลิก</button>
         )}

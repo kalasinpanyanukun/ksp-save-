@@ -137,7 +137,7 @@ export default function OPDForm({
         </div>
       )}
 
-      <div className="flex justify-end gap-2 pt-3 border-t border-ksp-blue-50">
+      <div className="flex flex-wrap justify-end gap-2 border-t border-ksp-blue-50 pt-3 max-sm:[&_button]:w-full">
         {onCancel && (
           <button type="button" className="btn-outline" onClick={onCancel}>
             ยกเลิก

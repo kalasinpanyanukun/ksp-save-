@@ -131,7 +131,7 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
   ));
 
   return (
-    <div className="relative left-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 lg:w-[calc(100vw-18rem-2rem)]">
+    <div className="relative left-1/2 w-[calc(100vw-0.75rem)] -translate-x-1/2 sm:w-[calc(100vw-2rem)] lg:w-[calc(100vw-18rem-2rem)]">
       <PageHeader
         title={report?.title ?? "รายงานสุขภาพ"}
         description={`${rows.length.toLocaleString("th-TH")} รายการ`}
@@ -166,7 +166,7 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
           </div>
         ) : (
           <div className="max-h-[calc(100vh-17rem)] overflow-auto">
-            <table className="w-full border-collapse text-center text-xs">
+            <table className="w-max min-w-full border-collapse text-center text-xs">
               <thead>
                 <tr>
                   <th className="sticky top-0 z-10 border-b-2 border-r border-slate-300 bg-slate-200 px-3 py-2.5 font-bold text-ksp-navy">
@@ -273,7 +273,7 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
                 </div>
               ))}
             </div>
-            <div className="flex justify-end border-t border-ksp-blue-50 pt-3">
+            <div className="flex flex-wrap justify-end border-t border-ksp-blue-50 pt-3 max-sm:[&_button]:w-full">
               <button
                 type="button"
                 className="btn-primary"

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import Brand from "../components/layout/Brand";
@@ -16,9 +16,11 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (isAuthenticated) {
-    navigate("/", { replace: true });
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

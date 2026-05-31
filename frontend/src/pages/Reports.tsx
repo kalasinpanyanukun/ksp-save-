@@ -162,21 +162,21 @@ export default function ReportsPage() {
 
       <div className="card-pad mb-4">
         {tab === "daily" && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <label className="text-sm font-medium text-ksp-navy">วันที่:</label>
             <input
               type="date"
-              className="input max-w-[200px]"
+              className="input sm:max-w-[200px]"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
         )}
         {tab === "monthly" && (
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[auto_10rem_8rem] sm:items-center">
             <label className="text-sm font-medium text-ksp-navy">เดือน:</label>
             <select
-              className="input max-w-[160px]"
+              className="input"
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
             >
@@ -188,7 +188,7 @@ export default function ReportsPage() {
             </select>
             <input
               type="number"
-              className="input max-w-[120px]"
+              className="input"
               value={year}
               min={2020}
               max={2100}
@@ -197,11 +197,11 @@ export default function ReportsPage() {
           </div>
         )}
         {tab === "yearly" && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <label className="text-sm font-medium text-ksp-navy">ปี:</label>
             <input
               type="number"
-              className="input max-w-[120px]"
+              className="input sm:max-w-[120px]"
               value={year}
               min={2020}
               max={2100}
@@ -211,7 +211,7 @@ export default function ReportsPage() {
         )}
       </div>
 
-      <div ref={reportRef} className="bg-white rounded-2xl p-6 shadow-card">
+      <div ref={reportRef} className="rounded-xl bg-white p-4 shadow-card sm:rounded-2xl sm:p-6">
         {loading ? (
           <div className="grid place-items-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-ksp-blue-500" />
@@ -289,7 +289,7 @@ function DailySection({ report }: { report: DailyReport }) {
         title="รายงานการใช้บริการเรือนพยาบาล (รายวัน)"
         dateRangeText={dateText}
       />
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatBlock label="OPD" value={report.totals.opd} hint="ครั้ง" />
         <StatBlock label="Admission" value={report.totals.admissions} hint="ราย" />
         <StatBlock label="Referral" value={report.totals.referrals} hint="ราย" />
@@ -300,6 +300,7 @@ function DailySection({ report }: { report: DailyReport }) {
         {report.opdVisits.length === 0 ? (
           <p className="text-sm text-ksp-gray">ไม่มีบันทึก</p>
         ) : (
+          <div className="overflow-x-auto rounded-xl border border-ksp-blue-50">
           <table className="table-base">
             <thead>
               <tr>
@@ -324,6 +325,7 @@ function DailySection({ report }: { report: DailyReport }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 
@@ -332,6 +334,7 @@ function DailySection({ report }: { report: DailyReport }) {
         {report.admissions.length === 0 ? (
           <p className="text-sm text-ksp-gray">ไม่มีบันทึก</p>
         ) : (
+          <div className="overflow-x-auto rounded-xl border border-ksp-blue-50">
           <table className="table-base">
             <thead>
               <tr>
@@ -364,6 +367,7 @@ function DailySection({ report }: { report: DailyReport }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 
@@ -372,6 +376,7 @@ function DailySection({ report }: { report: DailyReport }) {
         {report.referrals.length === 0 ? (
           <p className="text-sm text-ksp-gray">ไม่มีบันทึก</p>
         ) : (
+          <div className="overflow-x-auto rounded-xl border border-ksp-blue-50">
           <table className="table-base">
             <thead>
               <tr>
@@ -394,6 +399,7 @@ function DailySection({ report }: { report: DailyReport }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
     </>
@@ -409,7 +415,7 @@ function MonthlySection({ report }: { report: MonthlyReport }) {
         dateRangeText={title}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
         <StatBlock label="OPD" value={report.totals.opd} hint="ครั้ง" />
         <StatBlock label="Admission" value={report.totals.admissions} hint="ราย" />
         <StatBlock label="Referral" value={report.totals.referrals} hint="ราย" />
@@ -466,8 +472,8 @@ function MonthlySection({ report }: { report: MonthlyReport }) {
           <h3 className="font-semibold text-ksp-navy mb-2">
             แยกตามชั้นเรียน
           </h3>
-          <div className="border border-ksp-blue-50 rounded-xl overflow-hidden">
-            <table className="table-base">
+          <div className="overflow-x-auto rounded-xl border border-ksp-blue-50">
+            <table className="table-base min-w-full">
               <thead>
                 <tr>
                   <th>ชั้นเรียน</th>
@@ -542,7 +548,7 @@ function YearlySection({ report }: { report: YearlyReport }) {
         dateRangeText={`ปี ${report.year}`}
       />
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatBlock label="OPD รวม" value={report.totals.opd} hint="ครั้ง" />
         <StatBlock label="Admission รวม" value={report.totals.admissions} hint="ราย" />
         <StatBlock label="Referral รวม" value={report.totals.referrals} hint="ราย" />

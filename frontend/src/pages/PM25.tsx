@@ -154,14 +154,14 @@ export default function PM25Page() {
       />
 
       {latest && latestValue !== null && (
-        <div className="card-pad mb-4 flex items-center gap-4">
+        <div className="card-pad mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div
             className="grid h-16 w-16 place-items-center rounded-2xl text-white font-bold text-xl"
             style={{ backgroundColor: aqiInfo[latest.aqiLevel].color }}
           >
             {latestValue.toFixed(0)}
           </div>
-          <div className="flex-1">
+          <div className="w-full flex-1 text-center sm:text-left">
             <div className="text-sm text-ksp-gray">ค่าล่าสุด (µg/m³)</div>
             <div className="text-2xl font-bold text-ksp-navy">
               {latestValue.toFixed(2)}
@@ -175,7 +175,7 @@ export default function PM25Page() {
             </div>
           </div>
           {latestValue > 50 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+            <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 sm:w-auto sm:justify-start">
               <AlertTriangle className="h-4 w-4" />
               ค่าสูง — ควรระมัดระวังกิจกรรมกลางแจ้ง
             </div>
@@ -381,7 +381,7 @@ function PM25Form({
   }
   return (
     <form onSubmit={handle} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="label">วันที่ *</label>
           <input
@@ -423,7 +423,7 @@ function PM25Form({
           onChange={(e) => setNotes(e.target.value)}
         />
       </div>
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex flex-wrap justify-end gap-2 pt-2 max-sm:[&_button]:w-full">
         <button type="button" className="btn-outline" onClick={onCancel}>
           ยกเลิก
         </button>

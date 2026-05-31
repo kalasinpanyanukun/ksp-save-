@@ -199,7 +199,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
   }
 
   return (
-    <div className="relative left-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 lg:w-[calc(100vw-18rem-2rem)]">
+    <div className="relative left-1/2 w-[calc(100vw-0.75rem)] -translate-x-1/2 sm:w-[calc(100vw-2rem)] lg:w-[calc(100vw-18rem-2rem)]">
       {/* Header: count becomes the subtitle; teacher (medication) sits on the right */}
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
@@ -218,14 +218,14 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
         {kind === "medication" && (
-          <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-3 py-2">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 rounded-xl border border-ksp-blue-100 bg-gradient-to-r from-ksp-blue-50/70 to-sky-50/50 px-3 py-2 lg:w-auto">
             {editingTeacher ? (
               <>
                 <UserCog className="h-4 w-4 shrink-0 text-ksp-blue-600" />
                 <input
-                  className="input min-w-[14rem] py-1.5 text-sm"
+                  className="input min-w-0 flex-1 py-1.5 text-sm sm:min-w-[14rem]"
                   value={teacherDraft}
                   onChange={(e) => setTeacherDraft(e.target.value)}
                   placeholder="ชื่อครูพยาบาล · เบอร์โทร"
@@ -327,7 +327,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
           <MedicationScheduleTable rows={filteredRows} onRowClick={openStudentDetail} />
         ) : (
           <div className="max-h-[calc(100vh-15rem)] overflow-auto">
-            <table className="w-max border-collapse text-center text-xs">
+            <table className="w-max min-w-full border-collapse text-center text-xs">
               <thead>
                 <tr>
                   <th className="sticky left-0 top-0 z-30 border-b-2 border-r border-slate-300 bg-slate-200 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm">
@@ -484,7 +484,7 @@ function MedicationScheduleTable({
   const headBase = "border border-slate-300 bg-ksp-blue-600 px-2 py-2 font-bold text-white";
   return (
     <div className="max-h-[calc(100vh-15rem)] overflow-auto">
-      <table className="w-full border-collapse text-center text-xs">
+      <table className="w-max min-w-full border-collapse text-center text-xs">
         <thead className="sticky top-0 z-10">
           <tr>
             {["ลำดับ", "รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชื่อเล่น", "ชั้น", "เรือนนอน", "ชื่อยา"].map((h) => (

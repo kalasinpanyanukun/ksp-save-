@@ -451,7 +451,7 @@ function UserForm({
           </p>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex flex-wrap justify-end gap-2 pt-2 max-sm:[&_button]:w-full">
           <button type="button" className="btn-outline" onClick={onCancel}>
             ยกเลิก
           </button>
@@ -490,7 +490,7 @@ function UserForm({
                   required
                 />
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end max-sm:[&_button]:w-full">
                 <button
                   type="submit"
                   className="btn-primary"

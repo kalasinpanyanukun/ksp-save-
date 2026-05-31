@@ -497,7 +497,7 @@ function StudentHandoffForm({
         </div>
       )}
 
-      <div className="flex justify-end gap-2 border-t border-ksp-blue-50 pt-3">
+      <div className="flex flex-wrap justify-end gap-2 border-t border-ksp-blue-50 pt-3 max-sm:[&_button]:w-full">
         <button type="button" className="btn-outline" onClick={onCancel}>
           ยกเลิก
         </button>
