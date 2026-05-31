@@ -193,7 +193,7 @@ export default function PatientListPage() {
                 fontSize: 13,
                 columns: [
                   { header: "ลำดับ", weight: 0.4 },
-                  { header: "รหัส", weight: 1.3 },
+                  { header: "รหัสบัตรประชาชน", weight: 1.3 },
                   { header: "ชื่อ-สกุล", weight: 1.8 },
                   { header: "ชื่อเล่น", weight: 0.9 },
                   { header: "ประเภทความพิการ", weight: 1.4 },
@@ -310,7 +310,7 @@ export default function PatientListPage() {
             <thead>
               <tr>
                 <th>ลำดับ</th>
-                <th>รหัส</th>
+                <th>รหัสบัตรประชาชน</th>
                 <th>ชื่อ-นามสกุล</th>
                 <th>ชื่อเล่น</th>
                 <th>ประเภทความพิการ</th>
@@ -334,7 +334,7 @@ export default function PatientListPage() {
                   <tr
                     key={s.id}
                     onClick={() => navigate(`/patients/${s.id}`)}
-                    className="cursor-pointer transition-colors hover:bg-ksp-blue-50/40"
+                    className="cursor-pointer odd:bg-white even:bg-slate-50/80 transition-colors hover:bg-ksp-blue-50/40"
                   >
                     <td className="font-semibold text-ksp-gray">{index + 1}</td>
                     <td className="font-mono text-xs">{s.studentCode}</td>

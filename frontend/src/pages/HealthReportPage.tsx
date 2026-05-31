@@ -118,7 +118,7 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
     const dt = parseThaiDate(cells[index] ?? "");
     if (!dt) return false;
     const days = (dt.getTime() - Date.now()) / 86400000;
-    return days <= 30;
+    return days >= 0 && days <= 30;
   }
 
   const summaryChips = report?.summary?.map((s) => (

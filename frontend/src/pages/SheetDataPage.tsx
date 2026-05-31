@@ -327,7 +327,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
           <MedicationScheduleTable rows={filteredRows} onRowClick={openStudentDetail} />
         ) : (
           <div className="max-h-[calc(100vh-15rem)] overflow-auto">
-            <table className="w-full border-collapse text-center text-xs">
+            <table className="w-max border-collapse text-center text-xs">
               <thead>
                 <tr>
                   <th className="sticky left-0 top-0 z-30 border-b-2 border-r border-slate-300 bg-slate-200 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm">
@@ -653,14 +653,18 @@ function MedicationDetailOnly({ row }: { row: SheetRow }) {
 }
 
 function SheetRowDetail({ row }: { row: SheetRow }) {
-  const entries = Object.entries(row.record).filter(([, value]) => value && value !== "-");
+  const entries = Object.entries(row.record).filter(([label, value]) => {
+    if (!value || value === "-") return false;
+    if (!isCheckboxColumn(label)) return true;
+    return value.toUpperCase() === "TRUE" || value === "จริง" || value === "✓";
+  });
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {entries.map(([label, value]) => (
         <div key={label} className="rounded-xl border border-slate-100 bg-white px-3 py-2.5">
-          <div className="text-xs font-semibold text-ksp-gray">{label}</div>
+          <div className="text-xs font-semibold text-ksp-gray">{detailLabel(label)}</div>
           <div className="mt-1 whitespace-pre-wrap text-sm font-medium text-ksp-navy">
-            {value}
+            {detailValueForDisplay(label, value)}
           </div>
         </div>
       ))}
@@ -670,6 +674,20 @@ function SheetRowDetail({ row }: { row: SheetRow }) {
 
 function isCheckboxColumn(header: string) {
   return header.includes("กด ✓") || header.includes("ถ้ามีกด ✓");
+}
+
+function detailLabel(label: string) {
+  return label
+    .replace(/\s*ถ้ามีกด\s*✓/g, "")
+    .replace(/\s*กด\s*✓/g, "")
+    .replace("ปชช.", "ประชาชน")
+    .trim();
+}
+
+function detailValueForDisplay(label: string, value: string) {
+  if (!isCheckboxColumn(label)) return value || "-";
+  const checked = value.toUpperCase() === "TRUE" || value === "จริง" || value === "✓";
+  return checked ? "✓" : "-";
 }
 
 function CellValue({ header, value }: { header: string; value: string }) {

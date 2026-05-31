@@ -14,6 +14,7 @@ export interface StudentHandoffInput {
 
 export interface StudentHandoffSummary {
   today: { checkIn: number; checkOut: number };
+  week: { checkIn: number; checkOut: number };
   month: { checkIn: number; checkOut: number };
   year: { checkIn: number; checkOut: number };
   byDay: { day: number; checkIn: number; checkOut: number }[];

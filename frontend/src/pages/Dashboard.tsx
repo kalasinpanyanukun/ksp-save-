@@ -6,7 +6,6 @@ import {
   Send,
   Loader2,
   Plus,
-  Search,
   Home,
   LogOut,
   Pill,
@@ -18,6 +17,7 @@ import {
   AlertTriangle,
   ArrowDownToLine,
   ArrowUpFromLine,
+  ArrowRightLeft,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
@@ -46,6 +46,26 @@ const statTones = {
   slate: "text-slate-700",
 } as const;
 
+const statHeaderTones = {
+  blue: "bg-ksp-blue-600 text-white",
+  orange: "bg-orange-600 text-white",
+  cyan: "bg-cyan-600 text-white",
+  green: "bg-emerald-700 text-white",
+  violet: "bg-violet-600 text-white",
+  rose: "bg-rose-700 text-white",
+  slate: "bg-slate-700 text-white",
+} as const;
+
+const statIconTones = {
+  blue: "bg-white/15 text-white",
+  orange: "bg-white/15 text-white",
+  cyan: "bg-white/15 text-white",
+  green: "bg-white/15 text-white",
+  violet: "bg-white/15 text-white",
+  rose: "bg-white/15 text-white",
+  slate: "bg-white/15 text-white",
+} as const;
+
 function StatCard({
   label,
   value,
@@ -55,17 +75,17 @@ function StatCard({
   loading,
 }: StatCardProps) {
   return (
-    <section className="flex min-h-[9.5rem] flex-col justify-between bg-white p-5">
-      <div className="flex items-start justify-between gap-4">
+    <section className="flex min-h-[9.5rem] flex-col justify-between bg-white">
+      <div className={`flex items-start justify-between gap-4 p-5 ${statHeaderTones[tone]}`}>
         <div>
-          <p className="text-xl font-bold leading-tight text-ksp-navy">{label}</p>
-          {hint && <p className="mt-2 text-sm text-ksp-gray">{hint}</p>}
+          <p className="text-xl font-bold leading-tight">{label}</p>
+          {hint && <p className="mt-2 text-sm text-white/80">{hint}</p>}
         </div>
-        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-ksp-blue-50/60 ${statTones[tone]}`}>
+        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${statIconTones[tone]}`}>
           <Icon className="h-5.5 w-5.5" size={22} />
         </div>
       </div>
-      <div className={`mt-4 text-6xl font-extrabold leading-none tracking-tight ${statTones[tone]}`}>
+      <div className={`p-5 pt-4 text-6xl font-extrabold leading-none tracking-tight ${statTones[tone]}`}>
         {loading ? <Loader2 className="h-9 w-9 animate-spin" /> : value}
       </div>
     </section>
@@ -95,10 +115,29 @@ function MiniStat({
 }
 
 const shortcuts = [
+  { to: "/student-handoffs", label: "รับ-ส่ง นักเรียน", Icon: ArrowRightLeft, cls: "from-violet-500 to-violet-600" },
   { to: "/opd", label: "บันทึก OPD", Icon: Stethoscope, cls: "from-ksp-blue-500 to-ksp-blue-600" },
   { to: "/admissions", label: "รับ admit ใหม่", Icon: BedDouble, cls: "from-orange-500 to-orange-600" },
   { to: "/medications", label: "เบิกยา", Icon: Pill, cls: "from-emerald-500 to-emerald-600" },
 ];
+
+function DigitalClock() {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="rounded-2xl border border-ksp-blue-100 bg-white px-4 py-2 text-right shadow-sm">
+      <div className="font-mono text-2xl font-extrabold leading-none text-ksp-blue-700">
+        {now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+      </div>
+      <div className="mt-1 text-xs font-semibold text-ksp-gray">เวลาปัจจุบัน</div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
@@ -197,16 +236,21 @@ export default function DashboardPage() {
       <PageHeader
         title={`สวัสดี ${user?.fullName ?? ""}`}
         description={`วันนี้: ${today}`}
-        actions={shortcuts.map(({ to, label, Icon, cls }) => (
-          <Link
-            key={to}
-            to={to}
-            className={`btn bg-gradient-to-b ${cls} text-white shadow-sm hover:shadow-md`}
-          >
-            <Icon className="h-4 w-4" /> {label}
-            <Plus className="h-3.5 w-3.5 opacity-80" />
-          </Link>
-        ))}
+        actions={
+          <>
+            {shortcuts.map(({ to, label, Icon, cls }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`btn bg-gradient-to-b ${cls} text-white shadow-sm hover:shadow-md`}
+              >
+                <Icon className="h-4 w-4" /> {label}
+                <Plus className="h-3.5 w-3.5 opacity-80" />
+              </Link>
+            ))}
+            <DigitalClock />
+          </>
+        }
       />
 
       {/* Stats as a blue grid (gap-px reveals blue grid lines) */}
@@ -233,7 +277,7 @@ export default function DashboardPage() {
             value={stats?.studentCheckOutsToday ?? 0}
             hint={`เดือนนี้รวม ${stats?.studentCheckOutsMonth ?? 0}`}
             Icon={ArrowUpFromLine}
-            tone="orange"
+            tone="rose"
             loading={loading}
           />
           <StatCard label="กำลัง admit อยู่" value={stats?.activeAdmissions ?? 0} Icon={BedDouble} tone="orange" loading={loading} />

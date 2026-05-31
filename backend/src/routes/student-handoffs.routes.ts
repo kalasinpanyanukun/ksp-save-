@@ -68,6 +68,16 @@ function yearRange(year: number) {
   };
 }
 
+function weekRange(value: Date) {
+  const start = dateOnly(value);
+  const day = start.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  start.setDate(start.getDate() + mondayOffset);
+  const end = endOfDay(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end };
+}
+
 router.get("/", async (req, res, next) => {
   try {
     const page = Math.max(1, Number(req.query.page ?? 1));
@@ -130,12 +140,17 @@ router.get("/summary", async (req, res, next) => {
     const month = Math.min(12, Math.max(1, Number(req.query.month ?? now.getMonth() + 1)));
     const todayStart = dateOnly(now);
     const todayEnd = endOfDay(todayStart);
+    const weekDates = weekRange(now);
     const monthDates = monthRange(year, month);
     const yearDates = yearRange(year);
 
-    const [todayRows, monthRows, yearRows] = await Promise.all([
+    const [todayRows, weekRows, monthRows, yearRows] = await Promise.all([
       prisma.studentHandoff.findMany({
         where: { handoffDate: { gte: todayStart, lte: todayEnd } },
+        select: { handoffType: true },
+      }),
+      prisma.studentHandoff.findMany({
+        where: { handoffDate: { gte: weekDates.start, lte: weekDates.end } },
         select: { handoffType: true },
       }),
       prisma.studentHandoff.findMany({
@@ -180,6 +195,10 @@ router.get("/summary", async (req, res, next) => {
       today: {
         checkIn: countType(todayRows, "check_in"),
         checkOut: countType(todayRows, "check_out"),
+      },
+      week: {
+        checkIn: countType(weekRows, "check_in"),
+        checkOut: countType(weekRows, "check_out"),
       },
       month: {
         checkIn: countType(monthRows, "check_in"),

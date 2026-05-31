@@ -3,7 +3,6 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   ArrowRightLeft,
-  CalendarDays,
   Loader2,
   Plus,
 } from "lucide-react";
@@ -151,14 +150,14 @@ export default function StudentHandoffsPage() {
           checkOut={summary?.today.checkOut ?? 0}
         />
         <SummaryPanel
+          title="สัปดาห์นี้"
+          checkIn={summary?.week.checkIn ?? 0}
+          checkOut={summary?.week.checkOut ?? 0}
+        />
+        <SummaryPanel
           title="เดือนนี้"
           checkIn={summary?.month.checkIn ?? 0}
           checkOut={summary?.month.checkOut ?? 0}
-        />
-        <SummaryPanel
-          title="ปีนี้"
-          checkIn={summary?.year.checkIn ?? 0}
-          checkOut={summary?.year.checkOut ?? 0}
         />
       </div>
 
@@ -208,7 +207,7 @@ export default function StudentHandoffsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_22rem]">
+      <div>
         <section className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="table-base">
@@ -306,30 +305,6 @@ export default function StudentHandoffsPage() {
               </div>
             </div>
           )}
-        </section>
-
-        <section className="card-pad">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-ksp-blue-600" />
-            <h2 className="font-bold text-ksp-navy">สรุปรายเดือน</h2>
-          </div>
-          <div className="mt-4 max-h-[28rem] space-y-2 overflow-auto pr-1">
-            {(summary?.byDay ?? []).filter((day) => day.checkIn || day.checkOut).length === 0 ? (
-              <p className="text-sm text-ksp-gray">ยังไม่มีรายการในเดือนนี้</p>
-            ) : (
-              (summary?.byDay ?? [])
-                .filter((day) => day.checkIn || day.checkOut)
-                .map((day) => (
-                  <div key={day.day} className="rounded-xl border border-slate-100 bg-white px-3 py-2">
-                    <div className="text-xs font-semibold text-ksp-gray">วันที่ {day.day}</div>
-                    <div className="mt-1 flex flex-wrap gap-2 text-sm font-semibold">
-                      <span className="text-emerald-700">รับเข้า {day.checkIn} คน</span>
-                      <span className="text-orange-700">ลากลับ {day.checkOut} คน</span>
-                    </div>
-                  </div>
-                ))
-            )}
-          </div>
         </section>
       </div>
 

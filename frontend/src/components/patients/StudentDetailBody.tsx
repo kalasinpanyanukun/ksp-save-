@@ -66,6 +66,15 @@ function valueFrom(data: Record<string, unknown>, keys: string[]) {
   return "-";
 }
 
+function checkedFrom(data: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = data[key];
+    const text = value === null || value === undefined ? "" : String(value).trim();
+    if (text.toUpperCase() === "TRUE" || text === "จริง" || text === "✓") return "✓";
+  }
+  return "-";
+}
+
 function medText(med: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
     const value = med[key];
@@ -298,6 +307,8 @@ export default function StudentDetailBody({
     { label: "คะแนน BMI", value: valueFrom(record, ["คะแนน BMI", "คะแนน"]) },
     { label: "แปลผล BMI", value: valueFrom(record, ["แปลผล BMI", "แปลผล"]) },
     { label: "สิทธิการรักษา", value: valueFrom(record, ["สิทธิ"]) },
+    { label: "ฝากบัตรประชาชน", value: checkedFrom(record, ["ฝากบัตรประชาชน กด ✓", "ฝากบัตร ปชช. กด ✓", "ฝากบัตรประชาชน"]) },
+    { label: "ฝากบัตรคนพิการ", value: checkedFrom(record, ["ฝากบัตรคนพิการ กด ✓", "ฝากบัตร คนพิการ กด ✓", "ฝากบัตรคนพิการ"]) },
     { label: "วัคซีนพื้นฐาน", value: valueFrom(record, ["ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", "ได้รับวัคซีนพื้นฐาน(สมุดชมพู)"]) },
     { label: "วัคซีนไข้หวัดใหญ่", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", "ป้องกันไข้หวัดใหญ่ (ปี)"]) },
     { label: "วัคซีนโควิด", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันโควิค (ปี)", "ป้องกันโควิค (ปี)"]) },
@@ -305,6 +316,7 @@ export default function StudentDetailBody({
     { label: "ผลตรวจร่างกาย", value: valueFrom(record, ["ผลตรวจร่างกาย"]) },
     { label: "การมีประจำเดือน", value: valueFrom(record, ["การมีประจำเดือน"]) },
     { label: "การคุมกำเนิด", value: valueFrom(record, ["การคุมกำเนิด"]) },
+    { label: "ยาประจำตัว", value: checkedFrom(record, ["ยาประจำตัว ถ้ามีกด ✓", "ยาประจำตัว กด ✓", "ยาประจำตัว ถ้ามี"]) },
     { label: "วันที่ฉีดยาคุมล่าสุด", value: valueFrom(record, ["วันที่ฉีดยาคุมล่าสุด"]) },
     { label: "นัดฉีดยาคุมครั้งถัดไป", value: valueFrom(record, ["นัดฉีดยาคุมครั้งถัดไป"]) },
     { label: "สถานที่ฉีดยาคุม", value: valueFrom(record, ["สถานที่ฉีดยาคุม"]) },
