@@ -41,6 +41,16 @@ const healthExtraSchema = z.object({
   ageType: z.string().trim().max(20).optional(),
   idCard: z.string().trim().max(30).optional(),
   address: z.string().trim().max(300).optional(),
+  physicalResult: z.string().trim().max(300).optional(),
+  allergySymptom: z.string().trim().max(300).optional(),
+  menstruation: z.string().trim().max(100).optional(),
+  contraceptionMethod: z.string().trim().max(150).optional(),
+  contraceptionLastDate: z.string().trim().max(40).optional(),
+  contraceptionNextDate: z.string().trim().max(40).optional(),
+  injectionSideEffects: z.string().trim().max(200).optional(),
+  injectionLastDate: z.string().trim().max(40).optional(),
+  injectionPlace: z.string().trim().max(150).optional(),
+  injectionNextDate: z.string().trim().max(40).optional(),
 });
 type HealthExtraInput = z.infer<typeof healthExtraSchema>;
 
@@ -112,6 +122,16 @@ function mergeHealthExtra(
   set("เด็กเก่า/ใหม่", extra.ageType);
   set("เลขบัตรประชาชน", extra.idCard);
   set("ที่อยู่", extra.address);
+  set("ผลตรวจร่างกาย", extra.physicalResult);
+  set("อาการแสดงการแพ้", extra.allergySymptom);
+  set("การมีประจำเดือน", extra.menstruation);
+  set("การคุมกำเนิด", extra.contraceptionMethod);
+  set("วันที่คุมกำเนิดล่าสุด", extra.contraceptionLastDate);
+  set("นัดคุมกำเนิดครั้งถัดไป", extra.contraceptionNextDate);
+  set("อาการผิดปกติหลังฉีดยาคุม", extra.injectionSideEffects);
+  set("วันที่ฉีดยาคุมล่าสุด", extra.injectionLastDate);
+  set("สถานที่ฉีดยาคุม", extra.injectionPlace);
+  set("นัดฉีดยาคุมครั้งถัดไป", extra.injectionNextDate);
   // ให้เมนูสุขภาพมองเห็นว่ามาจากชีตสุขภาพ
   if (!data["แหล่งข้อมูล"]) data["แหล่งข้อมูล"] = "ข้อมูลสุขภาพนักเรียน";
   return data as Prisma.InputJsonObject;

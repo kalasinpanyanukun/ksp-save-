@@ -54,7 +54,7 @@ export interface PdfReportOptions {
 export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
   const { title, subtitle, columns, rows } = options;
   const orientation = options.orientation ?? (columns.length > 6 ? "l" : "p");
-  const fontSize = options.fontSize ?? 16;
+  const fontSize = options.fontSize ?? 14;
 
   const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
 

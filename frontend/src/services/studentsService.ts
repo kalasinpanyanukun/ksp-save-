@@ -27,6 +27,16 @@ export interface HealthExtraInput {
   ageType?: string;
   idCard?: string;
   address?: string;
+  physicalResult?: string;
+  allergySymptom?: string;
+  menstruation?: string;
+  contraceptionMethod?: string;
+  contraceptionLastDate?: string;
+  contraceptionNextDate?: string;
+  injectionSideEffects?: string;
+  injectionLastDate?: string;
+  injectionPlace?: string;
+  injectionNextDate?: string;
 }
 
 export interface StudentInput {

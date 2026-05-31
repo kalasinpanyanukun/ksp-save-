@@ -87,6 +87,16 @@ function parseRows(rows: Record<string, unknown>[]): StudentInput[] {
         weight: pick(row, ["น้ำหนัก", "weight"]),
         height: pick(row, ["ส่วนสูง", "height"]),
         healthRight: pick(row, ["สิทธิ", "สิทธิการรักษา", "healthRight"]),
+        physicalResult: pick(row, ["ผลตรวจร่างกาย", "physicalResult"]),
+        allergySymptom: pick(row, ["อาการแสดงการแพ้", "อาการแพ้"]),
+        menstruation: pick(row, ["การมีประจำเดือน", "menstruation"]),
+        contraceptionMethod: pick(row, ["การคุมกำเนิด", "วิธีการคุมกำเนิด"]),
+        contraceptionLastDate: pick(row, ["วันที่คุมกำเนิดล่าสุด"]),
+        contraceptionNextDate: pick(row, ["นัดคุมกำเนิดครั้งถัดไป"]),
+        injectionLastDate: pick(row, ["วันที่ฉีดยาคุมล่าสุด"]),
+        injectionPlace: pick(row, ["สถานที่ฉีดยาคุม"]),
+        injectionNextDate: pick(row, ["นัดฉีดยาคุมครั้งถัดไป"]),
+        injectionSideEffects: pick(row, ["อาการผิดปกติหลังฉีดยาคุม"]),
       };
       const hasHealthExtra = Object.values(healthExtra).some(Boolean);
       const item: StudentInput = {

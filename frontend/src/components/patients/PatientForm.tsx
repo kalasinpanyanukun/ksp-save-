@@ -200,6 +200,16 @@ function healthExtraFromInitial(initial?: Partial<Student>): HealthExtraInput {
     ageType: pickHealth(d, "เด็กเก่า/ใหม่"),
     idCard: pickHealth(d, "เลขบัตรประชาชน"),
     address: pickHealth(d, "ที่อยู่"),
+    physicalResult: pickHealth(d, "ผลตรวจร่างกาย"),
+    allergySymptom: pickHealth(d, "อาการแสดงการแพ้"),
+    menstruation: pickHealth(d, "การมีประจำเดือน"),
+    contraceptionMethod: pickHealth(d, "การคุมกำเนิด"),
+    contraceptionLastDate: pickHealth(d, "วันที่คุมกำเนิดล่าสุด"),
+    contraceptionNextDate: pickHealth(d, "นัดคุมกำเนิดครั้งถัดไป"),
+    injectionSideEffects: pickHealth(d, "อาการผิดปกติหลังฉีดยาคุม"),
+    injectionLastDate: pickHealth(d, "วันที่ฉีดยาคุมล่าสุด"),
+    injectionPlace: pickHealth(d, "สถานที่ฉีดยาคุม"),
+    injectionNextDate: pickHealth(d, "นัดฉีดยาคุมครั้งถัดไป"),
   };
 }
 
@@ -473,6 +483,53 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           <div>
             <label className="label">การแพ้ยา / อาหาร</label>
             <textarea className="input min-h-[72px]" value={form.drugAllergy ?? ""} onChange={(e) => update("drugAllergy", e.target.value)} placeholder="เช่น แพ้ Penicillin" />
+          </div>
+          <div>
+            <label className="label">อาการแสดงการแพ้</label>
+            <input className="input" value={health.allergySymptom ?? ""} onChange={(e) => updateHealth("allergySymptom", e.target.value)} placeholder="เช่น ผื่น, จาม" />
+          </div>
+          <div>
+            <label className="label">ผลตรวจร่างกาย</label>
+            <input className="input" value={health.physicalResult ?? ""} onChange={(e) => updateHealth("physicalResult", e.target.value)} placeholder="เช่น ปกติ / เหาเล็กน้อย" />
+          </div>
+        </div>
+      </section>
+
+      {/* 3.5 อนามัยเจริญพันธุ์ / การคุมกำเนิด */}
+      <section>
+        <SectionTitle Icon={HeartPulse}>อนามัยเจริญพันธุ์ / การคุมกำเนิด</SectionTitle>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">การมีประจำเดือน</label>
+            <input className="input" value={health.menstruation ?? ""} onChange={(e) => updateHealth("menstruation", e.target.value)} placeholder="เช่น เคยมี / ยังไม่มี" />
+          </div>
+          <div>
+            <label className="label">วิธีการคุมกำเนิด</label>
+            <input className="input" value={health.contraceptionMethod ?? ""} onChange={(e) => updateHealth("contraceptionMethod", e.target.value)} placeholder="เช่น ฝังยาคุม 3 ปี / ฉีดยาคุม 3 เดือน" />
+          </div>
+          <div>
+            <label className="label">วันที่คุมกำเนิดล่าสุด</label>
+            <input className="input" value={health.contraceptionLastDate ?? ""} onChange={(e) => updateHealth("contraceptionLastDate", e.target.value)} />
+          </div>
+          <div>
+            <label className="label">นัดคุมกำเนิดครั้งถัดไป</label>
+            <input className="input" value={health.contraceptionNextDate ?? ""} onChange={(e) => updateHealth("contraceptionNextDate", e.target.value)} />
+          </div>
+          <div>
+            <label className="label">วันที่ฉีดยาคุมล่าสุด</label>
+            <input className="input" value={health.injectionLastDate ?? ""} onChange={(e) => updateHealth("injectionLastDate", e.target.value)} />
+          </div>
+          <div>
+            <label className="label">สถานที่ฉีดยาคุม</label>
+            <input className="input" value={health.injectionPlace ?? ""} onChange={(e) => updateHealth("injectionPlace", e.target.value)} placeholder="เช่น รพ.สต.ดอนยานาง" />
+          </div>
+          <div>
+            <label className="label">นัดฉีดยาคุมครั้งถัดไป</label>
+            <input className="input" value={health.injectionNextDate ?? ""} onChange={(e) => updateHealth("injectionNextDate", e.target.value)} />
+          </div>
+          <div>
+            <label className="label">อาการผิดปกติหลังฉีดยาคุม</label>
+            <input className="input" value={health.injectionSideEffects ?? ""} onChange={(e) => updateHealth("injectionSideEffects", e.target.value)} placeholder="เช่น ไม่มี" />
           </div>
         </div>
       </section>

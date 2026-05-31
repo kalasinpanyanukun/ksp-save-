@@ -301,7 +301,13 @@ export default function StudentDetailBody({
     { label: "วัคซีนพื้นฐาน", value: valueFrom(record, ["ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", "ได้รับวัคซีนพื้นฐาน(สมุดชมพู)"]) },
     { label: "วัคซีนไข้หวัดใหญ่", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", "ป้องกันไข้หวัดใหญ่ (ปี)"]) },
     { label: "วัคซีนโควิด", value: valueFrom(record, ["ฉีดวัคซีน ป้องกันโควิค (ปี)", "ป้องกันโควิค (ปี)"]) },
+    { label: "อาการแสดงการแพ้", value: valueFrom(record, ["อาการแสดงการแพ้"]) },
     { label: "ผลตรวจร่างกาย", value: valueFrom(record, ["ผลตรวจร่างกาย"]) },
+    { label: "การมีประจำเดือน", value: valueFrom(record, ["การมีประจำเดือน"]) },
+    { label: "การคุมกำเนิด", value: valueFrom(record, ["การคุมกำเนิด"]) },
+    { label: "วันที่ฉีดยาคุมล่าสุด", value: valueFrom(record, ["วันที่ฉีดยาคุมล่าสุด"]) },
+    { label: "นัดฉีดยาคุมครั้งถัดไป", value: valueFrom(record, ["นัดฉีดยาคุมครั้งถัดไป"]) },
+    { label: "สถานที่ฉีดยาคุม", value: valueFrom(record, ["สถานที่ฉีดยาคุม"]) },
   ];
 
   const noteValue = valueFrom(record, ["หมายเหตุ"]);

@@ -13,6 +13,11 @@ import {
   UserCog,
   Settings,
   ShieldCheck,
+  Activity,
+  Scale,
+  ClipboardCheck,
+  ShieldPlus,
+  Syringe,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { setSidebar } from "../../store/uiSlice";
@@ -33,6 +38,11 @@ const navItems: NavItem[] = [
   { to: "/reports", label: "รายงาน & สถิติ", Icon: FileBarChart2 },
   { to: "/student-health-data", label: "ข้อมูลสุขภาพนักเรียน", Icon: HeartPulse },
   { to: "/student-medication-data", label: "ข้อมูลยาประจำตัวนักเรียน", Icon: Pill },
+  { to: "/health-disease", label: "สรุปโรคประจำตัวและการแพ้", Icon: Activity },
+  { to: "/health-nutrition", label: "ภาวะโภชนาการ", Icon: Scale },
+  { to: "/health-physical", label: "ผลการตรวจร่างกาย", Icon: ClipboardCheck },
+  { to: "/health-contraception", label: "การคุมกำเนิด", Icon: ShieldPlus },
+  { to: "/health-injection", label: "การฉีดยาคุม", Icon: Syringe },
   { to: "/pm25", label: "PM 2.5", Icon: Wind },
   { to: "/medications", label: "คลังยา", Icon: Pill },
   { to: "/admin/users", label: "จัดการผู้ใช้", Icon: UserCog, adminOnly: true },

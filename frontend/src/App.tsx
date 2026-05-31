@@ -12,6 +12,7 @@ import ReportsPage from "./pages/Reports";
 import PM25Page from "./pages/PM25";
 import MedicationStockPage from "./pages/MedicationStock";
 import SheetDataPage from "./pages/SheetDataPage";
+import HealthReportPage from "./pages/HealthReportPage";
 import AdminUsersPage from "./pages/admin/Users";
 import AdminAuditPage from "./pages/admin/AuditLog";
 import AdminSettingsPage from "./pages/admin/Settings";
@@ -135,6 +136,27 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      {(
+        [
+          ["disease", "/health-disease"],
+          ["nutrition", "/health-nutrition"],
+          ["physical", "/health-physical"],
+          ["contraception", "/health-contraception"],
+          ["injection", "/health-injection"],
+        ] as const
+      ).map(([type, path]) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            <ProtectedRoute>
+              <Shell>
+                <HealthReportPage type={type} />
+              </Shell>
+            </ProtectedRoute>
+          }
+        />
+      ))}
       <Route
         path="/admin/users"
         element={
