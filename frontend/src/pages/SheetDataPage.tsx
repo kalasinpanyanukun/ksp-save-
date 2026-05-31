@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   HeartPulse,
   Loader2,
@@ -322,6 +322,8 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
           <div className="p-6">
             <EmptyState title="ยังไม่มีข้อมูล" description="ยังไม่พบข้อมูลของเรือนนอนนี้" />
           </div>
+        ) : kind === "medication" ? (
+          <MedicationScheduleTable rows={filteredRows} onRowClick={openStudentDetail} />
         ) : (
           <div className="max-h-[calc(100vh-15rem)] overflow-auto">
             <table className="w-full border-collapse text-center text-xs">
@@ -429,6 +431,127 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
           />
         )}
       </Modal>
+    </div>
+  );
+}
+
+// แยกมื้อ (ก่อน/หลังอาหาร) ออกจากจำนวน เช่น "หลังอาหาร 1 เม็ด" -> {after:"1 เม็ด"}
+function splitMeal(value: string) {
+  const t = (value || "").trim();
+  if (!t) return { before: "", after: "" };
+  if (/ก่อนอาหาร/.test(t)) return { before: t.replace(/ก่อนอาหาร/, "").trim() || "✓", after: "" };
+  if (/หลังอาหาร/.test(t)) return { after: t.replace(/หลังอาหาร/, "").trim() || "✓", before: "" };
+  return { before: "", after: t };
+}
+
+function medVal(m: Record<string, string>, ...keys: string[]) {
+  for (const k of keys) {
+    const v = (m[k] || "").trim();
+    if (v && v !== "-") return v;
+  }
+  return "";
+}
+
+/** ตารางยาแบบแยกคอลัมน์เวลา (เช้า/กลางวัน/เย็น/ก่อนนอน/นอกเวลา + ก่อน/หลังอาหาร) */
+function MedicationScheduleTable({
+  rows,
+  onRowClick,
+}: {
+  rows: SheetRow[];
+  onRowClick: (row: SheetRow) => void;
+}) {
+  const TIMES: { key: string; alt: string; label: string }[] = [
+    { key: "เช้า", alt: "การรับประทาน เช้า", label: "เช้า" },
+    { key: "เที่ยง", alt: "การรับประทาน เที่ยง", label: "กลางวัน" },
+    { key: "เย็น", alt: "การรับประทาน เย็น", label: "เย็น" },
+  ];
+  const headBase = "border border-slate-300 bg-ksp-blue-600 px-2 py-2 font-bold text-white";
+  return (
+    <div className="max-h-[calc(100vh-15rem)] overflow-auto">
+      <table className="w-full border-collapse text-center text-xs">
+        <thead className="sticky top-0 z-10">
+          <tr>
+            {["ลำดับ", "รหัสบัตรประชาชน", "ชื่อ-สกุล", "ชื่อเล่น", "ชั้น", "เรือนนอน", "ชื่อยา"].map((h) => (
+              <th key={h} rowSpan={2} className={`${headBase} whitespace-nowrap`}>
+                {h}
+              </th>
+            ))}
+            {TIMES.map((t) => (
+              <th key={t.label} colSpan={2} className={headBase}>
+                {t.label}
+              </th>
+            ))}
+            <th rowSpan={2} className={`${headBase} whitespace-nowrap`}>ก่อนนอน</th>
+            <th rowSpan={2} className={`${headBase} whitespace-nowrap`}>นอกเวลา</th>
+          </tr>
+          <tr>
+            {TIMES.map((t) => (
+              <Fragment key={t.label}>
+                <th className={`${headBase} whitespace-nowrap`}>ก่อนอาหาร</th>
+                <th className={`${headBase} whitespace-nowrap`}>หลังอาหาร</th>
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const meds = row.medications ?? [];
+            const stack = (render: (m: Record<string, string>, i: number) => ReactNode) => (
+              <div className="flex flex-col">
+                {(meds.length ? meds : [{}]).map((m, i) => (
+                  <div
+                    key={i}
+                    className="flex min-h-[2.1rem] items-center justify-center border-b border-slate-100 px-1 py-1 last:border-b-0"
+                  >
+                    {render(m as Record<string, string>, i)}
+                  </div>
+                ))}
+              </div>
+            );
+            const r = (key: string) => row.record[key] ?? "-";
+            return (
+              <tr
+                key={row.rowNumber}
+                onClick={() => onRowClick(row)}
+                className="cursor-pointer align-top transition-shadow hover:shadow-[inset_3px_0_0_0_#4B98EC]"
+              >
+                <td className="border border-slate-200 px-2 py-2 font-semibold text-ksp-navy">{row.rowNumber}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{r("รหัสบัตรประชาชน")}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2 font-semibold text-ksp-blue-700">{r("ชื่อ-สกุล")}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{row.record["ชื่อเล่น"] || "-"}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{r("ชั้นเรียน")}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{r("เรือนนอน")}</td>
+                <td className="border border-slate-200 p-0 text-left">
+                  {stack((m) => (
+                    <span className="w-full px-1 font-semibold text-ksp-blue-700">
+                      {medVal(m, "ชื่อยา", "ข้อมูลยา ชื่อยา") || "-"}
+                      {medVal(m, "ขนาดยา", "ข้อมูลยา ขนาดยา") && (
+                        <span className="font-normal text-ksp-gray"> {medVal(m, "ขนาดยา", "ข้อมูลยา ขนาดยา")}</span>
+                      )}
+                    </span>
+                  ))}
+                </td>
+                {TIMES.map((t) => (
+                  <Fragment key={t.label}>
+                    <td className="border border-slate-200 p-0">
+                      {stack((m) => <span>{splitMeal(medVal(m, t.key, t.alt)).before || ""}</span>)}
+                    </td>
+                    <td className="border border-slate-200 p-0">
+                      {stack((m) => <span className="text-emerald-700">{splitMeal(medVal(m, t.key, t.alt)).after || ""}</span>)}
+                    </td>
+                  </Fragment>
+                ))}
+                <td className="border border-slate-200 p-0">
+                  {stack((m) => <span>{medVal(m, "ก่อนนอน", "การรับประทาน ก่อนนอน") || ""}</span>)}
+                </td>
+                <td className="border border-slate-200 p-0">
+                  {stack((m) => <span>{medVal(m, "นอกเวลา", "การรับประทาน นอกเวลา") || ""}</span>)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -152,6 +152,19 @@ function pickHealth(data: Record<string, unknown> | undefined, ...keys: string[]
   return "";
 }
 
+// แปลงวันที่ไทย d/m/พ.ศ. -> ISO yyyy-mm-dd (สำหรับ input type=date); parse ไม่ได้คืน ""
+function thaiToIso(text: string) {
+  const m = text.trim().match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+  if (!m) return "";
+  const d = Number(m[1]);
+  let mo = Number(m[2]);
+  let y = Number(m[3]);
+  if (y < 100) y += 2500;
+  if (y > 2400) y -= 543;
+  if (!d || !mo || !y || mo > 12 || d > 31) return "";
+  return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
 function medsFromInitial(initial?: Partial<Student>): MedicationEntryInput[] {
   const data = initial?.medicationData;
   const list =
@@ -200,6 +213,7 @@ function healthExtraFromInitial(initial?: Partial<Student>): HealthExtraInput {
     ageType: pickHealth(d, "เด็กเก่า/ใหม่"),
     idCard: pickHealth(d, "เลขบัตรประชาชน"),
     address: pickHealth(d, "ที่อยู่"),
+    birthDate: thaiToIso(pickHealth(d, "วันเดือนปีเกิด")),
     physicalResult: pickHealth(d, "ผลตรวจร่างกาย"),
     allergySymptom: pickHealth(d, "อาการแสดงการแพ้"),
     menstruation: pickHealth(d, "การมีประจำเดือน"),
@@ -354,6 +368,10 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           <div>
             <label className="label">เลขบัตรประชาชน</label>
             <input className="input" value={health.idCard ?? ""} onChange={(e) => updateHealth("idCard", e.target.value)} />
+          </div>
+          <div>
+            <label className="label">วันเดือนปีเกิด</label>
+            <input type="date" className="input" value={health.birthDate ?? ""} onChange={(e) => updateHealth("birthDate", e.target.value)} />
           </div>
           <div>
             <label className="label">ประเภทความพิการ</label>

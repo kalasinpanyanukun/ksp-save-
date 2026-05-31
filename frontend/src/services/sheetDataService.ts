@@ -12,6 +12,7 @@ export interface SheetRow {
   studentId?: string;
   cells: string[];
   record: Record<string, string>;
+  medications?: Record<string, string>[];
 }
 
 export interface SheetDataResponse {

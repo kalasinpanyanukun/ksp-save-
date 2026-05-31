@@ -414,7 +414,19 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
   }
 
   const teacher = kind === "medication" ? await resolveTeacher(dormitory) : undefined;
-  return buildStoredResponse(kind, dormitory, records, teacher);
+  const resp = buildStoredResponse(kind, dormitory, records, teacher);
+  if (kind === "medication") {
+    const byId = new Map(students.map((s) => [s.id, medicationList(s)]));
+    resp.rows = resp.rows.map((r) => ({
+      ...r,
+      medications: (byId.get(r.studentId ?? "") ?? []).map((m) =>
+        Object.fromEntries(
+          Object.entries(m).map(([k, v]) => [k, displayValue(v)]),
+        ),
+      ),
+    }));
+  }
+  return resp;
 }
 
 function normalizeName(name: string) {

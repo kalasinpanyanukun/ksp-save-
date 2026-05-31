@@ -252,16 +252,16 @@ function dischargeDescription(a: Admission) {
 /* ───────────────── Main shared body ───────────────── */
 
 function DocHeader({ title }: { title: string }) {
+  // หัวข้อแบบหัวตาราง: แถบสีน้ำเงิน ตัวหนังสือขาว จัดกึ่งกลาง เต็มความกว้าง
   return (
-    <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-ksp-navy">
-      <span className="h-4 w-1.5 rounded-full bg-ksp-blue-500" />
+    <div className="-mx-5 mb-3 bg-ksp-blue-600 px-5 py-2 text-center text-base font-bold text-white sm:-mx-7 sm:px-7">
       {title}
-    </h3>
+    </div>
   );
 }
 
 function DocDivider() {
-  return <hr className="my-5 border-slate-200" />;
+  return <div className="my-6" />;
 }
 
 function Line({ label, value }: { label: string; value: string | null | undefined }) {

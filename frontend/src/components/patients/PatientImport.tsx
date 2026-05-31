@@ -81,6 +81,7 @@ function parseRows(rows: Record<string, unknown>[]): StudentInput[] {
       const parentPhone = pick(row, FIELD_ALIASES.parentPhone) ?? null;
       const healthExtra = {
         idCard: pick(row, ["เลขบัตรประชาชน", "idCard"]),
+        birthDate: pick(row, ["วันเดือนปีเกิด", "วันเกิด", "birthDate"]),
         disabilityType: pick(row, ["ประเภทความพิการ", "ความพิการ", "disabilityType"]),
         ageType: pick(row, ["เด็กเก่า/ใหม่", "เด็กเก่าใหม่", "ageType"]),
         address: pick(row, ["ที่อยู่", "address"]),

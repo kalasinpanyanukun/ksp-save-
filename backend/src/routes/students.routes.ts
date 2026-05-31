@@ -41,6 +41,7 @@ const healthExtraSchema = z.object({
   ageType: z.string().trim().max(20).optional(),
   idCard: z.string().trim().max(30).optional(),
   address: z.string().trim().max(300).optional(),
+  birthDate: z.string().trim().max(20).optional(),
   physicalResult: z.string().trim().max(300).optional(),
   allergySymptom: z.string().trim().max(300).optional(),
   menstruation: z.string().trim().max(100).optional(),
@@ -122,6 +123,20 @@ function mergeHealthExtra(
   set("เด็กเก่า/ใหม่", extra.ageType);
   set("เลขบัตรประชาชน", extra.idCard);
   set("ที่อยู่", extra.address);
+  // วันเกิด: รับได้ทั้ง ISO (yyyy-mm-dd) และไทย d/m/พ.ศ. -> เก็บเป็น d/m/พ.ศ.
+  if (extra.birthDate && extra.birthDate.trim()) {
+    const bd = extra.birthDate.trim();
+    const iso = bd.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    const thai = bd.match(/^(\d{1,2})[/](\d{1,2})[/](\d{2,4})$/);
+    if (iso) {
+      data["วันเดือนปีเกิด"] = `${Number(iso[3])}/${Number(iso[2])}/${Number(iso[1]) + 543}`;
+    } else if (thai) {
+      let y = Number(thai[3]);
+      if (y < 100) y += 2500;
+      if (y < 2400) y += 543; // เผื่อกรอกเป็น ค.ศ.
+      data["วันเดือนปีเกิด"] = `${Number(thai[1])}/${Number(thai[2])}/${y}`;
+    }
+  }
   set("ผลตรวจร่างกาย", extra.physicalResult);
   set("อาการแสดงการแพ้", extra.allergySymptom);
   set("การมีประจำเดือน", extra.menstruation);

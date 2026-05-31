@@ -27,6 +27,7 @@ export interface HealthExtraInput {
   ageType?: string;
   idCard?: string;
   address?: string;
+  birthDate?: string;
   physicalResult?: string;
   allergySymptom?: string;
   menstruation?: string;
