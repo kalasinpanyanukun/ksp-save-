@@ -274,6 +274,7 @@ function buildStoredResponse(
           "รหัสนักเรียน",
           "รหัสบัตรประชาชน",
           "ชื่อ-สกุล",
+          "ชื่อเล่น",
           "ชั้นเรียน",
           "เรือนนอน",
           "จำนวนชนิดยา",
@@ -396,6 +397,7 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
       records.push({
         __studentId: student.id,
         ...base,
+        "ชื่อเล่น": student.nickname ?? "",
         "จำนวนชนิดยา": String(medications.length),
         "รายการยา": medicationSummary(
           medications.map((medication) =>
@@ -574,6 +576,7 @@ function classRoomFromMedication(row: string[]) {
 
 interface MedicationBlock {
   name: string;
+  nickname: string | null;
   classRoom: string | null;
   phone: string | null;
   medications: Record<string, string>[];
@@ -638,6 +641,7 @@ async function importMedicationSheets(studentCodesByName: Map<string, string>) {
       if (rowName) {
         current = {
           name: rowName,
+          nickname: clean(item.cells[3]) || null,
           classRoom: classRoomFromMedication(item.cells),
           phone: phoneValue(item.cells[7], item.cells[8]),
           medications: [],
@@ -704,6 +708,7 @@ async function importMedicationSheets(studentCodesByName: Map<string, string>) {
           studentCode,
           firstName,
           lastName,
+          nickname: block.nickname,
           classRoom: block.classRoom,
           dormitory: dormitory.name,
           parentPhone: block.phone,
