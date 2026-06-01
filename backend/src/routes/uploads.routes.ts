@@ -7,15 +7,33 @@ import {
   STUDENT_PHOTOS_BUCKET,
   uploadObject,
 } from "../lib/supabaseStorage.js";
+import { prisma } from "../lib/prisma.js";
 
 const router = Router();
-router.use(authMiddleware);
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 function bodyBuffer(body: unknown) {
   return Buffer.isBuffer(body) ? body : Buffer.alloc(0);
 }
+
+router.get("/student-photo-file/:id", async (req, res, next) => {
+  try {
+    const photo = await prisma.studentPhotoFile.findUnique({
+      where: { id: req.params.id },
+    });
+
+    if (!photo) throw new HttpError(404, "ไม่พบรูปนักเรียน");
+
+    res.setHeader("cache-control", "public, max-age=31536000, immutable");
+    res.type(photo.mimeType);
+    res.send(Buffer.from(photo.data));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.use(authMiddleware);
 
 router.post(
   "/student-photo",
@@ -35,12 +53,31 @@ router.post(
         throw new HttpError(400, "รูปภาพต้องมีขนาดไม่เกิน 2 MB");
       }
 
-      const uploaded = await uploadObject({
-        bucketId: STUDENT_PHOTOS_BUCKET,
-        path: objectPath("students", originalName),
-        buffer,
-        contentType,
-      });
+      let uploaded: { url: string; path: string };
+      try {
+        uploaded = await uploadObject({
+          bucketId: STUDENT_PHOTOS_BUCKET,
+          path: objectPath("students", originalName),
+          buffer,
+          contentType,
+        });
+      } catch (err) {
+        console.warn(
+          "[uploads] Supabase Storage unavailable, using database photo fallback:",
+          err instanceof Error ? err.message : err,
+        );
+        const photo = await prisma.studentPhotoFile.create({
+          data: {
+            mimeType: contentType,
+            data: buffer,
+            sizeBytes: buffer.length,
+          },
+        });
+        uploaded = {
+          path: `db:${photo.id}`,
+          url: `/api/uploads/student-photo-file/${photo.id}`,
+        };
+      }
 
       res.status(201).json({
         url: uploaded.url,

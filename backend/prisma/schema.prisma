@@ -94,6 +94,16 @@ model Student {
   @@map("students")
 }
 
+model StudentPhotoFile {
+  id        String   @id @default(uuid())
+  mimeType  String   @map("mime_type") @db.VarChar(120)
+  data      Bytes
+  sizeBytes Int      @map("size_bytes")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("student_photo_files")
+}
+
 // ───── รับนักเรียนเข้าพักประจำ / ลากลับบ้าน ─────
 enum StudentHandoffType {
   check_in

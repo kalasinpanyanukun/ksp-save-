@@ -341,21 +341,8 @@ export default function PatientListPage() {
                     <td className="font-semibold text-ksp-gray">{index + 1}</td>
                     <td className="font-mono text-xs">{s.studentCode}</td>
                     <td>
-                      <span className="flex items-center gap-2">
-                        {s.photoUrl ? (
-                          <img
-                            src={s.photoUrl}
-                            alt={`${s.firstName} ${s.lastName}`}
-                            className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm"
-                          />
-                        ) : (
-                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ksp-blue-50 text-xs font-bold text-ksp-blue-700 ring-1 ring-ksp-blue-100">
-                            {s.firstName.charAt(0)}
-                          </span>
-                        )}
-                        <span className="font-medium text-ksp-blue-700">
-                          {s.firstName} {s.lastName}
-                        </span>
+                      <span className="font-medium text-ksp-blue-700">
+                        {s.firstName} {s.lastName}
                       </span>
                     </td>
                     <td>{nicknameOf(s) || "-"}</td>
