@@ -3,22 +3,27 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   ArrowRightLeft,
+  Edit3,
   Loader2,
   Plus,
+  Trash2,
 } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import StudentPicker from "../components/patients/StudentPicker";
 import { useToast } from "../components/common/useToast";
 import { useAppSelector } from "../store";
 import { useTopbarSearch } from "../components/layout/TopbarSearchContext";
 import {
   createStudentHandoff,
+  deleteStudentHandoff,
   getStudentHandoffSummary,
   listStudentHandoffs,
   type StudentHandoffInput,
   type StudentHandoffSummary,
+  updateStudentHandoff,
 } from "../services/studentHandoffsService";
 import type { Student, StudentHandoff, StudentHandoffType } from "../types";
 
@@ -38,6 +43,13 @@ function formatDate(value: string) {
     month: "short",
     year: "numeric",
   });
+}
+
+function isoDate(value: string) {
+  if (!value) return todayDate();
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return todayDate();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 const typeLabels: Record<StudentHandoffType, string> = {
@@ -60,9 +72,11 @@ export default function StudentHandoffsPage() {
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [typeFilter, setTypeFilter] = useState<StudentHandoffType | "">("");
-  const [from, setFrom] = useState(todayDate());
-  const [to, setTo] = useState(todayDate());
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<StudentHandoff | null>(null);
+  const [deleting, setDeleting] = useState<StudentHandoff | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const pageSize = 20;
 
@@ -114,17 +128,23 @@ export default function StudentHandoffsPage() {
     [total],
   );
 
-  async function handleCreate(payload: StudentHandoffInput) {
+  async function handleSave(payload: StudentHandoffInput) {
     setSubmitting(true);
     try {
-      await createStudentHandoff(payload);
-      toast("บันทึกรับ-ส่งนักเรียนเรียบร้อย", "success");
+      if (editing) {
+        await updateStudentHandoff(editing.id, payload);
+        toast("แก้ไขบันทึกรับ-ส่งนักเรียนเรียบร้อย", "success");
+      } else {
+        await createStudentHandoff(payload);
+        toast("บันทึกรับ-ส่งนักเรียนเรียบร้อย", "success");
+      }
       setOpen(false);
+      setEditing(null);
       await load();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ?? "บันทึกไม่สำเร็จ";
+        ?.message ?? "บันทึกไม่สำเร็จ";
       toast(message, "error");
     } finally {
       setSubmitting(false);
@@ -137,7 +157,14 @@ export default function StudentHandoffsPage() {
         title="บันทึกรับ-ส่งนักเรียน"
         description="รับนักเรียนเข้าพักประจำ และบันทึกนักเรียนลากลับบ้าน"
         actions={
-          <button type="button" className="btn-primary" onClick={() => setOpen(true)}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+          >
             <Plus className="h-4 w-4" /> บันทึกรายการใหม่
           </button>
         }
@@ -220,12 +247,13 @@ export default function StudentHandoffsPage() {
                   <th>ผู้พามาส่ง / รับกลับ</th>
                   <th>ครูพยาบาล</th>
                   <th>หมายเหตุ</th>
+                  <th className="text-right">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center">
+                    <td colSpan={8} className="py-8 text-center">
                       <Loader2 className="inline h-5 w-5 animate-spin text-ksp-blue-500" />
                     </td>
                   </tr>
@@ -265,6 +293,29 @@ export default function StudentHandoffsPage() {
                       <td>{item.nurseName || item.recordedBy?.fullName || "-"}</td>
                       <td className="max-w-[22ch] truncate" title={item.notes ?? ""}>
                         {item.notes || "-"}
+                      </td>
+                      <td className="whitespace-nowrap text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-2 text-ksp-blue-700 hover:bg-ksp-blue-50"
+                            title="แก้ไข"
+                            onClick={() => {
+                              setEditing(item);
+                              setOpen(true);
+                            }}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-2 text-rose-600 hover:bg-rose-50"
+                            title="ลบ"
+                            onClick={() => setDeleting(item)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -308,14 +359,47 @@ export default function StudentHandoffsPage() {
         </section>
       </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} title="บันทึกรับ-ส่งนักเรียน" size="lg">
+      <Modal
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          setEditing(null);
+        }}
+        title={editing ? "แก้ไขบันทึกรับ-ส่งนักเรียน" : "บันทึกรับ-ส่งนักเรียน"}
+        size="lg"
+      >
         <StudentHandoffForm
+          initial={editing}
           defaultNurseName={user?.fullName ?? ""}
           submitting={submitting}
-          onSubmit={handleCreate}
-          onCancel={() => setOpen(false)}
+          onSubmit={handleSave}
+          onCancel={() => {
+            setOpen(false);
+            setEditing(null);
+          }}
         />
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(deleting)}
+        title="ยืนยันการลบบันทึก"
+        message={`ต้องการลบบันทึก ${deleting ? typeLabels[deleting.handoffType] : ""} ของ ${deleting?.student?.firstName ?? ""} ${deleting?.student?.lastName ?? ""} ใช่หรือไม่?`}
+        danger
+        confirmLabel="ลบ"
+        onConfirm={async () => {
+          if (!deleting) return;
+          try {
+            await deleteStudentHandoff(deleting.id);
+            toast("ลบบันทึกรับ-ส่งนักเรียนเรียบร้อย", "success");
+            await load();
+          } catch {
+            toast("ลบไม่สำเร็จ", "error");
+          } finally {
+            setDeleting(null);
+          }
+        }}
+        onClose={() => setDeleting(null)}
+      />
     </>
   );
 }
@@ -355,11 +439,13 @@ function SummaryPanel({
 }
 
 function StudentHandoffForm({
+  initial,
   defaultNurseName,
   submitting,
   onSubmit,
   onCancel,
 }: {
+  initial?: StudentHandoff | null;
   defaultNurseName: string;
   submitting?: boolean;
   onSubmit: (payload: StudentHandoffInput) => Promise<void> | void;
@@ -374,6 +460,18 @@ function StudentHandoffForm({
   const [nurseName, setNurseName] = useState(defaultNurseName);
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStudent(initial?.student ?? null);
+    setHandoffType(initial?.handoffType ?? "check_in");
+    setHandoffDate(initial ? isoDate(initial.handoffDate) : todayDate());
+    setHandoffTime(initial?.handoffTime ?? nowTime());
+    setCompanionName(initial?.companionName ?? "");
+    setCompanionPhone(initial?.companionPhone ?? "");
+    setNurseName(initial?.nurseName || defaultNurseName);
+    setNotes(initial?.notes ?? "");
+    setError(null);
+  }, [defaultNurseName, initial]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();

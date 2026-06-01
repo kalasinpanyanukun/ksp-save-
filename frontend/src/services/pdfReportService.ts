@@ -54,7 +54,7 @@ export interface PdfReportOptions {
 export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
   const { title, subtitle, columns, rows } = options;
   const orientation = options.orientation ?? (columns.length > 6 ? "l" : "p");
-  const fontSize = options.fontSize ?? 14;
+  const fontSize = 14;
 
   const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
 
@@ -93,22 +93,38 @@ export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
   const cellPadX = 1.6;
   const cellPadY = 1.6;
 
+  function drawCenteredLines(
+    lines: string[],
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) {
+    const textHeight = lines.length * lineHeight;
+    const startY = y + (height - textHeight) / 2 + lineHeight * 0.78;
+    lines.forEach((line, index) => {
+      doc.text(line, x + width / 2, startY + index * lineHeight, {
+        align: "center",
+      });
+    });
+  }
+
   function drawDocHeader() {
     let y = margin;
     doc.setFont(fontFamily, "bold");
-    doc.setFontSize(15);
+    doc.setFontSize(12);
     doc.text(ORG_NAME, pageWidth / 2, y + 3, { align: "center" });
-    y += 7;
-    doc.setFontSize(13);
+    y += 6;
+    doc.setFontSize(10.4);
     doc.setFont(fontFamily, "normal");
     doc.text(SYSTEM_NAME, pageWidth / 2, y + 2, { align: "center" });
-    y += 7;
+    y += 6;
     doc.setFont(fontFamily, "bold");
-    doc.setFontSize(18);
+    doc.setFontSize(14.4);
     doc.text(title, pageWidth / 2, y + 3, { align: "center" });
-    y += 8;
+    y += 7;
     doc.setFont(fontFamily, "normal");
-    doc.setFontSize(12);
+    doc.setFontSize(9.6);
     if (subtitle) {
       doc.text(subtitle, margin, y + 2);
     }
@@ -134,7 +150,7 @@ export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
     let x = margin;
     doc.setTextColor(13, 43, 69);
     cellLines.forEach((lines, i) => {
-      doc.text(lines, x + cellPadX, startY + cellPadY + lineHeight * 0.8);
+      drawCenteredLines(lines, x, startY, colWidths[i]!, rowH);
       x += colWidths[i]!;
     });
     // เส้นแนวตั้ง
@@ -179,7 +195,7 @@ export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
     }
     let x = margin;
     cellLines.forEach((lines, i) => {
-      doc.text(lines, x + cellPadX, y + cellPadY + lineHeight * 0.8);
+      drawCenteredLines(lines, x, y, colWidths[i]!, rowH);
       x += colWidths[i]!;
     });
     doc.setDrawColor(225);
@@ -197,7 +213,7 @@ export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
   for (let p = 1; p <= pageCount; p++) {
     doc.setPage(p);
     doc.setFont(fontFamily, "normal");
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setTextColor(120);
     doc.text(`หน้า ${p} / ${pageCount}`, pageWidth - margin, pageHeight - 6, { align: "right" });
   }

@@ -36,17 +36,7 @@ interface StatCardProps {
   loading?: boolean;
 }
 
-const statTones = {
-  blue: "text-ksp-blue-600",
-  orange: "text-orange-600",
-  cyan: "text-cyan-600",
-  green: "text-emerald-700",
-  violet: "text-violet-600",
-  rose: "text-rose-600",
-  slate: "text-slate-700",
-} as const;
-
-const statHeaderTones = {
+const statToneStyles = {
   blue: "bg-ksp-blue-600 text-white",
   orange: "bg-orange-600 text-white",
   cyan: "bg-cyan-600 text-white",
@@ -54,16 +44,6 @@ const statHeaderTones = {
   violet: "bg-violet-600 text-white",
   rose: "bg-rose-700 text-white",
   slate: "bg-slate-700 text-white",
-} as const;
-
-const statIconTones = {
-  blue: "bg-white/15 text-white",
-  orange: "bg-white/15 text-white",
-  cyan: "bg-white/15 text-white",
-  green: "bg-white/15 text-white",
-  violet: "bg-white/15 text-white",
-  rose: "bg-white/15 text-white",
-  slate: "bg-white/15 text-white",
 } as const;
 
 function StatCard({
@@ -75,17 +55,19 @@ function StatCard({
   loading,
 }: StatCardProps) {
   return (
-    <section className="flex min-h-[9.5rem] flex-col justify-between bg-white">
-      <div className={`flex items-start justify-between gap-4 p-5 ${statHeaderTones[tone]}`}>
+    <section
+      className={`grid min-h-[10rem] grid-cols-[minmax(0,1fr)_auto] items-stretch gap-4 p-5 ${statToneStyles[tone]}`}
+    >
+      <div className="flex min-w-0 flex-col justify-between">
         <div>
           <p className="text-xl font-bold leading-tight">{label}</p>
           {hint && <p className="mt-2 text-sm text-white/80">{hint}</p>}
         </div>
-        <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${statIconTones[tone]}`}>
+        <div className="mt-5 grid h-11 w-11 place-items-center rounded-xl bg-white/15 text-white">
           <Icon className="h-5.5 w-5.5" size={22} />
         </div>
       </div>
-      <div className={`p-5 pt-4 text-6xl font-extrabold leading-none tracking-tight ${statTones[tone]}`}>
+      <div className="flex min-w-[5.5rem] items-center justify-end text-right text-[clamp(4rem,7vw,6.75rem)] font-extrabold leading-none">
         {loading ? <Loader2 className="h-9 w-9 animate-spin" /> : value}
       </div>
     </section>
@@ -100,15 +82,17 @@ function MiniStat({
   loading,
 }: StatCardProps) {
   return (
-    <section className="flex min-h-[6.5rem] items-start justify-between gap-3 bg-white p-5">
-      <div>
-        <p className="text-sm font-semibold leading-tight text-ksp-navy">{label}</p>
-        <div className={`mt-2 text-4xl font-extrabold leading-none tracking-tight ${statTones[tone]}`}>
-          {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : value}
+    <section
+      className={`grid min-h-[7rem] grid-cols-[minmax(0,1fr)_auto] items-stretch gap-3 p-5 ${statToneStyles[tone]}`}
+    >
+      <div className="flex min-w-0 flex-col justify-between">
+        <p className="text-sm font-bold leading-tight text-white">{label}</p>
+        <div className="mt-4 grid h-9 w-9 place-items-center rounded-lg bg-white/15 text-white">
+          <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ksp-blue-50/60 ${statTones[tone]}`}>
-        <Icon className="h-5 w-5" />
+      <div className="flex min-w-[3.25rem] items-center justify-end text-right text-[clamp(2.75rem,4.5vw,4.75rem)] font-extrabold leading-none text-white">
+        {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : value}
       </div>
     </section>
   );
@@ -130,12 +114,24 @@ function DigitalClock() {
   }, []);
 
   return (
-    <div className="rounded-2xl border border-ksp-blue-100 bg-white px-4 py-2 text-right shadow-sm">
-      <div className="font-mono text-2xl font-extrabold leading-none text-ksp-blue-700">
+    <div className="text-right">
+      <div className="font-mono text-[clamp(2rem,5vw,4.5rem)] font-extrabold leading-none text-ksp-blue-800">
         {now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
       </div>
-      <div className="mt-1 text-xs font-semibold text-ksp-gray">เวลาปัจจุบัน</div>
+      <div className="mt-1 text-sm font-semibold text-ksp-blue-600">เวลาปัจจุบัน</div>
     </div>
+  );
+}
+
+function DashboardInfoPanel({ today }: { today: string }) {
+  return (
+    <section className="grid min-h-[7rem] gap-4 bg-ksp-blue-50 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div>
+        <p className="text-sm font-semibold text-ksp-blue-600">วันที่ปัจจุบัน</p>
+        <p className="mt-1 text-xl font-extrabold leading-tight text-ksp-navy">{today}</p>
+      </div>
+      <DigitalClock />
+    </section>
   );
 }
 
@@ -235,7 +231,7 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title={`สวัสดี ${user?.fullName ?? ""}`}
-        description={`วันนี้: ${today}`}
+        description="ภาพรวมระบบเรือนพยาบาล"
         actions={
           <>
             {shortcuts.map(({ to, label, Icon, cls }) => (
@@ -248,7 +244,6 @@ export default function DashboardPage() {
                 <Plus className="h-3.5 w-3.5 opacity-80" />
               </Link>
             ))}
-            <DigitalClock />
           </>
         }
       />
@@ -265,7 +260,7 @@ export default function DashboardPage() {
             loading={loading}
           />
           <StatCard
-            label="รับเข้าพักวันนี้"
+            label="มารายงานตัว"
             value={stats?.studentCheckInsToday ?? 0}
             hint={`เดือนนี้รวม ${stats?.studentCheckInsMonth ?? 0}`}
             Icon={ArrowDownToLine}
@@ -291,6 +286,9 @@ export default function DashboardPage() {
           {additionalStats.map((item) => (
             <MiniStat key={item.label} {...item} />
           ))}
+          <div className="sm:col-span-2 xl:col-span-2">
+            <DashboardInfoPanel today={today} />
+          </div>
         </div>
       </div>
     </>

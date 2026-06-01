@@ -57,11 +57,19 @@ function parseThaiDate(text: string): Date | null {
 }
 
 function nutritionTone(result: string): string {
-  if (/ผอม|น้อยกว่า/.test(result)) return "bg-amber-50";
-  if (/อ้วน/.test(result)) return "bg-rose-50";
-  if (/ท้วม|เกิน/.test(result)) return "bg-orange-50";
-  if (/ปกติ|สมส่วน/.test(result)) return "bg-emerald-50";
-  return "bg-sky-50";
+  if (/อ้วน/.test(result)) return "bg-rose-100";
+  if (/ท้วม|เกิน/.test(result)) return "bg-amber-100";
+  if (/ผอม|น้อยกว่า/.test(result)) return "bg-slate-100";
+  return "";
+}
+
+function isHeader(header: string, ...terms: string[]) {
+  return terms.some((term) => header.includes(term));
+}
+
+function todayStart() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 }
 
 export default function HealthReportPage({ type }: { type: HealthReportType }) {
@@ -117,8 +125,38 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
     if (type !== "injection" || index !== nextIdx) return false;
     const dt = parseThaiDate(cells[index] ?? "");
     if (!dt) return false;
-    const days = (dt.getTime() - Date.now()) / 86400000;
-    return days >= 0 && days <= 30;
+    return dt.getTime() >= todayStart();
+  }
+
+  function cellLayoutClass(header: string, weight?: number): string {
+    if (
+      type === "disease" &&
+      isHeader(header, "หมายเหตุ")
+    ) {
+      return "w-[350px] max-w-[350px] whitespace-normal break-words text-center align-middle leading-relaxed";
+    }
+    if (
+      type === "physical" &&
+      isHeader(header, "ผลตรวจร่างกาย")
+    ) {
+      return "w-[350px] max-w-[350px] whitespace-normal break-words text-center align-middle leading-relaxed";
+    }
+    if (
+      type === "injection" &&
+      isHeader(header, "วันที่ฉีดล่าสุด")
+    ) {
+      return "w-[350px] max-w-[350px] whitespace-normal break-words text-center align-middle leading-relaxed";
+    }
+    if (
+      (type === "disease" && isHeader(header, "ชื่อ-สกุล", "โรคประจำตัว")) ||
+      (type === "physical" && isHeader(header, "ชื่อ-สกุล", "ชื่อ - สกุล"))
+    ) {
+      return "whitespace-normal text-center align-middle leading-relaxed";
+    }
+    if ((weight ?? 1) >= 1.6) {
+      return "min-w-[12rem] whitespace-normal text-left align-top leading-relaxed";
+    }
+    return "whitespace-nowrap align-middle";
   }
 
   const summaryChips = report?.summary?.map((s) => (
@@ -204,12 +242,13 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
                       <td
                         key={i}
                         className={`border-b border-r border-slate-100 px-3 py-2.5 last:border-r-0 ${
-                          report?.columns[i] && (report.columns[i]!.weight ?? 1) >= 1.6
-                            ? "min-w-[12rem] whitespace-normal text-left align-top leading-relaxed"
-                            : "whitespace-nowrap align-middle"
+                          cellLayoutClass(
+                            report?.columns[i]?.header ?? "",
+                            report?.columns[i]?.weight,
+                          )
                         } ${
                           dueSoonCell(r.cells, i)
-                            ? "bg-amber-100 font-bold text-amber-900"
+                            ? "bg-amber-200 font-bold text-amber-950"
                             : i === 0 || report?.columns[i]?.header.includes("ชื่อ-สกุล")
                               ? "font-semibold text-ksp-blue-700"
                               : "text-ksp-navy/85"

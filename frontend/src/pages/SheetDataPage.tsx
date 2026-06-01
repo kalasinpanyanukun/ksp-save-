@@ -544,14 +544,14 @@ function MedicationScheduleTable({
                     onRowClick(row);
                   }
                 }}
-                className="cursor-pointer align-top odd:bg-white even:bg-slate-50/80 transition-shadow hover:shadow-[inset_3px_0_0_0_#4B98EC]"
+                className="cursor-pointer align-middle odd:bg-white even:bg-slate-50/80 transition-shadow hover:shadow-[inset_3px_0_0_0_#4B98EC]"
               >
-                <td className="border border-slate-200 px-2 py-2 font-semibold text-ksp-navy">{row.rowNumber}</td>
-                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{r("รหัสบัตรประชาชน")}</td>
-                <td className="whitespace-nowrap border border-slate-200 px-2 py-2 font-semibold text-ksp-blue-700">{r("ชื่อ-สกุล")}</td>
-                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{row.record["ชื่อเล่น"] || "-"}</td>
-                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{r("ชั้นเรียน")}</td>
-                <td className="whitespace-nowrap border border-slate-200 px-2 py-2">{r("เรือนนอน")}</td>
+                <td className="border border-slate-200 px-2 py-2 align-middle font-semibold text-ksp-navy">{row.rowNumber}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2 align-middle">{r("รหัสบัตรประชาชน")}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2 align-middle font-semibold text-ksp-blue-700">{r("ชื่อ-สกุล")}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2 align-middle">{row.record["ชื่อเล่น"] || "-"}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2 align-middle">{r("ชั้นเรียน")}</td>
+                <td className="whitespace-nowrap border border-slate-200 px-2 py-2 align-middle">{r("เรือนนอน")}</td>
                 <td className="border border-slate-200 p-0 text-left">
                   {stack((m) => (
                     <span className="w-full px-1 font-semibold text-ksp-blue-700">

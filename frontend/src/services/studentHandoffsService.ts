@@ -47,6 +47,21 @@ export async function createStudentHandoff(
   return data.handoff;
 }
 
+export async function updateStudentHandoff(
+  id: string,
+  payload: StudentHandoffInput,
+): Promise<StudentHandoff> {
+  const { data } = await api.put<{ handoff: StudentHandoff }>(
+    `/student-handoffs/${id}`,
+    payload,
+  );
+  return data.handoff;
+}
+
+export async function deleteStudentHandoff(id: string): Promise<void> {
+  await api.delete(`/student-handoffs/${id}`);
+}
+
 export async function getStudentHandoffSummary(params: {
   year?: number;
   month?: number;

@@ -251,4 +251,67 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+router.put("/:id", async (req, res, next) => {
+  try {
+    const id = z.string().uuid().parse(req.params.id);
+    const body = handoffSchema.parse(req.body);
+    const existing = await prisma.studentHandoff.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      res.status(404).json({ message: "ไม่พบบันทึกรับ-ส่งนักเรียน" });
+      return;
+    }
+
+    const nextStatus = body.handoffType === "check_in" ? "resident" : "home_leave";
+    const handoff = await prisma.$transaction(async (tx) => {
+      const updated = await tx.studentHandoff.update({
+        where: { id },
+        data: {
+          studentId: body.studentId,
+          handoffType: body.handoffType,
+          handoffDate: new Date(body.handoffDate),
+          handoffTime: body.handoffTime,
+          companionName: body.companionName,
+          companionPhone: body.companionPhone || null,
+          nurseName: body.nurseName || req.user!.fullName,
+          notes: body.notes || null,
+        },
+        include: {
+          student: studentInclude,
+          recordedBy: { select: { id: true, fullName: true } },
+        },
+      });
+      await tx.student.update({
+        where: { id: body.studentId },
+        data: { studentStatus: nextStatus },
+      });
+      return updated;
+    });
+
+    res.json({ handoff });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const id = z.string().uuid().parse(req.params.id);
+    const existing = await prisma.studentHandoff.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) {
+      res.status(404).json({ message: "ไม่พบบันทึกรับ-ส่งนักเรียน" });
+      return;
+    }
+    await prisma.studentHandoff.delete({ where: { id } });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
