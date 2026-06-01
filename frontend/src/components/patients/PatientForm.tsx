@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { ImagePlus, Pill, Plus, Trash2, Users, GraduationCap, HeartPulse } from "lucide-react";
+import {
+  AlertTriangle,
+  GraduationCap,
+  HeartPulse,
+  ImagePlus,
+  Pill,
+  Plus,
+  ShieldCheck,
+  Trash2,
+  Users,
+} from "lucide-react";
 import type { BloodType, Medication, Student, StudentStatus } from "../../types";
 import type {
   GuardianInput,
@@ -29,6 +39,7 @@ function MedicationCombobox({
   const [results, setResults] = useState<Medication[]>([]);
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => setQuery(value), [value]);
   useEffect(() => {
@@ -48,6 +59,9 @@ function MedicationCombobox({
   async function addNew() {
     const name = query.trim();
     if (!name) return;
+    const confirmed = window.confirm(`เพิ่ม "${name}" เป็นยาชนิดใหม่ในคลังยาใช่ไหม`);
+    if (!confirmed) return;
+    setError("");
     setCreating(true);
     try {
       const code = `MED-${Date.now().toString(36).toUpperCase()}`.slice(0, 20);
@@ -65,8 +79,7 @@ function MedicationCombobox({
       setQuery(med.drugName);
       setOpen(false);
     } catch {
-      // ถ้าเพิ่มไม่ได้ ยังคงใช้ชื่อที่พิมพ์ไว้
-      onChange(name);
+      setError("เพิ่มยาชนิดใหม่ไม่สำเร็จ กรุณาเลือกจากคลังหรือบันทึกชื่อให้ถูกต้องก่อน");
     } finally {
       setCreating(false);
     }
@@ -76,11 +89,15 @@ function MedicationCombobox({
     <div className="relative flex-1">
       <input
         className="input"
+        aria-invalid={Boolean(error)}
+        aria-expanded={open}
+        aria-label="ชื่อยา"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
           onChange(e.target.value);
           setOpen(true);
+          setError("");
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
@@ -119,6 +136,7 @@ function MedicationCombobox({
           )}
         </div>
       )}
+      {error && <p className="mt-1 text-xs font-semibold text-rose-700">{error}</p>}
     </div>
   );
 }
@@ -259,6 +277,34 @@ const emptyForm: StudentInput = {
   studentStatus: "resident",
 };
 
+type FormErrors = Record<string, string>;
+
+function digitsOnly(value?: string | null) {
+  return (value ?? "").replace(/\D/g, "");
+}
+
+function hasAnyDose(med: MedicationEntryInput) {
+  return MEAL_FIELDS.some((field) => Boolean((med[field.key] ?? "").trim()));
+}
+
+function numberInRange(value: string | null | undefined, min: number, max: number) {
+  const text = (value ?? "").trim();
+  if (!text) return true;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max;
+}
+
+function phoneLooksValid(value?: string | null) {
+  const text = (value ?? "").trim();
+  if (!text) return true;
+  const digits = digitsOnly(text);
+  return digits.length >= 9 && digits.length <= 10;
+}
+
+function uniqueMessages(errors: FormErrors) {
+  return Array.from(new Set(Object.values(errors)));
+}
+
 function SectionTitle({ Icon, children, action }: { Icon: typeof Users; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="mb-3 flex items-center justify-between">
@@ -304,10 +350,14 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
   const [photoPreview, setPhotoPreview] = useState("");
   const [photoError, setPhotoError] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [clinicalReviewConfirmed, setClinicalReviewConfirmed] = useState(false);
 
   useEffect(() => {
     setPhotoFile(null);
     setPhotoError("");
+    setFormErrors({});
+    setClinicalReviewConfirmed(false);
     if (initial) {
       setForm({
         studentCode: initial.studentCode ?? "",
@@ -352,16 +402,74 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
     return "";
   }, [health.weight, health.height]);
 
+  const clinicalReviewItems = useMemo(() => {
+    const items: string[] = [];
+    if ((form.congenitalDisease ?? "").trim()) items.push("โรคประจำตัว");
+    if ((form.drugAllergy ?? "").trim()) items.push("การแพ้ยา / อาหาร");
+    const medCount = meds.filter((m) => m.name.trim()).length;
+    if (medCount > 0) items.push(`ยาประจำตัว ${medCount} รายการ`);
+    if ((health.contraceptionNextDate ?? "").trim()) items.push("นัดคุมกำเนิดครั้งถัดไป");
+    if ((health.injectionNextDate ?? "").trim()) items.push("นัดฉีดยาคุมครั้งถัดไป");
+    return items;
+  }, [
+    form.congenitalDisease,
+    form.drugAllergy,
+    health.contraceptionNextDate,
+    health.injectionNextDate,
+    meds,
+  ]);
+
+  const visibleErrors = uniqueMessages(formErrors);
+
+  function clearError(key: string) {
+    setFormErrors((errors) => {
+      if (!errors[key] && !errors.submit) return errors;
+      const next = { ...errors };
+      delete next[key];
+      delete next.submit;
+      return next;
+    });
+  }
+
+  function clearIndexedError(prefix: string, index: number) {
+    setFormErrors((errors) => {
+      const keyPrefix = `${prefix}.${index}`;
+      if (!Object.keys(errors).some((key) => key.startsWith(keyPrefix))) return errors;
+      const next = { ...errors };
+      Object.keys(next).forEach((key) => {
+        if (key.startsWith(keyPrefix)) delete next[key];
+      });
+      return next;
+    });
+  }
+
+  function markClinicalReviewStale() {
+    if (clinicalReviewConfirmed) setClinicalReviewConfirmed(false);
+  }
+
   function update<K extends keyof StudentInput>(key: K, value: StudentInput[K]) {
+    clearError(String(key));
+    if (key === "congenitalDisease" || key === "drugAllergy") markClinicalReviewStale();
     setForm((f) => ({ ...f, [key]: value }));
   }
   function updateMed(index: number, key: keyof MedicationEntryInput, value: string) {
+    clearError(`med.${index}`);
+    markClinicalReviewStale();
     setMeds((list) => list.map((m, i) => (i === index ? { ...m, [key]: value } : m)));
   }
   function updateGuardian(index: number, key: keyof GuardianInput, value: string) {
+    clearError(`guardian.${index}.${key}`);
     setGuardians((list) => list.map((g, i) => (i === index ? { ...g, [key]: value } : g)));
   }
   function updateHealth(key: keyof HealthExtraInput, value: string) {
+    clearError(`health.${key}`);
+    if (
+      key === "allergySymptom" ||
+      key === "contraceptionNextDate" ||
+      key === "injectionNextDate"
+    ) {
+      markClinicalReviewStale();
+    }
     setHealth((h) => ({ ...h, [key]: value }));
   }
   function handlePhotoChange(file: File | null) {
@@ -385,18 +493,62 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setPhotoError("");
-    const cleanedMeds = meds
-      .map((m) => ({
-        name: m.name.trim(),
-        morning: m.morning?.trim() || "",
-        noon: m.noon?.trim() || "",
-        evening: m.evening?.trim() || "",
-        bedtime: m.bedtime?.trim() || "",
-      }))
+    const normalizedMeds = meds.map((m) => ({
+      name: m.name.trim(),
+      morning: m.morning?.trim() || "",
+      noon: m.noon?.trim() || "",
+      evening: m.evening?.trim() || "",
+      bedtime: m.bedtime?.trim() || "",
+    }));
+    const cleanedMeds = normalizedMeds
       .filter((m) => m.name);
     const cleanedGuardians = guardians
       .map((g) => ({ name: g.name.trim(), phone: g.phone.trim() }))
       .filter((g) => g.name || g.phone);
+
+    const errors: FormErrors = {};
+    normalizedMeds.forEach((med, index) => {
+      const hasName = Boolean(med.name);
+      const hasDose = hasAnyDose(med);
+      if (!hasName && hasDose) {
+        errors[`med.${index}`] = "กรุณาเลือกชื่อยาก่อนระบุเวลาใช้ยา";
+      } else if (hasName && !hasDose) {
+        errors[`med.${index}`] = "กรุณาระบุจำนวน/ขนาดยาอย่างน้อย 1 เวลา";
+      }
+    });
+    guardians.forEach((guardian, index) => {
+      const hasContact = guardian.name.trim() || guardian.phone.trim();
+      if (hasContact && !phoneLooksValid(guardian.phone)) {
+        errors[`guardian.${index}.phone`] = "เบอร์โทรผู้ปกครองควรมีตัวเลข 9-10 หลัก";
+      }
+    });
+    if (!phoneLooksValid(form.homeroomTeacherPhone)) {
+      errors.homeroomTeacherPhone = "เบอร์โทรครูประจำชั้นควรมีตัวเลข 9-10 หลัก";
+    }
+    if ((health.idCard ?? "").trim() && digitsOnly(health.idCard).length !== 13) {
+      errors["health.idCard"] = "เลขบัตรประชาชนต้องมีตัวเลข 13 หลัก";
+    }
+    if (!numberInRange(health.weight, 1, 250)) {
+      errors["health.weight"] = "น้ำหนักควรอยู่ระหว่าง 1-250 กก.";
+    }
+    if (!numberInRange(health.height, 30, 250)) {
+      errors["health.height"] = "ส่วนสูงควรอยู่ระหว่าง 30-250 ซม.";
+    }
+    if (!numberInRange(health.bmi, 5, 80)) {
+      errors["health.bmi"] = "BMI ควรอยู่ระหว่าง 5-80";
+    }
+    if ((form.drugAllergy ?? "").trim() && !(health.allergySymptom ?? "").trim()) {
+      errors["health.allergySymptom"] = "ระบุอาการแสดงการแพ้เพื่อป้องกันการจ่ายยาผิด";
+    }
+    if (clinicalReviewItems.length > 0 && !clinicalReviewConfirmed) {
+      errors.clinicalReview = "กรุณาตรวจทานข้อมูลสุขภาพและยาสำคัญก่อนบันทึก";
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+
     let photoPayload: Partial<StudentInput> = {};
     if (STUDENT_PHOTO_UPLOAD_ENABLED && photoFile) {
       setUploadingPhoto(true);
@@ -431,6 +583,25 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {visibleErrors.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-900"
+        >
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p>ตรวจสอบข้อมูลก่อนบันทึก</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs font-medium">
+                {visibleErrors.map((message) => (
+                  <li key={message}>{message}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. ข้อมูลพื้นฐาน + ผู้ปกครอง */}
       <section>
         <SectionTitle Icon={Users}>ข้อมูลพื้นฐาน</SectionTitle>
@@ -489,7 +660,17 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           </div>
           <div>
             <label className="label">เลขบัตรประชาชน</label>
-            <input className="input" value={health.idCard ?? ""} onChange={(e) => updateHealth("idCard", e.target.value)} />
+            <input
+              className="input"
+              inputMode="numeric"
+              aria-invalid={Boolean(formErrors["health.idCard"])}
+              value={health.idCard ?? ""}
+              onChange={(e) => updateHealth("idCard", e.target.value)}
+              placeholder="13 หลัก"
+            />
+            {formErrors["health.idCard"] && (
+              <p className="mt-1 text-xs font-semibold text-rose-700">{formErrors["health.idCard"]}</p>
+            )}
           </div>
           <div>
             <label className="label">วันเดือนปีเกิด</label>
@@ -521,10 +702,33 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           ) : (
             <div className="space-y-2">
               {guardians.map((g, index) => (
-                <div key={index} className="flex flex-col gap-2 sm:flex-row">
-                  <input className="input flex-1" value={g.name} onChange={(e) => updateGuardian(index, "name", e.target.value)} placeholder={`ชื่อผู้ปกครองคนที่ ${index + 1}`} />
-                  <input className="input sm:w-56" value={g.phone} onChange={(e) => updateGuardian(index, "phone", e.target.value)} placeholder="เบอร์โทร" />
-                  <button type="button" className="btn-ghost px-2 py-2 text-rose-600 hover:bg-rose-50" onClick={() => setGuardians((l) => l.filter((_, i) => i !== index))} title="ลบ">
+                <div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_14rem_auto]">
+                  <input className="input" value={g.name} onChange={(e) => updateGuardian(index, "name", e.target.value)} placeholder={`ชื่อผู้ปกครองคนที่ ${index + 1}`} />
+                  <div>
+                    <input
+                      className="input"
+                      inputMode="tel"
+                      aria-invalid={Boolean(formErrors[`guardian.${index}.phone`])}
+                      value={g.phone}
+                      onChange={(e) => updateGuardian(index, "phone", e.target.value)}
+                      placeholder="เบอร์โทร"
+                    />
+                    {formErrors[`guardian.${index}.phone`] && (
+                      <p className="mt-1 text-xs font-semibold text-rose-700">
+                        {formErrors[`guardian.${index}.phone`]}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-ghost px-2 py-2 text-rose-600 hover:bg-rose-50"
+                    onClick={() => {
+                      clearIndexedError("guardian", index);
+                      setGuardians((l) => l.filter((_, i) => i !== index));
+                    }}
+                    title="ลบ"
+                    aria-label={`ลบผู้ปกครองคนที่ ${index + 1}`}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -562,7 +766,17 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           </div>
           <div>
             <label className="label">เบอร์โทรครูประจำชั้น</label>
-            <input className="input" value={form.homeroomTeacherPhone ?? ""} onChange={(e) => update("homeroomTeacherPhone", e.target.value)} placeholder="0XX-XXX-XXXX" />
+            <input
+              className="input"
+              inputMode="tel"
+              aria-invalid={Boolean(formErrors.homeroomTeacherPhone)}
+              value={form.homeroomTeacherPhone ?? ""}
+              onChange={(e) => update("homeroomTeacherPhone", e.target.value)}
+              placeholder="0XX-XXX-XXXX"
+            />
+            {formErrors.homeroomTeacherPhone && (
+              <p className="mt-1 text-xs font-semibold text-rose-700">{formErrors.homeroomTeacherPhone}</p>
+            )}
           </div>
         </div>
       </section>
@@ -580,15 +794,43 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           </div>
           <div>
             <label className="label">น้ำหนัก (กก.)</label>
-            <input className="input" value={health.weight ?? ""} onChange={(e) => updateHealth("weight", e.target.value)} />
+            <input
+              className="input"
+              inputMode="decimal"
+              aria-invalid={Boolean(formErrors["health.weight"])}
+              value={health.weight ?? ""}
+              onChange={(e) => updateHealth("weight", e.target.value)}
+            />
+            {formErrors["health.weight"] && (
+              <p className="mt-1 text-xs font-semibold text-rose-700">{formErrors["health.weight"]}</p>
+            )}
           </div>
           <div>
             <label className="label">ส่วนสูง (ซม.)</label>
-            <input className="input" value={health.height ?? ""} onChange={(e) => updateHealth("height", e.target.value)} />
+            <input
+              className="input"
+              inputMode="decimal"
+              aria-invalid={Boolean(formErrors["health.height"])}
+              value={health.height ?? ""}
+              onChange={(e) => updateHealth("height", e.target.value)}
+            />
+            {formErrors["health.height"] && (
+              <p className="mt-1 text-xs font-semibold text-rose-700">{formErrors["health.height"]}</p>
+            )}
           </div>
           <div>
             <label className="label">BMI {autoBmi && !health.bmi ? `(คำนวณ ${autoBmi})` : ""}</label>
-            <input className="input" value={health.bmi ?? ""} onChange={(e) => updateHealth("bmi", e.target.value)} placeholder={autoBmi || "BMI"} />
+            <input
+              className="input"
+              inputMode="decimal"
+              aria-invalid={Boolean(formErrors["health.bmi"])}
+              value={health.bmi ?? ""}
+              onChange={(e) => updateHealth("bmi", e.target.value)}
+              placeholder={autoBmi || "BMI"}
+            />
+            {formErrors["health.bmi"] && (
+              <p className="mt-1 text-xs font-semibold text-rose-700">{formErrors["health.bmi"]}</p>
+            )}
           </div>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -640,7 +882,16 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           </div>
           <div>
             <label className="label">อาการแสดงการแพ้</label>
-            <input className="input" value={health.allergySymptom ?? ""} onChange={(e) => updateHealth("allergySymptom", e.target.value)} placeholder="เช่น ผื่น, จาม" />
+            <input
+              className="input"
+              aria-invalid={Boolean(formErrors["health.allergySymptom"])}
+              value={health.allergySymptom ?? ""}
+              onChange={(e) => updateHealth("allergySymptom", e.target.value)}
+              placeholder="เช่น ผื่น, จาม"
+            />
+            {formErrors["health.allergySymptom"] && (
+              <p className="mt-1 text-xs font-semibold text-rose-700">{formErrors["health.allergySymptom"]}</p>
+            )}
           </div>
           <div>
             <label className="label">ผลตรวจร่างกาย</label>
@@ -708,9 +959,25 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           <div className="space-y-3">
             {meds.map((med, index) => (
               <div key={index} className="rounded-xl border border-ksp-blue-100 bg-ksp-bg/40 p-3">
+                {formErrors[`med.${index}`] && (
+                  <div className="mb-2 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>{formErrors[`med.${index}`]}</span>
+                  </div>
+                )}
                 <div className="mb-2 flex items-center gap-2">
                   <MedicationCombobox value={med.name} onChange={(v) => updateMed(index, "name", v)} />
-                  <button type="button" className="btn-ghost px-2 py-2 text-rose-600 hover:bg-rose-50" onClick={() => setMeds((list) => list.filter((_, i) => i !== index))} title="ลบยา">
+                  <button
+                    type="button"
+                    className="btn-ghost px-2 py-2 text-rose-600 hover:bg-rose-50"
+                    onClick={() => {
+                      clearIndexedError("med", index);
+                      markClinicalReviewStale();
+                      setMeds((list) => list.filter((_, i) => i !== index));
+                    }}
+                    title="ลบยา"
+                    aria-label={`ลบรายการยาที่ ${index + 1}`}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -718,7 +985,12 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
                   {MEAL_FIELDS.map((field) => (
                     <div key={field.key}>
                       <label className="mb-1 block text-[11px] font-medium text-ksp-gray">{field.label}</label>
-                      <input className="input px-2.5 py-2 text-sm" value={(med[field.key] as string) ?? ""} onChange={(e) => updateMed(index, field.key, e.target.value)} placeholder="จำนวน" />
+                      <input
+                        className="input px-2.5 py-2 text-sm"
+                        value={(med[field.key] as string) ?? ""}
+                        onChange={(e) => updateMed(index, field.key, e.target.value)}
+                        placeholder="เช่น 1 เม็ด"
+                      />
                     </div>
                   ))}
                 </div>
@@ -727,6 +999,54 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           </div>
         )}
       </section>
+
+      {clinicalReviewItems.length > 0 && (
+        <section
+          className={`rounded-xl border px-4 py-3 ${
+            formErrors.clinicalReview
+              ? "border-rose-200 bg-rose-50"
+              : "border-amber-200 bg-amber-50"
+          }`}
+          aria-labelledby="clinical-review-title"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 id="clinical-review-title" className="flex items-center gap-2 font-bold text-ksp-navy">
+                <ShieldCheck className="h-4.5 w-4.5 text-amber-700" size={18} />
+                ตรวจทานข้อมูลสุขภาพสำคัญ
+              </h3>
+              <p className="mt-1 text-sm font-medium text-slate-700">
+                รายการนี้มีผลต่อการจ่ายยา การดูแล และประวัติสุขภาพ
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {clinicalReviewItems.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-amber-900 ring-1 ring-amber-200"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-white px-3 py-2 text-sm font-bold text-ksp-navy ring-1 ring-amber-200">
+              <input
+                type="checkbox"
+                className="h-5 w-5 rounded border-slate-300 accent-ksp-blue-600 focus:ring-ksp-blue-300"
+                checked={clinicalReviewConfirmed}
+                onChange={(event) => {
+                  setClinicalReviewConfirmed(event.target.checked);
+                  clearError("clinicalReview");
+                }}
+              />
+              ตรวจทานแล้ว
+            </label>
+          </div>
+          {formErrors.clinicalReview && (
+            <p className="mt-2 text-xs font-semibold text-rose-800">{formErrors.clinicalReview}</p>
+          )}
+        </section>
+      )}
 
       <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3 max-sm:[&_button]:w-full">
         {onCancel && (
