@@ -373,8 +373,8 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
       setPhotoError("อัปโหลดได้เฉพาะไฟล์รูปภาพเท่านั้น");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setPhotoError("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
+    if (file.size > 2 * 1024 * 1024) {
+      setPhotoError("รูปภาพต้องมีขนาดไม่เกิน 2 MB");
       return;
     }
     setPhotoFile(file);
@@ -443,7 +443,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-ksp-navy">รูปนักเรียน</p>
             <p className="mt-0.5 text-xs text-ksp-gray">
-              รองรับไฟล์รูปภาพทุกชนิด ขนาดไม่เกิน 5 MB
+              รองรับไฟล์รูปภาพทุกชนิด ขนาดไม่เกิน 2 MB
             </p>
             <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ksp-blue-200 bg-white px-3 py-2 text-sm font-semibold text-ksp-blue-700 shadow-sm hover:bg-ksp-blue-50">
               <ImagePlus className="h-4 w-4" />

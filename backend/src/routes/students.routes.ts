@@ -73,7 +73,7 @@ const studentSchema = z.object({
   photoUrl: z.string().trim().max(1000).optional().nullable(),
   photoPath: z.string().trim().max(1000).optional().nullable(),
   photoMimeType: z.string().trim().max(120).optional().nullable(),
-  photoSize: z.number().int().min(0).max(5 * 1024 * 1024).optional().nullable(),
+  photoSize: z.number().int().min(0).max(2 * 1024 * 1024).optional().nullable(),
   parentName: z.string().trim().max(100).optional().nullable(),
   parentPhone: z.string().trim().max(20).optional().nullable(),
   studentStatus: z.enum(studentStatuses).optional(),

@@ -161,21 +161,6 @@ export interface MedicationDetail {
   students: { id: string; name: string; classRoom: string | null; dormitory: string | null }[];
 }
 
-export interface InfirmaryDocument {
-  id: string;
-  title: string;
-  description: string | null;
-  fileName: string;
-  fileUrl: string;
-  filePath: string;
-  mimeType: string;
-  sizeBytes: number;
-  uploadedById: string;
-  createdAt: string;
-  updatedAt: string;
-  uploadedBy?: { id: string; fullName: string };
-}
-
 export type AqiLevel =
   | "good"
   | "moderate"

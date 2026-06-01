@@ -11,7 +11,7 @@ import {
 const router = Router();
 router.use(authMiddleware);
 
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 function bodyBuffer(body: unknown) {
   return Buffer.isBuffer(body) ? body : Buffer.alloc(0);
@@ -20,7 +20,7 @@ function bodyBuffer(body: unknown) {
 router.post(
   "/student-photo",
   requireAdmin,
-  express.raw({ type: "image/*", limit: "5mb" }),
+  express.raw({ type: "image/*", limit: "2mb" }),
   async (req, res, next) => {
     try {
       const buffer = bodyBuffer(req.body);
@@ -32,7 +32,7 @@ router.post(
       }
       if (buffer.length === 0) throw new HttpError(400, "ไม่พบไฟล์รูปภาพ");
       if (buffer.length > MAX_PHOTO_BYTES) {
-        throw new HttpError(400, "รูปภาพต้องมีขนาดไม่เกิน 5 MB");
+        throw new HttpError(400, "รูปภาพต้องมีขนาดไม่เกิน 2 MB");
       }
 
       const uploaded = await uploadObject({

@@ -19,7 +19,6 @@ import {
   ShieldPlus,
   Syringe,
   ArrowRightLeft,
-  FileText,
   X,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store";
@@ -48,7 +47,6 @@ const navItems: NavItem[] = [
   { to: "/health-injection", label: "การฉีดยาคุม", Icon: Syringe },
   { to: "/pm25", label: "PM 2.5", Icon: Wind },
   { to: "/medications", label: "คลังยา", Icon: Pill },
-  { to: "/infirmary-documents", label: "เอกสารประจำเรือนพยาบาล", Icon: FileText },
   { to: "/admin/users", label: "จัดการผู้ใช้", Icon: UserCog, adminOnly: true },
   { to: "/admin/audit", label: "Audit Log", Icon: ShieldCheck, adminOnly: true },
   { to: "/reports", label: "รายงาน & สถิติ", Icon: FileBarChart2 },

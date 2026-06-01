@@ -14,7 +14,6 @@ import MedicationStockPage from "./pages/MedicationStock";
 import SheetDataPage from "./pages/SheetDataPage";
 import HealthReportPage from "./pages/HealthReportPage";
 import StudentHandoffsPage from "./pages/StudentHandoffs";
-import InfirmaryDocumentsPage from "./pages/InfirmaryDocuments";
 import AdminUsersPage from "./pages/admin/Users";
 import AdminAuditPage from "./pages/admin/AuditLog";
 import AdminSettingsPage from "./pages/admin/Settings";
@@ -64,16 +63,6 @@ export default function App() {
           <ProtectedRoute>
             <Shell>
               <StudentHandoffsPage />
-            </Shell>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/infirmary-documents"
-        element={
-          <ProtectedRoute>
-            <Shell>
-              <InfirmaryDocumentsPage />
             </Shell>
           </ProtectedRoute>
         }

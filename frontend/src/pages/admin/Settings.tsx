@@ -25,7 +25,7 @@ const TECH_STACK = [
   ["Frontend", "React 18, TypeScript, Vite, Tailwind CSS, Redux Toolkit, Axios, Lucide React, jsPDF"],
   ["Backend", "Node.js, Express, TypeScript, Prisma ORM, Zod validation, JWT auth, bcryptjs"],
   ["Database", "Supabase PostgreSQL ผ่าน Prisma schema และ migrations ใน backend/prisma"],
-  ["File Storage", "Supabase Storage buckets: student-photos และ infirmary-documents"],
+  ["File Storage", "Supabase Storage bucket: student-photos สำหรับรูปนักเรียนเท่านั้น"],
   ["Deploy", "GitHub เป็น source control, Vercel สำหรับ production hosting/API"],
   ["Auth/Roles", "super_admin, admin, nurse_assistant พร้อม ProtectedRoute และ RBAC ฝั่ง API"],
   ["API Base", "Frontend ใช้ VITE_API_URL ค่าเริ่มต้น /api และ backend route หลักอยู่ที่ /api/*"],
@@ -140,10 +140,10 @@ export default function AdminSettingsPage() {
           )}
         </div>
 
-        {/* การใช้ไดรฟ์ข้อมูลเอกสาร */}
+        {/* การใช้พื้นที่รูปนักเรียน */}
         <div className="card-pad">
           <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-ksp-navy">
-            <HardDrive className="h-4 w-4 text-ksp-blue-600" /> การใช้ไดรฟ์ข้อมูลเอกสาร
+            <HardDrive className="h-4 w-4 text-ksp-blue-600" /> การใช้พื้นที่รูปนักเรียน
           </h2>
           {!status ? (
             <p className="text-sm text-ksp-gray">กำลังโหลด…</p>
@@ -175,25 +175,17 @@ export default function AdminSettingsPage() {
                   เหลือ {formatBytes(Math.max(0, status.fileStorage.totalBytes - status.fileStorage.usedBytes))}
                 </span>
               </div>
-              <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-xl bg-slate-50 px-3 py-2">
-                  <dt className="text-ksp-gray">รูปนักเรียน</dt>
-                  <dd className="mt-1 font-semibold text-ksp-navy">
-                    {formatBytes(status.fileStorage.studentPhotoBytes)}
-                  </dd>
-                </div>
-                <div className="rounded-xl bg-slate-50 px-3 py-2">
-                  <dt className="text-ksp-gray">เอกสาร</dt>
-                  <dd className="mt-1 font-semibold text-ksp-navy">
-                    {formatBytes(status.fileStorage.documentBytes)}
-                  </dd>
-                </div>
-              </dl>
+              <div className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-xs">
+                <p className="text-ksp-gray">ใช้กับรูปนักเรียน</p>
+                <p className="mt-1 font-semibold text-ksp-navy">
+                  {formatBytes(status.fileStorage.studentPhotoBytes)}
+                </p>
+              </div>
               <p className="mt-3 text-[11px] text-ksp-gray">
-                แผนพื้นที่นี้ตั้งไว้ 2.5 GB: รูปนักเรียน 500 คน × 5 MB = 2.5 GB ยังไม่รวมเอกสารประจำเรือนพยาบาล
+                แผนพื้นที่นี้ตั้งไว้ 1 GB: รูปนักเรียน 500 คน × 2 MB = 1,000 MB โดยประมาณ
               </p>
               <p className="mt-1 text-[11px] text-amber-700">
-                หมายเหตุ: Supabase Free plan ให้ File Storage 1 GB ถ้าต้องใช้ครบ 2.5 GB ควรใช้แผนที่รองรับพื้นที่เพิ่ม
+                หมายเหตุ: เมนูเอกสารถูกถอดออกแล้วเพื่อกันพื้นที่ให้รูปนักเรียนใน Supabase Free plan
               </p>
             </>
           )}
@@ -351,7 +343,7 @@ export default function AdminSettingsPage() {
               </div>
               <div className="flex justify-between gap-3">
                 <dt className="text-ksp-gray">Storage limit ภายในระบบ</dt>
-                <dd className="text-right font-semibold text-ksp-navy">2.5 GB</dd>
+                <dd className="text-right font-semibold text-ksp-navy">1 GB</dd>
               </div>
             </dl>
             <div className="mt-4 flex gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-ksp-gray">

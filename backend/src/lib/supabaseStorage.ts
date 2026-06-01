@@ -10,8 +10,6 @@ const ensuredBuckets = new Set<string>();
 
 export const STUDENT_PHOTOS_BUCKET =
   process.env.SUPABASE_STUDENT_PHOTOS_BUCKET ?? "student-photos";
-export const INFIRMARY_DOCUMENTS_BUCKET =
-  process.env.SUPABASE_INFIRMARY_DOCUMENTS_BUCKET ?? "infirmary-documents";
 
 function inferSupabaseUrl() {
   const databaseUrl = process.env.DATABASE_URL ?? "";

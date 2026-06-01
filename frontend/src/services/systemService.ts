@@ -12,7 +12,6 @@ export interface SystemStatus {
     totalBytes: number;
     usedPct: number;
     limitGb: number;
-    documentBytes: number;
     studentPhotoBytes: number;
   };
   activeUsers: {
