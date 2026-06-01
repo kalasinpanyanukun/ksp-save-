@@ -162,7 +162,7 @@ export default function AdmissionsPage() {
               </div>
               <button
                 type="button"
-                className="btn mt-3 w-full border border-white/30 bg-white/10 text-white hover:bg-white/20"
+                className="btn mt-3 w-full border border-white bg-white text-ksp-blue-800 shadow-sm hover:bg-ksp-blue-50"
                 onClick={() => setDischarging(a)}
               >
                 <LogOut className="h-4 w-4" /> จำหน่าย
