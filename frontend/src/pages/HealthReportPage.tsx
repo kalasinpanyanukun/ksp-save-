@@ -142,18 +142,19 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
       return "w-full min-w-[18rem] whitespace-normal break-words text-center align-middle leading-relaxed";
     }
     if (
+      type === "physical" &&
+      isHeader(header, "เรือนนอน", "ชื่อ-สกุล", "ชื่อ - สกุล", "ชั้น")
+    ) {
+      return "w-[1%] whitespace-nowrap text-center align-middle leading-relaxed !px-12";
+    }
+    if (
       type === "injection" &&
       isHeader(header, "วันที่ฉีดล่าสุด")
     ) {
       return "w-[350px] max-w-[350px] whitespace-normal break-words text-center align-middle leading-relaxed";
     }
-    if (
-      (type === "disease" && isHeader(header, "ชื่อ-สกุล", "โรคประจำตัว")) ||
-      (type === "physical" && isHeader(header, "ชื่อ-สกุล", "ชื่อ - สกุล"))
-    ) {
-      return type === "physical"
-        ? "w-[1%] whitespace-nowrap text-center align-middle leading-relaxed"
-        : "whitespace-normal text-center align-middle leading-relaxed";
+    if (type === "disease" && isHeader(header, "ชื่อ-สกุล", "โรคประจำตัว")) {
+      return "whitespace-normal text-center align-middle leading-relaxed";
     }
     if (type === "physical") {
       return "w-[1%] whitespace-nowrap text-center align-middle";
@@ -218,7 +219,12 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
                   {report?.columns.map((c, i) => (
                     <th
                       key={`${c.header}-${i}`}
-                      className={`sticky top-0 z-10 whitespace-nowrap border-b-2 border-r border-slate-300 px-3 py-2.5 font-bold text-ksp-navy last:border-r-0 ${tint(i)}`}
+                      className={`sticky top-0 z-10 whitespace-nowrap border-b-2 border-r border-slate-300 px-3 py-2.5 font-bold text-ksp-navy last:border-r-0 ${
+                        type === "physical" &&
+                        isHeader(c.header, "เรือนนอน", "ชื่อ-สกุล", "ชื่อ - สกุล", "ชั้น")
+                          ? "!px-12"
+                          : ""
+                      } ${tint(i)}`}
                     >
                       {c.header}
                     </th>

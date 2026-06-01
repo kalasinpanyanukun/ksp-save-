@@ -70,6 +70,10 @@ const studentSchema = z.object({
   congenitalDisease: z.string().trim().max(2000).optional().nullable(),
   drugAllergy: z.string().trim().max(2000).optional().nullable(),
   regularMedication: z.string().trim().max(2000).optional().nullable(),
+  photoUrl: z.string().trim().max(1000).optional().nullable(),
+  photoPath: z.string().trim().max(1000).optional().nullable(),
+  photoMimeType: z.string().trim().max(120).optional().nullable(),
+  photoSize: z.number().int().min(0).max(5 * 1024 * 1024).optional().nullable(),
   parentName: z.string().trim().max(100).optional().nullable(),
   parentPhone: z.string().trim().max(20).optional().nullable(),
   studentStatus: z.enum(studentStatuses).optional(),
@@ -333,6 +337,10 @@ router.post("/", requireAdmin, async (req, res, next) => {
         congenitalDisease: body.congenitalDisease || null,
         drugAllergy: body.drugAllergy || null,
         regularMedication: meds ? meds.regularMedication : body.regularMedication || null,
+        photoUrl: body.photoUrl || null,
+        photoPath: body.photoPath || null,
+        photoMimeType: body.photoMimeType || null,
+        photoSize: body.photoSize ?? null,
         parentName: guardians ? guardians.parentName : body.parentName || null,
         parentPhone: guardians ? guardians.parentPhone : body.parentPhone || null,
         studentStatus: body.studentStatus ?? "resident",
@@ -374,6 +382,10 @@ router.put("/:id", requireAdmin, async (req, res, next) => {
         congenitalDisease:
           body.congenitalDisease === "" ? null : body.congenitalDisease,
         drugAllergy: body.drugAllergy === "" ? null : body.drugAllergy,
+        photoUrl: body.photoUrl === "" ? null : body.photoUrl,
+        photoPath: body.photoPath === "" ? null : body.photoPath,
+        photoMimeType: body.photoMimeType === "" ? null : body.photoMimeType,
+        photoSize: body.photoSize ?? undefined,
         regularMedication: meds
           ? meds.regularMedication
           : body.regularMedication === ""

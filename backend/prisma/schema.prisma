@@ -35,6 +35,7 @@ model User {
   referrals   Referral[]    @relation("ReferralRecordedBy")
   pm25Records Pm25Record[]  @relation("Pm25RecordedBy")
   studentHandoffs StudentHandoff[] @relation("HandoffRecordedBy")
+  infirmaryDocuments InfirmaryDocument[] @relation("DocumentUploadedBy")
   auditLogs   AuditLog[]
 
   @@map("users")
@@ -69,6 +70,10 @@ model Student {
   congenitalDisease   String?    @map("congenital_disease")
   drugAllergy         String?    @map("drug_allergy")
   regularMedication   String?    @map("regular_medication")
+  photoUrl            String?    @map("photo_url")
+  photoPath           String?    @map("photo_path")
+  photoMimeType       String?    @map("photo_mime_type") @db.VarChar(120)
+  photoSize           Int?       @map("photo_size")
   healthData          Json       @default("{}") @map("health_data")
   medicationData      Json       @default("{}") @map("medication_data")
   guardians           Json       @default("[]")
@@ -88,6 +93,27 @@ model Student {
   @@index([classRoom])
   @@index([dormitory])
   @@map("students")
+}
+
+// ───── เอกสารประจำเรือนพยาบาล ─────
+model InfirmaryDocument {
+  id           String   @id @default(uuid())
+  title        String   @db.VarChar(200)
+  description  String?
+  fileName     String   @map("file_name") @db.VarChar(255)
+  fileUrl      String   @map("file_url")
+  filePath     String   @map("file_path")
+  mimeType     String   @map("mime_type") @db.VarChar(120)
+  sizeBytes    Int      @map("size_bytes")
+  uploadedById String   @map("uploaded_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  uploadedBy User @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([createdAt])
+  @@index([uploadedById])
+  @@map("infirmary_documents")
 }
 
 // ───── รับนักเรียนเข้าพักประจำ / ลากลับบ้าน ─────

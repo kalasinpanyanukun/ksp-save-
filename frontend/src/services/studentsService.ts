@@ -55,6 +55,10 @@ export interface StudentInput {
   congenitalDisease?: string | null;
   drugAllergy?: string | null;
   regularMedication?: string | null;
+  photoUrl?: string | null;
+  photoPath?: string | null;
+  photoMimeType?: string | null;
+  photoSize?: number | null;
   parentName?: string | null;
   parentPhone?: string | null;
   studentStatus?: Student["studentStatus"];
@@ -113,6 +117,23 @@ export async function updateStudent(
 
 export async function deleteStudent(id: string): Promise<void> {
   await api.delete(`/students/${id}`);
+}
+
+export interface UploadedStudentPhoto {
+  url: string;
+  path: string;
+  mimeType: string;
+  size: number;
+}
+
+export async function uploadStudentPhoto(file: File): Promise<UploadedStudentPhoto> {
+  const { data } = await api.post<UploadedStudentPhoto>("/uploads/student-photo", file, {
+    headers: {
+      "Content-Type": file.type,
+      "X-File-Name": encodeURIComponent(file.name),
+    },
+  });
+  return data;
 }
 
 export async function fetchClassrooms(): Promise<string[]> {

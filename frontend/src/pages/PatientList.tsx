@@ -177,6 +177,8 @@ export default function PatientListPage() {
       }),
     [students, ageFilter, disability1, disability2],
   );
+  const stickyThClass =
+    "lg:sticky lg:top-16 lg:z-20 lg:bg-ksp-blue-50 lg:shadow-[0_1px_0_rgba(148,163,184,0.35),0_8px_16px_rgba(15,23,42,0.06)]";
 
   return (
     <>
@@ -305,20 +307,20 @@ export default function PatientListPage() {
       </div>
 
       <div className="card">
-        <div className="overflow-x-auto rounded-xl sm:rounded-2xl lg:overflow-visible">
-          <table className="table-base lg:[&_thead_th]:sticky lg:[&_thead_th]:top-16 lg:[&_thead_th]:z-20 lg:[&_thead_th]:shadow-sm">
+        <div className="max-lg:overflow-x-auto rounded-xl sm:rounded-2xl">
+          <table className="table-base">
             <thead>
               <tr>
-                <th>ลำดับ</th>
-                <th>รหัสบัตรประชาชน</th>
-                <th>ชื่อ-นามสกุล</th>
-                <th>ชื่อเล่น</th>
-                <th>ประเภทความพิการ</th>
-                <th>ชั้นเรียน</th>
-                <th>เรือนนอน</th>
-                <th>สถานะ</th>
-                <th>เด็กเก่า/ใหม่</th>
-                <th className="text-right">การจัดการ</th>
+                <th className={stickyThClass}>ลำดับ</th>
+                <th className={stickyThClass}>รหัสบัตรประชาชน</th>
+                <th className={stickyThClass}>ชื่อ-นามสกุล</th>
+                <th className={stickyThClass}>ชื่อเล่น</th>
+                <th className={stickyThClass}>ประเภทความพิการ</th>
+                <th className={stickyThClass}>ชั้นเรียน</th>
+                <th className={stickyThClass}>เรือนนอน</th>
+                <th className={stickyThClass}>สถานะ</th>
+                <th className={stickyThClass}>เด็กเก่า/ใหม่</th>
+                <th className={`${stickyThClass} text-right`}>การจัดการ</th>
               </tr>
             </thead>
             <tbody>
@@ -339,8 +341,21 @@ export default function PatientListPage() {
                     <td className="font-semibold text-ksp-gray">{index + 1}</td>
                     <td className="font-mono text-xs">{s.studentCode}</td>
                     <td>
-                      <span className="font-medium text-ksp-blue-700">
-                        {s.firstName} {s.lastName}
+                      <span className="flex items-center gap-2">
+                        {s.photoUrl ? (
+                          <img
+                            src={s.photoUrl}
+                            alt={`${s.firstName} ${s.lastName}`}
+                            className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm"
+                          />
+                        ) : (
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ksp-blue-50 text-xs font-bold text-ksp-blue-700 ring-1 ring-ksp-blue-100">
+                            {s.firstName.charAt(0)}
+                          </span>
+                        )}
+                        <span className="font-medium text-ksp-blue-700">
+                          {s.firstName} {s.lastName}
+                        </span>
                       </span>
                     </td>
                     <td>{nicknameOf(s) || "-"}</td>

@@ -1,5 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Settings as SettingsIcon, KeyRound, Info, Database, Users, Circle } from "lucide-react";
+import {
+  Settings as SettingsIcon,
+  KeyRound,
+  Info,
+  Database,
+  Users,
+  Circle,
+  HardDrive,
+  Code2,
+} from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import { useToast } from "../../components/common/useToast";
 import { useAppSelector } from "../../store";
@@ -11,6 +20,16 @@ const ROLE_LABEL: Record<string, string> = {
   admin: "ครูเรือนพยาบาล (Admin)",
   nurse_assistant: "พี่เลี้ยงเรือนพยาบาล",
 };
+
+const TECH_STACK = [
+  ["Frontend", "React 18, TypeScript, Vite, Tailwind CSS, Redux Toolkit, Axios, Lucide React, jsPDF"],
+  ["Backend", "Node.js, Express, TypeScript, Prisma ORM, Zod validation, JWT auth, bcryptjs"],
+  ["Database", "Supabase PostgreSQL ผ่าน Prisma schema และ migrations ใน backend/prisma"],
+  ["File Storage", "Supabase Storage buckets: student-photos และ infirmary-documents"],
+  ["Deploy", "GitHub เป็น source control, Vercel สำหรับ production hosting/API"],
+  ["Auth/Roles", "super_admin, admin, nurse_assistant พร้อม ProtectedRoute และ RBAC ฝั่ง API"],
+  ["API Base", "Frontend ใช้ VITE_API_URL ค่าเริ่มต้น /api และ backend route หลักอยู่ที่ /api/*"],
+];
 
 function formatBytes(bytes: number) {
   if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
@@ -81,7 +100,7 @@ export default function AdminSettingsPage() {
         description="ข้อมูลโรงเรียน บัญชีผู้ใช้ และการตั้งค่าทั่วไป"
       />
 
-      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="mb-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* การใช้งานฐานข้อมูล Supabase */}
         <div className="card-pad">
           <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-ksp-navy">
@@ -117,6 +136,65 @@ export default function AdminSettingsPage() {
                   เหลือ {formatBytes(Math.max(0, status.database.totalBytes - status.database.usedBytes))}
                 </span>
               </div>
+            </>
+          )}
+        </div>
+
+        {/* การใช้ไดรฟ์ข้อมูลเอกสาร */}
+        <div className="card-pad">
+          <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-ksp-navy">
+            <HardDrive className="h-4 w-4 text-ksp-blue-600" /> การใช้ไดรฟ์ข้อมูลเอกสาร
+          </h2>
+          {!status ? (
+            <p className="text-sm text-ksp-gray">กำลังโหลด…</p>
+          ) : (
+            <>
+              <div className="mb-1 flex items-baseline justify-between">
+                <span className="text-2xl font-bold text-ksp-navy">
+                  {formatBytes(status.fileStorage.usedBytes)}
+                </span>
+                <span className="text-sm text-ksp-gray">
+                  จาก {status.fileStorage.limitGb.toFixed(1)} GB
+                </span>
+              </div>
+              <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    status.fileStorage.usedPct >= 90
+                      ? "bg-rose-500"
+                      : status.fileStorage.usedPct >= 70
+                        ? "bg-amber-500"
+                        : "bg-ksp-blue-500"
+                  }`}
+                  style={{ width: `${Math.max(2, status.fileStorage.usedPct)}%` }}
+                />
+              </div>
+              <div className="mt-2 flex justify-between text-xs text-ksp-gray">
+                <span>ใช้ไป {status.fileStorage.usedPct.toFixed(1)}%</span>
+                <span>
+                  เหลือ {formatBytes(Math.max(0, status.fileStorage.totalBytes - status.fileStorage.usedBytes))}
+                </span>
+              </div>
+              <dl className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <dt className="text-ksp-gray">รูปนักเรียน</dt>
+                  <dd className="mt-1 font-semibold text-ksp-navy">
+                    {formatBytes(status.fileStorage.studentPhotoBytes)}
+                  </dd>
+                </div>
+                <div className="rounded-xl bg-slate-50 px-3 py-2">
+                  <dt className="text-ksp-gray">เอกสาร</dt>
+                  <dd className="mt-1 font-semibold text-ksp-navy">
+                    {formatBytes(status.fileStorage.documentBytes)}
+                  </dd>
+                </div>
+              </dl>
+              <p className="mt-3 text-[11px] text-ksp-gray">
+                แผนพื้นที่นี้ตั้งไว้ 2.5 GB: รูปนักเรียน 500 คน × 5 MB = 2.5 GB ยังไม่รวมเอกสารประจำเรือนพยาบาล
+              </p>
+              <p className="mt-1 text-[11px] text-amber-700">
+                หมายเหตุ: Supabase Free plan ให้ File Storage 1 GB ถ้าต้องใช้ครบ 2.5 GB ควรใช้แผนที่รองรับพื้นที่เพิ่ม
+              </p>
             </>
           )}
         </div>
@@ -234,6 +312,53 @@ export default function AdminSettingsPage() {
               {submitting ? "กำลังบันทึก..." : "เปลี่ยนรหัสผ่าน"}
             </button>
           </form>
+        </div>
+      </div>
+
+      <div className="mt-4 card-pad">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-ksp-navy">
+          <Code2 className="h-4 w-4 text-ksp-blue-600" /> ข้อมูลส่วนสำหรับนักพัฒนา
+        </h2>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <dl className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              {TECH_STACK.map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
+                  <dt className="text-xs font-semibold text-ksp-gray">{label}</dt>
+                  <dd className="mt-1 text-sm font-medium leading-6 text-ksp-navy">
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <div className="rounded-2xl border border-ksp-blue-100 bg-ksp-blue-50/60 p-4">
+            <h3 className="font-semibold text-ksp-navy">บัญชีและสภาพแวดล้อม</h3>
+            <dl className="mt-3 space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-ksp-gray">อีเมลโปรเจกต์</dt>
+                <dd className="text-right font-semibold text-ksp-navy">
+                  kalasinpanyanukun@ksp.ac.th
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-ksp-gray">รหัสผ่าน</dt>
+                <dd className="text-right font-semibold text-ksp-navy">(ติดต่อฝ่าย IT)</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-ksp-gray">Production domain</dt>
+                <dd className="text-right font-semibold text-ksp-navy">save.ksp.ac.th</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-ksp-gray">Storage limit ภายในระบบ</dt>
+                <dd className="text-right font-semibold text-ksp-navy">2.5 GB</dd>
+              </div>
+            </dl>
+            <div className="mt-4 flex gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs leading-5 text-ksp-gray">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-ksp-blue-500" />
+              เมื่อเพิ่ม environment ใหม่ให้ตั้งค่า DATABASE_URL, DIRECT_URL, JWT secrets, SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY ก่อน deploy
+            </div>
+          </div>
         </div>
       </div>
     </>

@@ -30,6 +30,15 @@ export function errorHandler(
     res.status(err.status).json({ message: err.message });
     return;
   }
+  if (
+    err &&
+    typeof err === "object" &&
+    "type" in err &&
+    (err as { type?: string }).type === "entity.too.large"
+  ) {
+    res.status(413).json({ message: "ไฟล์หรือข้อมูลที่อัปโหลดมีขนาดใหญ่เกินกำหนด" });
+    return;
+  }
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2002") {
       res.status(409).json({ message: "ข้อมูลซ้ำในระบบ" });

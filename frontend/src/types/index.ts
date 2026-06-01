@@ -35,6 +35,10 @@ export interface Student {
   congenitalDisease: string | null;
   drugAllergy: string | null;
   regularMedication: string | null;
+  photoUrl: string | null;
+  photoPath: string | null;
+  photoMimeType: string | null;
+  photoSize: number | null;
   healthData: Record<string, unknown>;
   medicationData: Record<string, unknown>;
   guardians: Guardian[];
@@ -155,6 +159,21 @@ export interface MedicationDetail {
   medication: Medication;
   movements: MedicationMovement[];
   students: { id: string; name: string; classRoom: string | null; dormitory: string | null }[];
+}
+
+export interface InfirmaryDocument {
+  id: string;
+  title: string;
+  description: string | null;
+  fileName: string;
+  fileUrl: string;
+  filePath: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedById: string;
+  createdAt: string;
+  updatedAt: string;
+  uploadedBy?: { id: string; fullName: string };
 }
 
 export type AqiLevel =

@@ -8,6 +8,7 @@ router.use(authMiddleware);
 
 // ความจุฐานข้อมูลตามแพ็กเกจ (MB) — ปรับผ่าน env ได้ (Supabase free = 500MB)
 const DB_LIMIT_MB = Number(process.env.SUPABASE_DB_LIMIT_MB ?? 500);
+const DOCUMENT_STORAGE_LIMIT_GB = Number(process.env.DOCUMENT_STORAGE_LIMIT_GB ?? 2.5);
 const ACTIVE_WINDOW_MIN = 5;
 
 router.get("/status", requireAdmin, async (_req, res, next) => {
@@ -19,6 +20,16 @@ router.get("/status", requireAdmin, async (_req, res, next) => {
     const usedBytes = Number(sizeRows[0]?.bytes ?? 0);
     const totalBytes = DB_LIMIT_MB * 1024 * 1024;
     const usedPct = totalBytes > 0 ? Math.min(100, (usedBytes / totalBytes) * 100) : 0;
+
+    const [documentBytes, studentPhotoBytes] = await Promise.all([
+      prisma.infirmaryDocument.aggregate({ _sum: { sizeBytes: true } }),
+      prisma.student.aggregate({ _sum: { photoSize: true } }),
+    ]);
+    const fileUsedBytes =
+      (documentBytes._sum.sizeBytes ?? 0) + (studentPhotoBytes._sum.photoSize ?? 0);
+    const fileTotalBytes = DOCUMENT_STORAGE_LIMIT_GB * 1024 * 1024 * 1024;
+    const fileUsedPct =
+      fileTotalBytes > 0 ? Math.min(100, (fileUsedBytes / fileTotalBytes) * 100) : 0;
 
     // บัญชีที่กำลังใช้งาน (มี activity ภายใน N นาที)
     const since = new Date(Date.now() - ACTIVE_WINDOW_MIN * 60_000);
@@ -34,6 +45,14 @@ router.get("/status", requireAdmin, async (_req, res, next) => {
         totalBytes,
         usedPct,
         limitMb: DB_LIMIT_MB,
+      },
+      fileStorage: {
+        usedBytes: fileUsedBytes,
+        totalBytes: fileTotalBytes,
+        usedPct: fileUsedPct,
+        limitGb: DOCUMENT_STORAGE_LIMIT_GB,
+        documentBytes: documentBytes._sum.sizeBytes ?? 0,
+        studentPhotoBytes: studentPhotoBytes._sum.photoSize ?? 0,
       },
       activeUsers,
       activeWindowMin: ACTIVE_WINDOW_MIN,

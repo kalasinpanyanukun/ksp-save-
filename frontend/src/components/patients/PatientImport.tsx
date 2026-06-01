@@ -17,7 +17,16 @@ interface PatientImportProps {
 }
 
 const FIELD_ALIASES: Record<
-  Exclude<keyof StudentInput, "medications" | "guardians" | "healthExtra">,
+  Exclude<
+    keyof StudentInput,
+    | "medications"
+    | "guardians"
+    | "healthExtra"
+    | "photoUrl"
+    | "photoPath"
+    | "photoMimeType"
+    | "photoSize"
+  >,
   string[]
 > = {
   studentCode: ["studentCode", "รหัสนักเรียน", "รหัส", "รหัสประจำตัว"],

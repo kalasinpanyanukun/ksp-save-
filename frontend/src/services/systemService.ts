@@ -7,6 +7,14 @@ export interface SystemStatus {
     usedPct: number;
     limitMb: number;
   };
+  fileStorage: {
+    usedBytes: number;
+    totalBytes: number;
+    usedPct: number;
+    limitGb: number;
+    documentBytes: number;
+    studentPhotoBytes: number;
+  };
   activeUsers: {
     id: string;
     fullName: string;

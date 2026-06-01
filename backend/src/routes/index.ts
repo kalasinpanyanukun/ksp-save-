@@ -14,6 +14,8 @@ import sheetDataRoutes from "./sheet-data.routes.js";
 import systemRoutes from "./system.routes.js";
 import healthReportsRoutes from "./health-reports.routes.js";
 import studentHandoffsRoutes from "./student-handoffs.routes.js";
+import uploadsRoutes from "./uploads.routes.js";
+import documentsRoutes from "./documents.routes.js";
 
 const router = Router();
 
@@ -32,5 +34,7 @@ router.use("/sheet-data", sheetDataRoutes);
 router.use("/system", systemRoutes);
 router.use("/health-reports", healthReportsRoutes);
 router.use("/student-handoffs", studentHandoffsRoutes);
+router.use("/uploads", uploadsRoutes);
+router.use("/infirmary-documents", documentsRoutes);
 
 export default router;

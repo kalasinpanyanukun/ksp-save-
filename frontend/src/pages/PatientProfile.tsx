@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Edit3, Loader2 } from "lucide-react";
-import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
 import PatientForm from "../components/patients/PatientForm";
@@ -74,11 +73,29 @@ export default function PatientProfilePage() {
 
   return (
     <>
-      <PageHeader
-        title={`${student.firstName} ${student.lastName}`}
-        description={`รหัส ${student.studentCode} · ${student.classRoom ?? "-"} · ${student.dormitory ?? "-"}`}
-        actions={
-          <>
+      <div className="mb-5 flex min-w-0 flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          {student.photoUrl ? (
+            <img
+              src={student.photoUrl}
+              alt={`${student.firstName} ${student.lastName}`}
+              className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-4 ring-white shadow-card"
+            />
+          ) : (
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-ksp-blue-50 text-2xl font-bold text-ksp-blue-700 ring-4 ring-white shadow-card">
+              {student.firstName.charAt(0)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h1 className="break-words text-[1.45rem] font-bold tracking-tight text-ksp-navy sm:text-2xl">
+              {student.firstName} {student.lastName}
+            </h1>
+            <p className="mt-1 break-words text-sm text-ksp-gray">
+              รหัส {student.studentCode} · {student.classRoom ?? "-"} · {student.dormitory ?? "-"}
+            </p>
+          </div>
+        </div>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end max-sm:[&_a]:w-full max-sm:[&_button]:w-full max-sm:[&_a]:justify-center max-sm:[&_button]:justify-center">
             <Link to="/patients" className="btn-outline">
               <ArrowLeft className="h-4 w-4" /> กลับ
             </Link>
@@ -92,9 +109,8 @@ export default function PatientProfilePage() {
                 <Edit3 className="h-4 w-4" /> แก้ไขข้อมูล
               </button>
             )}
-          </>
-        }
-      />
+        </div>
+      </div>
 
       <StudentDetailBody student={student} showStatusBadge />
 

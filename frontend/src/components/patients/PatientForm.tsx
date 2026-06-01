@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Pill, Plus, Trash2, Users, GraduationCap, HeartPulse } from "lucide-react";
+import { ImagePlus, Pill, Plus, Trash2, Users, GraduationCap, HeartPulse } from "lucide-react";
 import type { BloodType, Medication, Student, StudentStatus } from "../../types";
 import type {
   GuardianInput,
@@ -7,6 +7,7 @@ import type {
   MedicationEntryInput,
   StudentInput,
 } from "../../services/studentsService";
+import { uploadStudentPhoto } from "../../services/studentsService";
 import { searchMedications, createMedication } from "../../services/visitsService";
 import {
   BLOOD_TYPE_OPTIONS,
@@ -297,8 +298,14 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
   const [meds, setMeds] = useState<MedicationEntryInput[]>([]);
   const [guardians, setGuardians] = useState<GuardianInput[]>([]);
   const [health, setHealth] = useState<HealthExtraInput>({});
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
+    setPhotoFile(null);
+    setPhotoError("");
     if (initial) {
       setForm({
         studentCode: initial.studentCode ?? "",
@@ -319,13 +326,22 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
       setMeds(medsFromInitial(initial));
       setGuardians(guardiansFromInitial(initial));
       setHealth(healthExtraFromInitial(initial));
+      setPhotoPreview(initial.photoUrl ?? "");
     } else {
       setForm(emptyForm);
       setMeds([]);
       setGuardians([]);
       setHealth({});
+      setPhotoPreview("");
     }
   }, [initial]);
+
+  useEffect(() => {
+    if (!photoFile) return;
+    const url = URL.createObjectURL(photoFile);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile]);
 
   const autoBmi = useMemo(() => {
     const w = parseFloat(health.weight ?? "");
@@ -346,9 +362,27 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
   function updateHealth(key: keyof HealthExtraInput, value: string) {
     setHealth((h) => ({ ...h, [key]: value }));
   }
+  function handlePhotoChange(file: File | null) {
+    setPhotoError("");
+    if (!file) {
+      setPhotoFile(null);
+      setPhotoPreview(initial?.photoUrl ?? "");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("อัปโหลดได้เฉพาะไฟล์รูปภาพเท่านั้น");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
+      return;
+    }
+    setPhotoFile(file);
+  }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setPhotoError("");
     const cleanedMeds = meds
       .map((m) => ({
         name: m.name.trim(),
@@ -361,19 +395,69 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
     const cleanedGuardians = guardians
       .map((g) => ({ name: g.name.trim(), phone: g.phone.trim() }))
       .filter((g) => g.name || g.phone);
-    onSubmit({
+    let photoPayload: Partial<StudentInput> = {};
+    if (photoFile) {
+      setUploadingPhoto(true);
+      try {
+        const uploaded = await uploadStudentPhoto(photoFile);
+        photoPayload = {
+          photoUrl: uploaded.url,
+          photoPath: uploaded.path,
+          photoMimeType: uploaded.mimeType,
+          photoSize: uploaded.size,
+        };
+      } catch (err) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message ?? "อัปโหลดรูปนักเรียนไม่สำเร็จ";
+        setPhotoError(message);
+        setUploadingPhoto(false);
+        return;
+      }
+      setUploadingPhoto(false);
+    }
+    await onSubmit({
       ...form,
+      ...photoPayload,
       guardians: cleanedGuardians,
       healthExtra: { ...health, bmi: health.bmi?.trim() || autoBmi },
       ...(cleanedMeds.length > 0 ? { medications: cleanedMeds } : {}),
     });
   }
 
+  const saving = submitting || uploadingPhoto;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* 1. ข้อมูลพื้นฐาน + ผู้ปกครอง */}
       <section>
         <SectionTitle Icon={Users}>ข้อมูลพื้นฐาน</SectionTitle>
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-ksp-blue-100 bg-ksp-blue-50/40 p-3 sm:flex-row sm:items-center">
+          <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white bg-white shadow-sm">
+            {photoPreview ? (
+              <img src={photoPreview} alt="รูปนักเรียน" className="h-full w-full object-cover" />
+            ) : (
+              <ImagePlus className="h-8 w-8 text-ksp-blue-400" />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-ksp-navy">รูปนักเรียน</p>
+            <p className="mt-0.5 text-xs text-ksp-gray">
+              รองรับไฟล์รูปภาพทุกชนิด ขนาดไม่เกิน 5 MB
+            </p>
+            <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ksp-blue-200 bg-white px-3 py-2 text-sm font-semibold text-ksp-blue-700 shadow-sm hover:bg-ksp-blue-50">
+              <ImagePlus className="h-4 w-4" />
+              เลือกรูปภาพ
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
+              />
+            </label>
+            {photoError && <p className="mt-2 text-xs font-semibold text-rose-600">{photoError}</p>}
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="label">รหัสนักเรียน *</label>
@@ -644,8 +728,8 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
         {onCancel && (
           <button type="button" className="btn-outline" onClick={onCancel}>ยกเลิก</button>
         )}
-        <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? "กำลังบันทึก..." : "บันทึก"}
+        <button type="submit" className="btn-primary" disabled={saving}>
+          {uploadingPhoto ? "กำลังอัปโหลดรูป..." : submitting ? "กำลังบันทึก..." : "บันทึก"}
         </button>
       </div>
     </form>
