@@ -304,9 +304,9 @@ export default function PatientListPage() {
         </div>
       </div>
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="table-base [&_thead_th]:sticky [&_thead_th]:top-[7.5rem] [&_thead_th]:z-20 [&_thead_th]:shadow-sm lg:[&_thead_th]:top-16">
+      <div className="card">
+        <div className="overflow-x-auto rounded-xl sm:rounded-2xl lg:overflow-visible">
+          <table className="table-base lg:[&_thead_th]:sticky lg:[&_thead_th]:top-16 lg:[&_thead_th]:z-20 lg:[&_thead_th]:shadow-sm">
             <thead>
               <tr>
                 <th>ลำดับ</th>
