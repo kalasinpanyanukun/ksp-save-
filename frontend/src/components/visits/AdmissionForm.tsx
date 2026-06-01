@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import StudentPicker from "../patients/StudentPicker";
-import type { DischargeDestination, Student } from "../../types";
+import type { Admission, DischargeDestination, Student } from "../../types";
 import type { AdmissionInput } from "../../services/visitsService";
 
 interface AdmissionFormProps {
+  initial?: Admission | null;
   onSubmit: (payload: AdmissionInput) => Promise<void> | void;
   onCancel?: () => void;
   submitting?: boolean;
@@ -18,6 +19,13 @@ function nowTime(): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function inputDate(value?: string | Date | null): string {
+  if (!value) return todayDate();
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return todayDate();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 const destOptions: { value: DischargeDestination; label: string }[] = [
   { value: "dormitory", label: "กลับเรือนนอน" },
   { value: "home", label: "กลับบ้าน" },
@@ -26,21 +34,35 @@ const destOptions: { value: DischargeDestination; label: string }[] = [
 ];
 
 export default function AdmissionForm({
+  initial,
   onSubmit,
   onCancel,
   submitting,
 }: AdmissionFormProps) {
-  const [student, setStudent] = useState<Student | null>(null);
-  const [admitDate, setAdmitDate] = useState(todayDate());
-  const [admitTime, setAdmitTime] = useState(nowTime());
-  const [chiefComplaint, setChiefComplaint] = useState("");
-  const [hasDischarge, setHasDischarge] = useState(false);
-  const [dischargeDate, setDischargeDate] = useState(todayDate());
-  const [dischargeTime, setDischargeTime] = useState(nowTime());
+  const [student, setStudent] = useState<Student | null>(initial?.student ?? null);
+  const [admitDate, setAdmitDate] = useState(inputDate(initial?.admitDate));
+  const [admitTime, setAdmitTime] = useState(initial?.admitTime ?? nowTime());
+  const [chiefComplaint, setChiefComplaint] = useState(initial?.chiefComplaint ?? "");
+  const [hasDischarge, setHasDischarge] = useState(Boolean(initial?.dischargeDate));
+  const [dischargeDate, setDischargeDate] = useState(inputDate(initial?.dischargeDate));
+  const [dischargeTime, setDischargeTime] = useState(initial?.dischargeTime ?? nowTime());
   const [dischargeDestination, setDischargeDestination] =
-    useState<DischargeDestination>("dormitory");
-  const [notes, setNotes] = useState("");
+    useState<DischargeDestination>(initial?.dischargeDestination ?? "dormitory");
+  const [notes, setNotes] = useState(initial?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStudent(initial?.student ?? null);
+    setAdmitDate(inputDate(initial?.admitDate));
+    setAdmitTime(initial?.admitTime ?? nowTime());
+    setChiefComplaint(initial?.chiefComplaint ?? "");
+    setHasDischarge(Boolean(initial?.dischargeDate));
+    setDischargeDate(inputDate(initial?.dischargeDate));
+    setDischargeTime(initial?.dischargeTime ?? nowTime());
+    setDischargeDestination(initial?.dischargeDestination ?? "dormitory");
+    setNotes(initial?.notes ?? "");
+    setError(null);
+  }, [initial]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -178,7 +200,7 @@ export default function AdmissionForm({
           </button>
         )}
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? "กำลังบันทึก..." : "บันทึก admission"}
+          {submitting ? "กำลังบันทึก..." : initial ? "บันทึกการแก้ไข" : "บันทึก admission"}
         </button>
       </div>
     </form>

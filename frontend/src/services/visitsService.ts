@@ -112,6 +112,10 @@ export async function updateAdmission(
   return data.admission;
 }
 
+export async function deleteAdmission(id: string) {
+  await api.delete(`/admissions/${id}`);
+}
+
 // ========== Referrals ==========
 export interface ReferralInput {
   studentId: string;
@@ -135,6 +139,18 @@ export async function listReferrals(params: {
 export async function createReferral(payload: ReferralInput): Promise<Referral> {
   const { data } = await api.post<{ referral: Referral }>("/referrals", payload);
   return data.referral;
+}
+
+export async function updateReferral(
+  id: string,
+  payload: Partial<ReferralInput>,
+): Promise<Referral> {
+  const { data } = await api.put<{ referral: Referral }>(`/referrals/${id}`, payload);
+  return data.referral;
+}
+
+export async function deleteReferral(id: string) {
+  await api.delete(`/referrals/${id}`);
 }
 
 export async function getReferralSummary(): Promise<{

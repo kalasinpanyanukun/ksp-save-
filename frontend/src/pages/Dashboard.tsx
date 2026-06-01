@@ -52,42 +52,64 @@ interface SignalItem {
   tone: Tone;
 }
 
-const toneStyles: Record<Tone, { badge: string; value: string; border: string; soft: string }> = {
+const toneStyles: Record<
+  Tone,
+  {
+    badge: string;
+    value: string;
+    border: string;
+    soft: string;
+    row: string;
+    rowHover: string;
+  }
+> = {
   blue: {
     badge: "bg-ksp-blue-50 text-ksp-blue-700",
     value: "text-ksp-blue-800",
     border: "border-ksp-blue-200",
     soft: "bg-ksp-blue-50/60",
+    row: "bg-ksp-blue-800 text-white",
+    rowHover: "hover:bg-ksp-blue-900",
   },
   green: {
     badge: "bg-emerald-50 text-emerald-800",
     value: "text-emerald-800",
     border: "border-emerald-200",
     soft: "bg-emerald-50/70",
+    row: "bg-emerald-800 text-white",
+    rowHover: "hover:bg-emerald-900",
   },
   orange: {
     badge: "bg-orange-50 text-orange-800",
     value: "text-orange-800",
     border: "border-orange-200",
     soft: "bg-orange-50/70",
+    row: "bg-orange-700 text-white",
+    rowHover: "hover:bg-orange-800",
   },
   rose: {
     badge: "bg-rose-50 text-rose-800",
     value: "text-rose-800",
     border: "border-rose-200",
     soft: "bg-rose-50/70",
+    row: "bg-rose-800 text-white",
+    rowHover: "hover:bg-rose-900",
   },
   cyan: {
     badge: "bg-cyan-50 text-cyan-800",
     value: "text-cyan-800",
     border: "border-cyan-200",
     soft: "bg-cyan-50/70",
+    row: "bg-cyan-800 text-white",
+    rowHover: "hover:bg-cyan-900",
   },
   slate: {
     badge: "bg-slate-100 text-slate-800",
     value: "text-slate-800",
     border: "border-slate-200",
     soft: "bg-slate-50",
+    row: "bg-slate-800 text-white",
+    rowHover: "hover:bg-slate-900",
   },
 };
 
@@ -127,27 +149,27 @@ function WorkflowRow({ item, loading }: { item: WorkflowItem; loading: boolean }
   return (
     <Link
       to={item.to}
-      className={`grid min-h-[5.75rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-l-4 bg-white px-4 py-3 shadow-sm ring-1 ring-slate-100 transition hover:bg-ksp-blue-50/45 focus:outline-none focus:ring-2 focus:ring-ksp-blue-500 ${tone.border}`}
+      className={`grid min-h-[7rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 rounded-xl px-5 py-4 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-ksp-blue-500 focus:ring-offset-2 ${tone.row} ${tone.rowHover}`}
     >
-      <span className={`grid h-11 w-11 place-items-center rounded-xl ${tone.badge}`}>
+      <span className="grid h-12 w-12 place-items-center rounded-xl bg-white/20 text-white ring-1 ring-white/20">
         <item.Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0">
         <span className="flex flex-wrap items-center gap-2">
-          <span className="font-bold text-ksp-navy">{item.label}</span>
+          <span className="font-bold text-white">{item.label}</span>
           {item.critical && (
-            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-800">
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-bold text-white ring-1 ring-white/20">
               ต้องตรวจ
             </span>
           )}
         </span>
-        <span className="mt-1 block text-sm font-medium text-ksp-gray">{item.meta}</span>
-        <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-ksp-blue-700">
+        <span className="mt-1 block text-sm font-medium text-white/90">{item.meta}</span>
+        <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-white">
           {item.action}
           <ChevronRight className="h-3.5 w-3.5" />
         </span>
       </span>
-      <span className={`min-w-14 text-right text-4xl font-extrabold leading-none ${tone.value}`}>
+      <span className="min-w-16 text-right text-5xl font-extrabold leading-none text-white">
         {valueOrZero(item.value, loading)}
       </span>
     </Link>
@@ -334,7 +356,7 @@ export default function DashboardPage() {
       />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(21rem,0.65fr)]">
-        <section className="rounded-2xl border border-ksp-blue-100 bg-ksp-bg/50 p-4 shadow-card">
+        <section className="flex min-h-[36rem] flex-col rounded-2xl border border-ksp-blue-100 bg-ksp-bg/50 p-4 shadow-card">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="flex items-center gap-2 text-lg font-extrabold text-ksp-navy">
@@ -349,7 +371,7 @@ export default function DashboardPage() {
               {today}
             </span>
           </div>
-          <div className="grid gap-3">
+          <div className="grid flex-1 grid-rows-4 gap-3">
             {workflowItems.map((item) => (
               <WorkflowRow key={item.to} item={item} loading={loading} />
             ))}

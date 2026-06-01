@@ -489,7 +489,7 @@ function MedicationScheduleTable({
     { key: "เที่ยง", alt: "การรับประทาน เที่ยง", label: "กลางวัน" },
     { key: "เย็น", alt: "การรับประทาน เย็น", label: "เย็น" },
   ];
-  const headBase = "border border-slate-300 bg-ksp-blue-600 px-2 py-2 font-bold text-white";
+  const headBase = "border border-ksp-blue-700 bg-ksp-blue-800 px-2 py-2 font-bold text-white";
   return (
     <div className="max-h-[calc(100vh-15rem)] overflow-auto">
       <table className="w-max min-w-full border-collapse text-center text-xs">

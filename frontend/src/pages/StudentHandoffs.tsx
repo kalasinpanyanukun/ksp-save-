@@ -4,10 +4,12 @@ import {
   ArrowUpFromLine,
   ArrowRightLeft,
   Edit3,
+  Eye,
   Loader2,
   Plus,
   Trash2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import PageHeader from "../components/common/PageHeader";
 import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/common/Modal";
@@ -76,9 +78,10 @@ export default function StudentHandoffsPage() {
   const [to, setTo] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StudentHandoff | null>(null);
+  const [selected, setSelected] = useState<StudentHandoff | null>(null);
   const [deleting, setDeleting] = useState<StudentHandoff | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const pageSize = 20;
+  const pageSize = 100;
 
   const topbarSearch = useMemo(
     () => ({
@@ -243,6 +246,7 @@ export default function StudentHandoffsPage() {
                   <th>วันที่ / เวลา</th>
                   <th>ประเภท</th>
                   <th>นักเรียน</th>
+                  <th>ชื่อเล่น</th>
                   <th>ชั้น / เรือนนอน</th>
                   <th>ผู้พามาส่ง / รับกลับ</th>
                   <th>ครูพยาบาล</th>
@@ -253,14 +257,26 @@ export default function StudentHandoffsPage() {
               <tbody>
                 {loading && (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center">
+                    <td colSpan={9} className="py-8 text-center">
                       <Loader2 className="inline h-5 w-5 animate-spin text-ksp-blue-500" />
                     </td>
                   </tr>
                 )}
                 {!loading &&
                   items.map((item) => (
-                    <tr key={item.id}>
+                    <tr
+                      key={item.id}
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer"
+                      onClick={() => setSelected(item)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelected(item);
+                        }
+                      }}
+                    >
                       <td className="whitespace-nowrap">
                         <div className="font-semibold">{formatDate(item.handoffDate)}</div>
                         <div className="text-xs text-ksp-gray">{item.handoffTime}</div>
@@ -278,6 +294,7 @@ export default function StudentHandoffsPage() {
                           {item.student?.studentCode}
                         </div>
                       </td>
+                      <td className="font-medium">{item.student?.nickname || "-"}</td>
                       <td>
                         <div>{item.student?.classRoom ?? "-"}</div>
                         <div className="text-xs text-ksp-gray">
@@ -299,8 +316,22 @@ export default function StudentHandoffsPage() {
                           <button
                             type="button"
                             className="btn-ghost px-2 py-2 text-ksp-blue-700 hover:bg-ksp-blue-50"
+                            title="ดูรายละเอียด"
+                            aria-label="ดูรายละเอียด"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelected(item);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost px-2 py-2 text-ksp-blue-700 hover:bg-ksp-blue-50"
                             title="แก้ไข"
-                            onClick={() => {
+                            aria-label="แก้ไข"
+                            onClick={(event) => {
+                              event.stopPropagation();
                               setEditing(item);
                               setOpen(true);
                             }}
@@ -311,7 +342,11 @@ export default function StudentHandoffsPage() {
                             type="button"
                             className="btn-ghost px-2 py-2 text-rose-600 hover:bg-rose-50"
                             title="ลบ"
-                            onClick={() => setDeleting(item)}
+                            aria-label="ลบข้อมูล"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleting(item);
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -380,6 +415,24 @@ export default function StudentHandoffsPage() {
         />
       </Modal>
 
+      <Modal
+        open={Boolean(selected)}
+        onClose={() => setSelected(null)}
+        title="รายละเอียดรับ-ส่งนักเรียน"
+        size="lg"
+      >
+        {selected && (
+          <HandoffDetail
+            item={selected}
+            onEdit={() => {
+              setEditing(selected);
+              setSelected(null);
+              setOpen(true);
+            }}
+          />
+        )}
+      </Modal>
+
       <ConfirmDialog
         open={Boolean(deleting)}
         title="ยืนยันการลบบันทึก"
@@ -401,6 +454,68 @@ export default function StudentHandoffsPage() {
         onClose={() => setDeleting(null)}
       />
     </>
+  );
+}
+
+function HandoffDetail({
+  item,
+  onEdit,
+}: {
+  item: StudentHandoff;
+  onEdit: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl bg-ksp-blue-50 px-4 py-3">
+        <h2 className="text-xl font-bold text-ksp-navy">
+          {item.student?.firstName} {item.student?.lastName}
+          {item.student?.nickname ? (
+            <span className="ml-2 text-base font-semibold text-ksp-blue-700">
+              ({item.student.nickname})
+            </span>
+          ) : null}
+        </h2>
+        <p className="mt-1 text-sm font-medium text-ksp-blue-700">
+          {item.student?.studentCode ?? "-"} · {item.student?.classRoom ?? "-"} · {item.student?.dormitory ?? "-"}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <DetailCell label="ประเภท" value={typeLabels[item.handoffType]} />
+        <DetailCell label="วันที่ / เวลา" value={`${formatDate(item.handoffDate)} · ${item.handoffTime}`} />
+        <DetailCell label={item.handoffType === "check_in" ? "ผู้พามาส่ง" : "ผู้รับกลับบ้าน"} value={item.companionName} />
+        <DetailCell label="เบอร์โทร" value={item.companionPhone || "-"} />
+        <DetailCell label="ครูพยาบาล" value={item.nurseName || item.recordedBy?.fullName || "-"} />
+        <DetailCell label="ผู้บันทึก" value={item.recordedBy?.fullName ?? "-"} />
+        <DetailCell label="หมายเหตุ" value={item.notes || "-"} wide />
+      </div>
+      <div className="flex flex-wrap justify-end gap-2 border-t border-ksp-blue-50 pt-3">
+        <button type="button" className="btn-outline" onClick={onEdit}>
+          <Edit3 className="h-4 w-4" /> แก้ไข
+        </button>
+        {item.student?.id && (
+          <Link to={`/patients/${item.student.id}`} className="btn-primary">
+            ดูข้อมูลเพิ่มเติม
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DetailCell({
+  label,
+  value,
+  wide,
+}: {
+  label: string;
+  value: string;
+  wide?: boolean;
+}) {
+  return (
+    <div className={`rounded-xl border border-slate-100 bg-white px-3 py-2.5 ${wide ? "sm:col-span-2" : ""}`}>
+      <div className="text-xs font-semibold text-ksp-gray">{label}</div>
+      <div className="mt-1 whitespace-pre-wrap text-sm font-medium text-ksp-navy">{value}</div>
+    </div>
   );
 }
 

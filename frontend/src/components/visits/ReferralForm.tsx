@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import StudentPicker from "../patients/StudentPicker";
-import type { Student } from "../../types";
+import type { Referral, Student } from "../../types";
 import type { ReferralInput } from "../../services/visitsService";
 
 interface ReferralFormProps {
+  initial?: Referral | null;
   onSubmit: (payload: ReferralInput) => Promise<void> | void;
   onCancel?: () => void;
   submitting?: boolean;
@@ -18,19 +19,38 @@ function nowTime() {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function inputDate(value?: string | Date | null): string {
+  if (!value) return todayDate();
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return todayDate();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function ReferralForm({
+  initial,
   onSubmit,
   onCancel,
   submitting,
 }: ReferralFormProps) {
-  const [student, setStudent] = useState<Student | null>(null);
-  const [referralDate, setReferralDate] = useState(todayDate());
-  const [referralTime, setReferralTime] = useState(nowTime());
-  const [chiefComplaint, setChiefComplaint] = useState("");
-  const [referredTo, setReferredTo] = useState("");
-  const [treatmentGiven, setTreatmentGiven] = useState("");
-  const [notes, setNotes] = useState("");
+  const [student, setStudent] = useState<Student | null>(initial?.student ?? null);
+  const [referralDate, setReferralDate] = useState(inputDate(initial?.referralDate));
+  const [referralTime, setReferralTime] = useState(initial?.referralTime ?? nowTime());
+  const [chiefComplaint, setChiefComplaint] = useState(initial?.chiefComplaint ?? "");
+  const [referredTo, setReferredTo] = useState(initial?.referredTo ?? "");
+  const [treatmentGiven, setTreatmentGiven] = useState(initial?.treatmentGiven ?? "");
+  const [notes, setNotes] = useState(initial?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStudent(initial?.student ?? null);
+    setReferralDate(inputDate(initial?.referralDate));
+    setReferralTime(initial?.referralTime ?? nowTime());
+    setChiefComplaint(initial?.chiefComplaint ?? "");
+    setReferredTo(initial?.referredTo ?? "");
+    setTreatmentGiven(initial?.treatmentGiven ?? "");
+    setNotes(initial?.notes ?? "");
+    setError(null);
+  }, [initial]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -132,7 +152,7 @@ export default function ReferralForm({
           </button>
         )}
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? "กำลังบันทึก..." : "บันทึกการส่งต่อ"}
+          {submitting ? "กำลังบันทึก..." : initial ? "บันทึกการแก้ไข" : "บันทึกการส่งต่อ"}
         </button>
       </div>
     </form>

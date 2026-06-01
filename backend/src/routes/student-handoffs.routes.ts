@@ -26,6 +26,7 @@ const studentInclude = {
     studentCode: true,
     firstName: true,
     lastName: true,
+    nickname: true,
     classRoom: true,
     dormitory: true,
     studentStatus: true,

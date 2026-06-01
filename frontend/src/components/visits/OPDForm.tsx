@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import StudentPicker from "../patients/StudentPicker";
 import MedicationPicker from "./MedicationPicker";
-import type { OpdMedicationItem, Student } from "../../types";
+import type { OpdMedicationItem, OpdVisit, Student } from "../../types";
 import type { OpdInput } from "../../services/visitsService";
 
 interface OPDFormProps {
+  initial?: OpdVisit | null;
   initialStudent?: Student | null;
   onSubmit: (payload: OpdInput) => Promise<void> | void;
   onCancel?: () => void;
@@ -21,21 +22,41 @@ function nowTimeString(): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function inputDate(value?: string | Date | null): string {
+  if (!value) return nowDateString();
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return nowDateString();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function OPDForm({
+  initial,
   initialStudent,
   onSubmit,
   onCancel,
   submitting,
 }: OPDFormProps) {
-  const [student, setStudent] = useState<Student | null>(initialStudent ?? null);
-  const [visitDate, setVisitDate] = useState(nowDateString());
-  const [visitTime, setVisitTime] = useState(nowTimeString());
-  const [chiefComplaint, setChiefComplaint] = useState("");
-  const [diagnosis, setDiagnosis] = useState("");
-  const [treatment, setTreatment] = useState("");
-  const [medications, setMedications] = useState<OpdMedicationItem[]>([]);
-  const [notes, setNotes] = useState("");
+  const [student, setStudent] = useState<Student | null>(initial?.student ?? initialStudent ?? null);
+  const [visitDate, setVisitDate] = useState(inputDate(initial?.visitDate));
+  const [visitTime, setVisitTime] = useState(initial?.visitTime ?? nowTimeString());
+  const [chiefComplaint, setChiefComplaint] = useState(initial?.chiefComplaint ?? "");
+  const [diagnosis, setDiagnosis] = useState(initial?.diagnosis ?? "");
+  const [treatment, setTreatment] = useState(initial?.treatment ?? "");
+  const [medications, setMedications] = useState<OpdMedicationItem[]>(initial?.medications ?? []);
+  const [notes, setNotes] = useState(initial?.notes ?? "");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStudent(initial?.student ?? initialStudent ?? null);
+    setVisitDate(inputDate(initial?.visitDate));
+    setVisitTime(initial?.visitTime ?? nowTimeString());
+    setChiefComplaint(initial?.chiefComplaint ?? "");
+    setDiagnosis(initial?.diagnosis ?? "");
+    setTreatment(initial?.treatment ?? "");
+    setMedications(initial?.medications ?? []);
+    setNotes(initial?.notes ?? "");
+    setError(null);
+  }, [initial, initialStudent]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -144,7 +165,7 @@ export default function OPDForm({
           </button>
         )}
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? "กำลังบันทึก..." : "บันทึก OPD"}
+          {submitting ? "กำลังบันทึก..." : initial ? "บันทึกการแก้ไข" : "บันทึก OPD"}
         </button>
       </div>
     </form>
