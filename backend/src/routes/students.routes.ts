@@ -37,6 +37,8 @@ const healthExtraSchema = z.object({
   vaccineBasic: z.string().trim().max(60).optional(),
   vaccineFlu: z.string().trim().max(60).optional(),
   vaccineCovid: z.string().trim().max(60).optional(),
+  idCardDeposited: z.string().trim().max(10).optional(),
+  disabilityCardDeposited: z.string().trim().max(10).optional(),
   disabilityType: z.string().trim().max(100).optional(),
   ageType: z.string().trim().max(20).optional(),
   idCard: z.string().trim().max(30).optional(),
@@ -105,6 +107,12 @@ function mergeHealthExtra(
     if (value.trim()) data[key] = value.trim();
     else delete data[key];
   };
+  const setBoolean = (key: string, value: string | undefined) => {
+    if (value === undefined) return;
+    const checked = ["TRUE", "true", "1", "yes", "✓", "จริง"].includes(value.trim());
+    if (checked) data[key] = "TRUE";
+    else delete data[key];
+  };
   set("น้ำหนัก (กิโลกรัม)", extra.weight);
   set("ส่วนสูง (เซนติเมตร)", extra.height);
   let bmi = extra.bmi;
@@ -119,6 +127,8 @@ function mergeHealthExtra(
   set("ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", extra.vaccineBasic);
   set("ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", extra.vaccineFlu);
   set("ฉีดวัคซีน ป้องกันโควิค (ปี)", extra.vaccineCovid);
+  setBoolean("ฝากบัตรประชาชน", extra.idCardDeposited);
+  setBoolean("ฝากบัตรคนพิการ", extra.disabilityCardDeposited);
   set("ประเภท ความพิการ", extra.disabilityType);
   set("เด็กเก่า/ใหม่", extra.ageType);
   set("เลขบัตรประชาชน", extra.idCard);

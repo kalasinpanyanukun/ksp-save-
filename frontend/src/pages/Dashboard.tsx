@@ -46,6 +46,16 @@ const statToneStyles = {
   slate: "bg-slate-700 text-white",
 } as const;
 
+const statTextTones = {
+  blue: "text-ksp-blue-600",
+  orange: "text-orange-600",
+  cyan: "text-cyan-600",
+  green: "text-emerald-700",
+  violet: "text-violet-600",
+  rose: "text-rose-600",
+  slate: "text-slate-700",
+} as const;
+
 function StatCard({
   label,
   value,
@@ -82,17 +92,15 @@ function MiniStat({
   loading,
 }: StatCardProps) {
   return (
-    <section
-      className={`grid min-h-[7rem] grid-cols-[minmax(0,1fr)_auto] items-stretch gap-3 p-5 ${statToneStyles[tone]}`}
-    >
-      <div className="flex min-w-0 flex-col justify-between">
-        <p className="text-sm font-bold leading-tight text-white">{label}</p>
-        <div className="mt-4 grid h-9 w-9 place-items-center rounded-lg bg-white/15 text-white">
-          <Icon className="h-5 w-5" />
+    <section className="flex min-h-[6.5rem] items-start justify-between gap-3 bg-white p-5">
+      <div>
+        <p className="text-sm font-semibold leading-tight text-ksp-navy">{label}</p>
+        <div className={`mt-2 text-4xl font-extrabold leading-none tracking-tight ${statTextTones[tone]}`}>
+          {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : value}
         </div>
       </div>
-      <div className="flex min-w-[3.25rem] items-center justify-end text-right text-[clamp(2.75rem,4.5vw,4.75rem)] font-extrabold leading-none text-white">
-        {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : value}
+      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-ksp-blue-50/60 ${statTextTones[tone]}`}>
+        <Icon className="h-5 w-5" />
       </div>
     </section>
   );
@@ -125,7 +133,7 @@ function DigitalClock() {
 
 function DashboardInfoPanel({ today }: { today: string }) {
   return (
-    <section className="grid min-h-[7rem] gap-4 bg-ksp-blue-50 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+    <section className="grid min-h-[6.5rem] gap-4 bg-white p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
       <div>
         <p className="text-sm font-semibold text-ksp-blue-600">วันที่ปัจจุบัน</p>
         <p className="mt-1 text-xl font-extrabold leading-tight text-ksp-navy">{today}</p>
@@ -282,11 +290,11 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-5 overflow-hidden rounded-2xl bg-ksp-blue-100 shadow-card ring-1 ring-ksp-blue-100">
-        <div className="grid grid-cols-1 gap-px sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-px sm:grid-cols-2 xl:grid-cols-4">
           {additionalStats.map((item) => (
             <MiniStat key={item.label} {...item} />
           ))}
-          <div className="sm:col-span-2 xl:col-span-2">
+          <div className="sm:col-span-2">
             <DashboardInfoPanel today={today} />
           </div>
         </div>

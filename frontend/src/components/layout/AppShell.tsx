@@ -26,7 +26,7 @@ export default function AppShell({ children }: AppShellProps) {
     <TopbarSearchProvider>
       <div className="flex min-h-screen overflow-x-hidden bg-gradient-to-br from-ksp-bg via-white to-ksp-blue-50/45">
         <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
           <Topbar />
           <main className="mx-auto w-full max-w-[1400px] flex-1 p-3 sm:p-5 lg:p-8">
             {children}

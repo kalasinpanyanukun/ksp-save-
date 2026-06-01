@@ -102,7 +102,7 @@ export default function PatientProfilePage() {
         open={editing}
         onClose={() => setEditing(false)}
         title="แก้ไขข้อมูลนักเรียน"
-        size="lg"
+        size="xxl"
       >
         <PatientForm
           initial={student}

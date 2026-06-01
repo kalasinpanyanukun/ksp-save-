@@ -306,7 +306,7 @@ export default function PatientListPage() {
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table-base">
+          <table className="table-base [&_thead_th]:sticky [&_thead_th]:top-[7.5rem] [&_thead_th]:z-20 [&_thead_th]:shadow-sm lg:[&_thead_th]:top-16">
             <thead>
               <tr>
                 <th>ลำดับ</th>
@@ -433,7 +433,7 @@ export default function PatientListPage() {
           setEditing(null);
         }}
         title={editing ? "แก้ไขข้อมูลนักเรียน" : "เพิ่มนักเรียนใหม่"}
-        size="lg"
+        size="xxl"
       >
         <PatientForm
           initial={editing ?? undefined}

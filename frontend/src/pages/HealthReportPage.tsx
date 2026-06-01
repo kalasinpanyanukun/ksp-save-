@@ -139,7 +139,7 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
       type === "physical" &&
       isHeader(header, "ผลตรวจร่างกาย")
     ) {
-      return "w-[350px] max-w-[350px] whitespace-normal break-words text-center align-middle leading-relaxed";
+      return "w-full min-w-[18rem] whitespace-normal break-words text-center align-middle leading-relaxed";
     }
     if (
       type === "injection" &&
@@ -151,7 +151,12 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
       (type === "disease" && isHeader(header, "ชื่อ-สกุล", "โรคประจำตัว")) ||
       (type === "physical" && isHeader(header, "ชื่อ-สกุล", "ชื่อ - สกุล"))
     ) {
-      return "whitespace-normal text-center align-middle leading-relaxed";
+      return type === "physical"
+        ? "w-[1%] whitespace-nowrap text-center align-middle leading-relaxed"
+        : "whitespace-normal text-center align-middle leading-relaxed";
+    }
+    if (type === "physical") {
+      return "w-[1%] whitespace-nowrap text-center align-middle";
     }
     if ((weight ?? 1) >= 1.6) {
       return "min-w-[12rem] whitespace-normal text-left align-top leading-relaxed";
@@ -204,7 +209,7 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
           </div>
         ) : (
           <div className="max-h-[calc(100vh-17rem)] overflow-auto">
-            <table className="w-max min-w-full border-collapse text-center text-xs">
+            <table className={`${type === "physical" ? "min-w-full table-auto" : "w-max min-w-full"} border-collapse text-center text-xs`}>
               <thead>
                 <tr>
                   <th className="sticky top-0 z-10 border-b-2 border-r border-slate-300 bg-slate-200 px-3 py-2.5 font-bold text-ksp-navy">

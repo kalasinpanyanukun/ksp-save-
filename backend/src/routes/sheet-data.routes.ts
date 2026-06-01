@@ -68,6 +68,7 @@ const HEALTH_COLUMN_ORDER = [
   "ป้องกันโควิค",
   "กรุปเลือด",
   "โรคประจำตัว",
+  "มียาประจำตัว",
   "ยาประจำตัว",
   "แพ้ยา",
   "อาการแสดงการแพ้",
@@ -222,6 +223,19 @@ function addRecordValue(
   if (!record[key]) record[key] = text;
 }
 
+function normalizeHealthHeader(key: string) {
+  if (key.includes("ฝากบัตร") && (key.includes("ประชาชน") || key.includes("ปชช"))) {
+    return "ฝากบัตรประชาชน";
+  }
+  if (key.includes("ฝากบัตร") && key.includes("พิการ")) {
+    return "ฝากบัตรคนพิการ";
+  }
+  if (key.includes("ยาประจำตัว") && (key.includes("กด") || key.includes("✓") || key.includes("มี"))) {
+    return "มียาประจำตัว";
+  }
+  return key;
+}
+
 function shouldSkipStoredKey(kind: SheetKind, key: string) {
   const commonHidden = new Set([
     "__studentId",
@@ -265,6 +279,7 @@ function buildStoredResponse(
           "ชั้นเรียน",
           "เรือนนอน",
           "โรคประจำตัว",
+          "มียาประจำตัว",
           "ยาประจำตัว",
           "แพ้ยา/อาหาร",
           "ผู้ปกครอง",
@@ -370,6 +385,7 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
         __studentId: student.id,
         ...base,
         "โรคประจำตัว": student.congenitalDisease ?? "",
+        "มียาประจำตัว": student.regularMedication || medicationList(student).length > 0 ? "TRUE" : "",
         "ยาประจำตัว": student.regularMedication ?? "",
         "แพ้ยา/อาหาร": student.drugAllergy ?? "",
         "ผู้ปกครอง": student.parentName ?? "",
@@ -384,7 +400,7 @@ async function getStoredSheetData(kind: SheetKind, dormitory: DormitorySheet) {
           if (text) extraNotes.push(text);
           continue;
         }
-        addRecordValue(record, key, value);
+        addRecordValue(record, normalizeHealthHeader(key), value);
       }
       if (extraNotes.length) {
         record["หมายเหตุ"] = [record["หมายเหตุ"], ...extraNotes]

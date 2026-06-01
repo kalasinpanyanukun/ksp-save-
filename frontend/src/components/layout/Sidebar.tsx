@@ -70,7 +70,7 @@ export default function Sidebar() {
       )}
       <aside
         className={clsx(
-          "fixed inset-y-0 left-0 z-40 flex h-[100svh] w-[min(19rem,86vw)] flex-col bg-ksp-blue-800 text-white shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-40 flex h-[100svh] w-[min(19rem,86vw)] flex-col bg-ksp-blue-800 text-white shadow-2xl transition-transform duration-200 lg:w-64 lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >

@@ -73,6 +73,9 @@ const LONG_COLUMNS = [
 ];
 const isLongColumn = (header: string) =>
   LONG_COLUMNS.some((key) => header.includes(key));
+const CHECKBOX_COLUMNS = ["ฝากบัตรประชาชน", "ฝากบัตรคนพิการ", "มียาประจำตัว"];
+const isCompactCheckboxColumn = (header: string) =>
+  CHECKBOX_COLUMNS.includes(detailLabel(header));
 
 export default function SheetDataPage({ kind }: SheetDataPageProps) {
   const copy = pageCopy[kind] as {
@@ -330,15 +333,17 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             <table className="w-max min-w-full border-collapse text-center text-xs">
               <thead>
                 <tr>
-                  <th className="sticky left-0 top-0 z-30 border-b-2 border-r border-slate-300 bg-slate-200 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm">
+                  <th className="sticky left-0 top-0 z-30 border-b-2 border-r-2 border-slate-300 bg-slate-200 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm">
                     ลำดับ
                   </th>
                   {sheet?.headers.map((header, index) => (
                     <th
                       key={`${header}-${index}`}
-                      className={`sticky top-0 z-20 whitespace-nowrap border-b-2 border-r border-slate-300 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm last:border-r-0 ${tintFor(index).head}`}
+                      className={`sticky top-0 z-20 whitespace-nowrap border-b-2 border-r-2 border-slate-300 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm last:border-r-0 ${tintFor(index).head} ${
+                        isCompactCheckboxColumn(header) ? "w-[1%]" : ""
+                      }`}
                     >
-                      {header}
+                      {detailLabel(header)}
                     </th>
                   ))}
                 </tr>
@@ -360,18 +365,21 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
                       row.studentId ? "cursor-pointer" : ""
                     }`}
                   >
-                    <td className="sticky left-0 z-10 whitespace-nowrap border-b border-r border-slate-100 bg-white px-3 py-2.5 text-center font-semibold text-ksp-navy">
+                    <td className="sticky left-0 z-10 whitespace-nowrap border-b-2 border-r-2 border-slate-200 bg-white px-3 py-2.5 text-center align-middle font-semibold text-ksp-navy">
                       {row.rowNumber}
                     </td>
                     {sheet?.headers.map((header, index) => {
                       const long = isLongColumn(header);
+                      const compactCheckbox = isCompactCheckboxColumn(header);
                       return (
                         <td
                           key={`${row.rowNumber}-${header}-${index}`}
-                          className={`border-b border-r border-slate-100 px-3 py-2.5 last:border-r-0 ${tintFor(index).body} ${
-                            long
-                              ? "min-w-[18rem] max-w-[30rem] whitespace-normal text-left align-top leading-relaxed"
-                              : "whitespace-nowrap text-center align-middle"
+                          className={`border-b-2 border-r-2 border-slate-200 px-3 py-2.5 text-center align-middle last:border-r-0 ${tintFor(index).body} ${
+                            compactCheckbox
+                              ? "w-[1%] whitespace-nowrap"
+                              : long
+                                ? "min-w-[18rem] max-w-[30rem] whitespace-normal leading-relaxed"
+                                : "whitespace-nowrap"
                           } ${header === "ชื่อ-สกุล" ? "font-semibold text-ksp-blue-700" : "text-ksp-navy/85"}`}
                           title={header === "รายการยา" ? undefined : row.cells[index] ?? ""}
                         >
@@ -437,7 +445,7 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
         ) : null}
       </Modal>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="แก้ไขข้อมูลนักเรียน" size="lg">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="แก้ไขข้อมูลนักเรียน" size="xxl">
         {selectedStudent && (
           <PatientForm
             initial={selectedStudent}
@@ -673,7 +681,11 @@ function SheetRowDetail({ row }: { row: SheetRow }) {
 }
 
 function isCheckboxColumn(header: string) {
-  return header.includes("กด ✓") || header.includes("ถ้ามีกด ✓");
+  return (
+    header.includes("กด ✓") ||
+    header.includes("ถ้ามีกด ✓") ||
+    CHECKBOX_COLUMNS.includes(detailLabel(header))
+  );
 }
 
 function detailLabel(label: string) {

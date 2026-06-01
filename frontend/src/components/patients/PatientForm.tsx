@@ -152,6 +152,16 @@ function pickHealth(data: Record<string, unknown> | undefined, ...keys: string[]
   return "";
 }
 
+function checkedHealth(data: Record<string, unknown> | undefined, ...keys: string[]) {
+  if (!data) return "";
+  for (const key of keys) {
+    const value = data[key];
+    const text = value === null || value === undefined ? "" : String(value).trim();
+    if (["TRUE", "true", "1", "yes", "✓", "จริง"].includes(text)) return "TRUE";
+  }
+  return "";
+}
+
 // แปลงวันที่ไทย d/m/พ.ศ. -> ISO yyyy-mm-dd (สำหรับ input type=date); parse ไม่ได้คืน ""
 function thaiToIso(text: string) {
   const m = text.trim().match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
@@ -209,6 +219,8 @@ function healthExtraFromInitial(initial?: Partial<Student>): HealthExtraInput {
     vaccineBasic: pickHealth(d, "ได้รับวัคซีนพื้นฐาน(สมุดชมพู) ครบ/ไม่ครบ", "ได้รับวัคซีนพื้นฐาน(สมุดชมพู)"),
     vaccineFlu: pickHealth(d, "ฉีดวัคซีน ป้องกันไข้หวัดใหญ่ (ปี)", "ป้องกันไข้หวัดใหญ่ (ปี)"),
     vaccineCovid: pickHealth(d, "ฉีดวัคซีน ป้องกันโควิค (ปี)", "ป้องกันโควิค (ปี)"),
+    idCardDeposited: checkedHealth(d, "ฝากบัตรประชาชน", "ฝากบัตรประชาชน กด ✓", "ฝากบัตร ปชช. กด ✓"),
+    disabilityCardDeposited: checkedHealth(d, "ฝากบัตรคนพิการ", "ฝากบัตรคนพิการ กด ✓", "ฝากบัตร คนพิการ กด ✓"),
     disabilityType: pickHealth(d, "ประเภท ความพิการ", "ประเภท"),
     ageType: pickHealth(d, "เด็กเก่า/ใหม่"),
     idCard: pickHealth(d, "เลขบัตรประชาชน"),
@@ -255,6 +267,28 @@ function SectionTitle({ Icon, children, action }: { Icon: typeof Users; children
       </h3>
       {action}
     </div>
+  );
+}
+
+function CheckboxField({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex min-h-[3.25rem] cursor-pointer items-center gap-3 rounded-xl border border-ksp-blue-100 bg-white px-3 py-2.5 text-sm font-semibold text-ksp-navy hover:bg-ksp-blue-50/50">
+      <input
+        type="checkbox"
+        className="h-5 w-5 rounded border-slate-300 accent-ksp-blue-600 focus:ring-ksp-blue-300"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span>{label}</span>
+    </label>
   );
 }
 
@@ -336,11 +370,11 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {/* 1. ข้อมูลพื้นฐาน + ผู้ปกครอง */}
       <section>
         <SectionTitle Icon={Users}>ข้อมูลพื้นฐาน</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="label">รหัสนักเรียน *</label>
             <input className="input" required value={form.studentCode} onChange={(e) => update("studentCode", e.target.value)} placeholder="เช่น 6601001" />
@@ -419,7 +453,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
       {/* 2. ข้อมูลชั้นเรียน */}
       <section>
         <SectionTitle Icon={GraduationCap}>ข้อมูลชั้นเรียน</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="label">ชั้นเรียน</label>
             <select className="input" value={form.classRoom ?? ""} onChange={(e) => update("classRoom", e.target.value)}>
@@ -469,7 +503,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
             <input className="input" value={health.bmi ?? ""} onChange={(e) => updateHealth("bmi", e.target.value)} placeholder={autoBmi || "BMI"} />
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="label">แปลผล BMI</label>
             <input className="input" value={health.bmiResult ?? ""} onChange={(e) => updateHealth("bmiResult", e.target.value)} placeholder="เช่น ปกติ / น้ำหนักเกิน" />
@@ -477,6 +511,20 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
           <div>
             <label className="label">สิทธิการรักษา</label>
             <input className="input" value={health.healthRight ?? ""} onChange={(e) => updateHealth("healthRight", e.target.value)} placeholder="เช่น บัตรทอง / ผู้พิการ" />
+          </div>
+          <div className="self-end">
+            <CheckboxField
+              label="ฝากบัตรประชาชน"
+              checked={health.idCardDeposited === "TRUE"}
+              onChange={(checked) => updateHealth("idCardDeposited", checked ? "TRUE" : "")}
+            />
+          </div>
+          <div className="self-end">
+            <CheckboxField
+              label="ฝากบัตรคนพิการ"
+              checked={health.disabilityCardDeposited === "TRUE"}
+              onChange={(checked) => updateHealth("disabilityCardDeposited", checked ? "TRUE" : "")}
+            />
           </div>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -493,7 +541,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
             <input className="input" value={health.vaccineCovid ?? ""} onChange={(e) => updateHealth("vaccineCovid", e.target.value)} />
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="label">โรคประจำตัว</label>
             <textarea className="input min-h-[72px]" value={form.congenitalDisease ?? ""} onChange={(e) => update("congenitalDisease", e.target.value)} placeholder="ระบุโรคประจำตัวถ้ามี" />
@@ -516,7 +564,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
       {/* 3.5 อนามัยเจริญพันธุ์ / การคุมกำเนิด */}
       <section>
         <SectionTitle Icon={HeartPulse}>อนามัยเจริญพันธุ์ / การคุมกำเนิด</SectionTitle>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="label">การมีประจำเดือน</label>
             <input className="input" value={health.menstruation ?? ""} onChange={(e) => updateHealth("menstruation", e.target.value)} placeholder="เช่น เคยมี / ยังไม่มี" />
