@@ -29,6 +29,7 @@ interface NavItem {
   label: string;
   Icon: typeof LayoutDashboard;
   adminOnly?: boolean;
+  superAdminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -50,7 +51,7 @@ const navItems: NavItem[] = [
   { to: "/admin/users", label: "จัดการผู้ใช้", Icon: UserCog, adminOnly: true },
   { to: "/admin/audit", label: "Audit Log", Icon: ShieldCheck, adminOnly: true },
   { to: "/reports", label: "รายงาน & สถิติ", Icon: FileBarChart2 },
-  { to: "/admin/settings", label: "ตั้งค่าระบบ", Icon: Settings, adminOnly: true },
+  { to: "/admin/settings", label: "ตั้งค่าระบบ", Icon: Settings, superAdminOnly: true },
 ];
 
 export default function Sidebar() {
@@ -97,9 +98,8 @@ export default function Sidebar() {
           {navItems
             .filter(
               (i) =>
-                !i.adminOnly ||
-                user?.role === "super_admin" ||
-                user?.role === "admin",
+                (!i.adminOnly || user?.role === "super_admin" || user?.role === "admin") &&
+                (!i.superAdminOnly || user?.role === "super_admin"),
             )
             .map(({ to, label, Icon }) => (
               <NavLink

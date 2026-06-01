@@ -15,6 +15,8 @@ import {
   DORMITORY_OPTIONS,
 } from "../../constants/studentOptions";
 
+const STUDENT_PHOTO_UPLOAD_ENABLED = false;
+
 /** ช่องเลือกยาจากคลังยา (ค้นหาได้) + ปุ่มเพิ่มยาชนิดใหม่ถ้าไม่เจอ */
 function MedicationCombobox({
   value,
@@ -396,7 +398,7 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
       .map((g) => ({ name: g.name.trim(), phone: g.phone.trim() }))
       .filter((g) => g.name || g.phone);
     let photoPayload: Partial<StudentInput> = {};
-    if (photoFile) {
+    if (STUDENT_PHOTO_UPLOAD_ENABLED && photoFile) {
       setUploadingPhoto(true);
       try {
         const uploaded = await uploadStudentPhoto(photoFile);
@@ -432,32 +434,34 @@ export default function PatientForm({ initial, onSubmit, onCancel, submitting }:
       {/* 1. ข้อมูลพื้นฐาน + ผู้ปกครอง */}
       <section>
         <SectionTitle Icon={Users}>ข้อมูลพื้นฐาน</SectionTitle>
-        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-ksp-blue-100 bg-ksp-blue-50/40 p-3 sm:flex-row sm:items-center">
-          <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white bg-white shadow-sm">
-            {photoPreview ? (
-              <img src={photoPreview} alt="รูปนักเรียน" className="h-full w-full object-cover" />
-            ) : (
-              <ImagePlus className="h-8 w-8 text-ksp-blue-400" />
-            )}
+        {STUDENT_PHOTO_UPLOAD_ENABLED && (
+          <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-ksp-blue-100 bg-ksp-blue-50/40 p-3 sm:flex-row sm:items-center">
+            <div className="grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white bg-white shadow-sm">
+              {photoPreview ? (
+                <img src={photoPreview} alt="รูปนักเรียน" className="h-full w-full object-cover" />
+              ) : (
+                <ImagePlus className="h-8 w-8 text-ksp-blue-400" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-ksp-navy">รูปนักเรียน</p>
+              <p className="mt-0.5 text-xs text-ksp-gray">
+                รองรับไฟล์รูปภาพทุกชนิด ขนาดไม่เกิน 2 MB
+              </p>
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ksp-blue-200 bg-white px-3 py-2 text-sm font-semibold text-ksp-blue-700 shadow-sm hover:bg-ksp-blue-50">
+                <ImagePlus className="h-4 w-4" />
+                เลือกรูปภาพ
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
+                />
+              </label>
+              {photoError && <p className="mt-2 text-xs font-semibold text-rose-600">{photoError}</p>}
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-ksp-navy">รูปนักเรียน</p>
-            <p className="mt-0.5 text-xs text-ksp-gray">
-              รองรับไฟล์รูปภาพทุกชนิด ขนาดไม่เกิน 2 MB
-            </p>
-            <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ksp-blue-200 bg-white px-3 py-2 text-sm font-semibold text-ksp-blue-700 shadow-sm hover:bg-ksp-blue-50">
-              <ImagePlus className="h-4 w-4" />
-              เลือกรูปภาพ
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => handlePhotoChange(event.target.files?.[0] ?? null)}
-              />
-            </label>
-            {photoError && <p className="mt-2 text-xs font-semibold text-rose-600">{photoError}</p>}
-          </div>
-        </div>
+        )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="label">รหัสนักเรียน *</label>

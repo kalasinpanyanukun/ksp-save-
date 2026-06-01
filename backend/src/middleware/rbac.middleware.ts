@@ -17,3 +17,4 @@ export function requireRole(...allowed: Role[]) {
 }
 
 export const requireAdmin = requireRole("super_admin", "admin");
+export const requireSuperAdmin = requireRole("super_admin");

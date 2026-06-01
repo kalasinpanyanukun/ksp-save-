@@ -191,7 +191,7 @@ export default function App() {
       <Route
         path="/admin/settings"
         element={
-          <ProtectedRoute roles={["super_admin", "admin"]}>
+          <ProtectedRoute roles={["super_admin"]}>
             <Shell>
               <AdminSettingsPage />
             </Shell>

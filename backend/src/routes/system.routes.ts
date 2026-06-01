@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { requireAdmin } from "../middleware/rbac.middleware.js";
+import { requireSuperAdmin } from "../middleware/rbac.middleware.js";
 
 const router = Router();
 router.use(authMiddleware);
@@ -11,7 +11,7 @@ const DB_LIMIT_MB = Number(process.env.SUPABASE_DB_LIMIT_MB ?? 500);
 const PHOTO_STORAGE_LIMIT_GB = Number(process.env.PHOTO_STORAGE_LIMIT_GB ?? 1);
 const ACTIVE_WINDOW_MIN = 5;
 
-router.get("/status", requireAdmin, async (_req, res, next) => {
+router.get("/status", requireSuperAdmin, async (_req, res, next) => {
   try {
     // ขนาดฐานข้อมูลจริงจาก Postgres
     const sizeRows = await prisma.$queryRaw<{ bytes: bigint }[]>`
