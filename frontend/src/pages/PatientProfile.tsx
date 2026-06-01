@@ -15,6 +15,8 @@ import {
   type StudentInput,
 } from "../services/studentsService";
 
+const STUDENT_PHOTO_DISPLAY_ENABLED = false;
+
 export default function PatientProfilePage() {
   const { id } = useParams<{ id: string }>();
   const role = useAppSelector((s) => s.auth.user?.role);
@@ -75,15 +77,17 @@ export default function PatientProfilePage() {
     <>
       <div className="mb-5 flex min-w-0 flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          {student.photoUrl ? (
-            <img
-              src={student.photoUrl}
-              alt={`${student.firstName} ${student.lastName}`}
-              className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-4 ring-white shadow-card"
-            />
-          ) : (
+          {STUDENT_PHOTO_DISPLAY_ENABLED && (
             <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-ksp-blue-50 text-2xl font-bold text-ksp-blue-700 ring-4 ring-white shadow-card">
-              {student.firstName.charAt(0)}
+              {student.photoUrl ? (
+                <img
+                  src={student.photoUrl}
+                  alt={`${student.firstName} ${student.lastName}`}
+                  className="h-full w-full rounded-2xl object-cover"
+                />
+              ) : (
+                student.firstName.charAt(0)
+              )}
             </div>
           )}
           <div className="min-w-0">
