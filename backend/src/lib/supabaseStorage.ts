@@ -115,6 +115,10 @@ export async function uploadObject({
   const config = storageConfig();
   await ensureBucket(bucketId, true);
   const encodedPath = encodeObjectPath(path);
+  const body = buffer.buffer.slice(
+    buffer.byteOffset,
+    buffer.byteOffset + buffer.byteLength,
+  ) as ArrayBuffer;
   const upload = await fetch(
     `${config.url}/storage/v1/object/${bucketId}/${encodedPath}`,
     {
@@ -125,7 +129,7 @@ export async function uploadObject({
         "content-type": contentType,
         "x-upsert": "true",
       },
-      body: buffer,
+      body,
     },
   );
   if (!upload.ok) {
