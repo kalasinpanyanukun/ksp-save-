@@ -25,6 +25,15 @@ export const aqiInfo: Record<AqiLevel, { label: string; color: string; chip: str
   },
 };
 
+export function aqiFromPm25Value(value: number): AqiLevel {
+  if (value <= 12) return "good";
+  if (value <= 35.4) return "moderate";
+  if (value <= 55.4) return "unhealthy_sensitive";
+  if (value <= 150.4) return "unhealthy";
+  if (value <= 250.4) return "very_unhealthy";
+  return "hazardous";
+}
+
 export interface NormalizedPm25Point {
   id: string;
   location: string;

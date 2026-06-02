@@ -5,6 +5,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -16,9 +17,13 @@ import PageHeader from "../components/common/PageHeader";
 import PdfExportButton from "../components/common/PdfExportButton";
 import { useToast } from "../components/common/useToast";
 import { getPm25 } from "../services/pm25Service";
-import { chartPalette } from "../theme/colors";
 import type { Pm25Record } from "../types";
-import { aqiInfo, formatThaiDate, normalizePm25Points } from "../utils/pm25";
+import {
+  aqiFromPm25Value,
+  aqiInfo,
+  formatThaiDate,
+  normalizePm25Points,
+} from "../utils/pm25";
 
 export default function PM25DetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -76,6 +81,7 @@ export default function PM25DetailPage() {
     label: point.location,
     shortLabel: point.location.length > 12 ? `${point.location.slice(0, 12)}…` : point.location,
     value: point.pm25Value,
+    quality: aqiFromPm25Value(point.pm25Value),
     order: index + 1,
   }));
 
@@ -109,11 +115,13 @@ export default function PM25DetailPage() {
                   { header: "ลำดับ", weight: 0.5 },
                   { header: "สถานที่", weight: 2 },
                   { header: "ค่า PM2.5", weight: 1 },
+                  { header: "คุณภาพอากาศ", weight: 1.4 },
                 ],
                 rows: points.map((point, index) => [
                   index + 1,
                   point.location,
                   point.pm25Value.toFixed(2),
+                  aqiInfo[aqiFromPm25Value(point.pm25Value)].label,
                 ]),
               })}
             />
@@ -162,7 +170,12 @@ export default function PM25DetailPage() {
                   `${Number(value).toFixed(2)} µg/m³`,
                   "ค่า PM2.5",
                 ]}
-                labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ""}
+                labelFormatter={(_, payload) => {
+                  const item = payload?.[0]?.payload as { label?: string; quality?: keyof typeof aqiInfo } | undefined;
+                  return item?.quality
+                    ? `${item.label ?? ""} (${aqiInfo[item.quality].label})`
+                    : item?.label ?? "";
+                }}
               />
               <ReferenceLine
                 y={50}
@@ -170,11 +183,71 @@ export default function PM25DetailPage() {
                 strokeDasharray="4 4"
                 label={{ value: "เกณฑ์เริ่มอันตราย 50", position: "right", fontSize: 10 }}
               />
-              <Bar dataKey="value" fill={chartPalette[0]} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                {chartData.map((item) => (
+                  <Cell key={item.order} fill={aqiInfo[item.quality].color} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
+
+      <section className="mb-4 space-y-3">
+        <h3 className="font-semibold text-ksp-navy">กราฟฟิคคุณภาพอากาศรายจุด</h3>
+        <div className="space-y-3">
+          {points.map((point, index) => {
+            const quality = aqiFromPm25Value(point.pm25Value);
+            const info = aqiInfo[quality];
+            return (
+              <div
+                key={point.id}
+                className="grid grid-cols-1 items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-4 shadow-sm md:grid-cols-[12rem_minmax(0,1fr)_11rem]"
+              >
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <div
+                    className="grid h-24 w-24 place-items-center rounded-full border-8 text-center shadow-sm"
+                    style={{
+                      backgroundColor: `${info.color}22`,
+                      borderColor: `${info.color}55`,
+                      color: info.color,
+                    }}
+                  >
+                    <div>
+                      <div className="text-2xl font-bold leading-none">
+                        {Math.round(point.pm25Value)}
+                      </div>
+                      <div className="text-xs font-semibold">PM2.5</div>
+                    </div>
+                  </div>
+                  <div className="text-center text-sm font-semibold text-ksp-navy">
+                    {info.label}
+                  </div>
+                </div>
+                <div className="min-w-0 text-center md:text-left">
+                  <div className="text-sm font-semibold text-ksp-gray">
+                    จุดที่ {index + 1}
+                  </div>
+                  <div className="mt-1 break-words text-lg font-bold text-ksp-navy">
+                    {point.location}
+                  </div>
+                  <div className="mt-2 text-sm text-ksp-gray">
+                    {formatThaiDate(record.recordDate)} · {record.recordTime} น.
+                  </div>
+                </div>
+                <div className="text-center md:text-left">
+                  <div className="text-sm font-semibold text-ksp-navy">PM2.5</div>
+                  <div className="mt-1 text-3xl font-bold" style={{ color: info.color }}>
+                    {point.pm25Value.toFixed(1)}
+                  </div>
+                  <div className="text-sm font-semibold text-ksp-navy">µg/m³</div>
+                  <div className="mt-1 text-xs text-ksp-gray">Avg 24Hr</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
@@ -184,18 +257,26 @@ export default function PM25DetailPage() {
                 <th>ลำดับ</th>
                 <th>สถานที่</th>
                 <th>ค่า PM2.5 (µg/m³)</th>
+                <th>คุณภาพอากาศ</th>
               </tr>
             </thead>
             <tbody>
-              {points.map((point, index) => (
-                <tr key={point.id}>
-                  <td>{index + 1}</td>
-                  <td className="font-medium text-ksp-navy">{point.location}</td>
-                  <td className="font-semibold text-ksp-blue-700">
-                    {point.pm25Value.toFixed(2)}
-                  </td>
-                </tr>
-              ))}
+              {points.map((point, index) => {
+                const quality = aqiFromPm25Value(point.pm25Value);
+                const info = aqiInfo[quality];
+                return (
+                  <tr key={point.id}>
+                    <td>{index + 1}</td>
+                    <td className="font-medium text-ksp-navy">{point.location}</td>
+                    <td className="font-semibold" style={{ color: info.color }}>
+                      {point.pm25Value.toFixed(2)}
+                    </td>
+                    <td>
+                      <span className={`chip ${info.chip}`}>{info.label}</span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -42,8 +42,8 @@ import {
   formatThaiDate,
   formatThaiMonth,
   normalizePm25Points,
-  type NormalizedPm25Point,
 } from "../utils/pm25";
+import { numberInputToNumber, numberInputToString } from "../utils/numberInput";
 
 function todayDate() {
   const d = new Date();
@@ -418,13 +418,20 @@ function isoDate(value: string) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function editablePoints(initial?: Pm25Record | null): NormalizedPm25Point[] {
+interface EditablePm25Point {
+  id: string;
+  location: string;
+  pm25Value: string;
+}
+
+function editablePoints(initial?: Pm25Record | null): EditablePm25Point[] {
   if (!initial) {
-    return [{ id: makePointId(), location: "จุดวัดหลัก", pm25Value: 0 }];
+    return [{ id: makePointId(), location: "จุดวัดหลัก", pm25Value: "" }];
   }
   return normalizePm25Points(initial).map((point) => ({
-    ...point,
     id: point.id || makePointId(),
+    location: point.location,
+    pm25Value: numberInputToString(point.pm25Value),
   }));
 }
 
@@ -439,12 +446,12 @@ function PM25Form({
 }) {
   const [recordDate, setRecordDate] = useState(initial ? isoDate(initial.recordDate) : todayDate());
   const [recordTime, setRecordTime] = useState(initial?.recordTime ?? nowTime());
-  const [points, setPoints] = useState<NormalizedPm25Point[]>(() => editablePoints(initial));
+  const [points, setPoints] = useState<EditablePm25Point[]>(() => editablePoints(initial));
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const average = averagePm25Points(points);
 
-  function updatePoint(index: number, next: Partial<NormalizedPm25Point>) {
+  function updatePoint(index: number, next: Partial<EditablePm25Point>) {
     setPoints((current) =>
       current.map((point, pointIndex) =>
         pointIndex === index ? { ...point, ...next } : point,
@@ -458,7 +465,7 @@ function PM25Form({
       {
         id: makePointId(),
         location: `จุดที่ ${current.length + 1}`,
-        pm25Value: 0,
+        pm25Value: "",
       },
     ]);
   }
@@ -474,7 +481,7 @@ function PM25Form({
       const measurementPoints = points.map((point) => ({
         id: point.id,
         location: point.location.trim(),
-        pm25Value: Number(point.pm25Value),
+        pm25Value: numberInputToNumber(point.pm25Value),
       }));
       await onSubmit({
         recordDate,
@@ -558,7 +565,7 @@ function PM25Form({
                   min="0"
                   className="input"
                   value={point.pm25Value}
-                  onChange={(e) => updatePoint(index, { pm25Value: Number(e.target.value) })}
+                  onChange={(e) => updatePoint(index, { pm25Value: e.target.value })}
                   required
                 />
               </div>

@@ -33,6 +33,7 @@ import {
   MED_UNIT_OPTIONS,
 } from "../constants/studentOptions";
 import type { Medication, MedicationDetail } from "../types";
+import { numberInputToNumber, numberInputToString } from "../utils/numberInput";
 
 function formatDateTime(value: string) {
   try {
@@ -638,15 +639,19 @@ function MedicationForm({
   onSubmit: (data: MedicationInput) => Promise<void> | void;
   onCancel: () => void;
 }) {
-  const [form, setForm] = useState<MedicationInput>({
+  type MedicationFormState = Omit<MedicationInput, "stockQty" | "minStock"> & {
+    stockQty: string;
+    minStock: string;
+  };
+  const [form, setForm] = useState<MedicationFormState>({
     drugCode: initial?.drugCode ?? "",
     drugName: initial?.drugName ?? "",
     drugType: initial?.drugType ?? "",
     source: initial?.source ?? "เรือนพยาบาล",
     category: initial?.category ?? "medicine",
     unit: initial?.unit ?? "",
-    stockQty: initial?.stockQty ?? 0,
-    minStock: initial?.minStock ?? 0,
+    stockQty: initial ? numberInputToString(initial.stockQty) : "",
+    minStock: initial ? numberInputToString(initial.minStock) : "",
     entryStatus: initial?.entryStatus ?? "entered",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -655,7 +660,11 @@ function MedicationForm({
     e.preventDefault();
     setSubmitting(true);
     try {
-      await onSubmit(form);
+      await onSubmit({
+        ...form,
+        stockQty: numberInputToNumber(form.stockQty),
+        minStock: numberInputToNumber(form.minStock),
+      });
     } finally {
       setSubmitting(false);
     }
@@ -729,7 +738,7 @@ function MedicationForm({
             className="input"
             value={form.stockQty}
             onChange={(e) =>
-              setForm((f) => ({ ...f, stockQty: Number(e.target.value) }))
+              setForm((f) => ({ ...f, stockQty: e.target.value }))
             }
           />
         </div>
@@ -741,7 +750,7 @@ function MedicationForm({
             className="input"
             value={form.minStock}
             onChange={(e) =>
-              setForm((f) => ({ ...f, minStock: Number(e.target.value) }))
+              setForm((f) => ({ ...f, minStock: e.target.value }))
             }
           />
         </div>
@@ -786,15 +795,16 @@ function AdjustForm({
   onCancel: () => void;
 }) {
   const [mode, setMode] = useState<"add" | "remove">("add");
-  const [qty, setQty] = useState(0);
+  const [qty, setQty] = useState("");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const qtyNumber = numberInputToNumber(qty);
 
   async function handle(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await onSubmit(mode === "add" ? qty : -qty, reason || undefined);
+      await onSubmit(mode === "add" ? qtyNumber : -qtyNumber, reason || undefined);
     } finally {
       setSubmitting(false);
     }
@@ -836,7 +846,7 @@ function AdjustForm({
           min={1}
           className="input"
           value={qty}
-          onChange={(e) => setQty(Number(e.target.value))}
+          onChange={(e) => setQty(e.target.value)}
           required
         />
       </div>
@@ -853,7 +863,7 @@ function AdjustForm({
         <button type="button" className="btn-outline" onClick={onCancel}>
           ยกเลิก
         </button>
-        <button type="submit" className="btn-primary" disabled={submitting || qty <= 0}>
+        <button type="submit" className="btn-primary" disabled={submitting || qtyNumber <= 0}>
           {submitting ? "กำลังบันทึก..." : "บันทึก"}
         </button>
       </div>

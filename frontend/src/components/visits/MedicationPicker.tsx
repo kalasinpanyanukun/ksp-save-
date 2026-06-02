@@ -146,9 +146,11 @@ export default function MedicationPicker({
                       type="number"
                       min={0}
                       className="input py-1.5"
-                      value={m.qty ?? 0}
+                      value={m.qty ?? ""}
                       onChange={(e) =>
-                        update(i, { qty: Number(e.target.value) })
+                        update(i, {
+                          qty: e.target.value === "" ? undefined : Number(e.target.value),
+                        })
                       }
                     />
                   </td>

@@ -35,6 +35,7 @@ import {
   type YearlyReport,
 } from "../services/reportsService";
 import { chartPalette } from "../theme/colors";
+import { numberInputToNumber } from "../utils/numberInput";
 
 type Tab = "daily" | "monthly" | "yearly";
 
@@ -62,7 +63,7 @@ export default function ReportsPage() {
   const [tab, setTab] = useState<Tab>("daily");
   const [date, setDate] = useState(todayDate());
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
+  const [year, setYear] = useState(String(today.getFullYear()));
   const [month, setMonth] = useState(today.getMonth() + 1);
 
   const [daily, setDaily] = useState<DailyReport | null>(null);
@@ -72,20 +73,23 @@ export default function ReportsPage() {
   const [exporting, setExporting] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
+  const selectedYear = numberInputToNumber(year, today.getFullYear());
+  const yearReady = year.trim() !== "" && selectedYear >= 2020 && selectedYear <= 2100;
 
   useEffect(() => {
     let cancelled = false;
     async function fetchData() {
+      if ((tab === "monthly" || tab === "yearly") && !yearReady) return;
       setLoading(true);
       try {
         if (tab === "daily") {
           const d = await getDailyReport(date);
           if (!cancelled) setDaily(d);
         } else if (tab === "monthly") {
-          const m = await getMonthlyReport(year, month);
+          const m = await getMonthlyReport(selectedYear, month);
           if (!cancelled) setMonthly(m);
         } else {
-          const y = await getYearlyReport(year);
+          const y = await getYearlyReport(selectedYear);
           if (!cancelled) setYearly(y);
         }
       } catch {
@@ -98,14 +102,14 @@ export default function ReportsPage() {
     return () => {
       cancelled = true;
     };
-  }, [tab, date, year, month, toast]);
+  }, [tab, date, selectedYear, yearReady, month, toast]);
 
   async function handleExport() {
     if (!reportRef.current) return;
     setExporting(true);
     try {
       const label =
-        tab === "daily" ? date : tab === "monthly" ? `${year}-${String(month).padStart(2, "0")}` : `${year}`;
+        tab === "daily" ? date : tab === "monthly" ? `${selectedYear}-${String(month).padStart(2, "0")}` : `${selectedYear}`;
       await exportElementToPdf(reportRef.current, {
         filename: `KSP_SAVE_Report_${tab}_${label}.pdf`,
       });
@@ -192,7 +196,7 @@ export default function ReportsPage() {
               value={year}
               min={2020}
               max={2100}
-              onChange={(e) => setYear(Number(e.target.value))}
+              onChange={(e) => setYear(e.target.value)}
             />
           </div>
         )}
@@ -205,7 +209,7 @@ export default function ReportsPage() {
               value={year}
               min={2020}
               max={2100}
-              onChange={(e) => setYear(Number(e.target.value))}
+              onChange={(e) => setYear(e.target.value)}
             />
           </div>
         )}
