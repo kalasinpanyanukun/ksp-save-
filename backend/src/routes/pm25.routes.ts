@@ -81,10 +81,24 @@ function monthRange(month: string) {
   return { start, end };
 }
 
+function dateRange(from: string, to: string) {
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (!datePattern.test(from) || !datePattern.test(to)) return null;
+  const start = new Date(`${from}T00:00:00.000Z`);
+  const end = new Date(`${to}T00:00:00.000Z`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  if (end <= start) return null;
+  return { start, end };
+}
+
 router.get("/", async (req, res, next) => {
   try {
+    const from = typeof req.query.from === "string" ? req.query.from : "";
+    const to = typeof req.query.to === "string" ? req.query.to : "";
+    const explicitRange = from && to ? dateRange(from, to) : null;
     const month = typeof req.query.month === "string" ? req.query.month : "";
-    const range = month ? monthRange(month) : null;
+    const monthOnlyRange = month ? monthRange(month) : null;
+    const range = explicitRange ?? monthOnlyRange;
     const days = Math.max(1, Math.min(365, Number(req.query.days ?? 30)));
     const start = range?.start ?? new Date();
     if (!range) start.setDate(start.getDate() - days);
@@ -95,7 +109,13 @@ router.get("/", async (req, res, next) => {
       orderBy: [{ recordDate: "desc" }, { recordTime: "desc" }],
       include: { recordedBy: { select: { id: true, fullName: true } } },
     });
-    res.json({ days: range ? undefined : days, month: range ? month : undefined, data });
+    res.json({
+      days: range ? undefined : days,
+      from: explicitRange ? from : undefined,
+      to: explicitRange ? to : undefined,
+      month: monthOnlyRange && !explicitRange ? month : undefined,
+      data,
+    });
   } catch (err) {
     next(err);
   }

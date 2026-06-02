@@ -12,6 +12,8 @@ export interface Pm25Input {
 export interface Pm25ListParams {
   days?: number;
   month?: string;
+  from?: string;
+  to?: string;
 }
 
 export async function listPm25(params: number | Pm25ListParams = 30): Promise<Pm25Record[]> {

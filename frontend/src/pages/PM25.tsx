@@ -38,12 +38,19 @@ import { chartPalette } from "../theme/colors";
 import {
   aqiInfo,
   averagePm25Points,
-  currentMonthKey,
   formatThaiDate,
   formatThaiMonth,
   normalizePm25Points,
 } from "../utils/pm25";
 import { numberInputToNumber, numberInputToString } from "../utils/numberInput";
+
+type Pm25View = "day" | "week" | "month";
+
+const viewOptions: { value: Pm25View; label: string }[] = [
+  { value: "day", label: "รายวัน" },
+  { value: "week", label: "สัปดาห์" },
+  { value: "month", label: "เดือน" },
+];
 
 function todayDate() {
   const d = new Date();
@@ -62,6 +69,87 @@ function makePointId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+function parseLocalDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year || 0, (month || 1) - 1, day || 1);
+}
+
+function isoDateFromDate(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function startOfWeek(date: Date) {
+  const next = new Date(date);
+  const day = next.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  next.setDate(next.getDate() + diff);
+  return next;
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+}
+
+function formatThaiDay(value: Date) {
+  return value.toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function viewRange(view: Pm25View, anchorDate: string) {
+  const anchor = parseLocalDate(anchorDate);
+  if (view === "day") {
+    const start = anchor;
+    const end = addDays(start, 1);
+    return {
+      from: isoDateFromDate(start),
+      to: isoDateFromDate(end),
+      label: `วันที่ ${formatThaiDay(start)}`,
+      chartLabel: `รายวัน ${formatThaiDay(start)}`,
+      inputType: "date" as const,
+      inputValue: isoDateFromDate(anchor),
+      inputLabel: "เลือกวันที่",
+    };
+  }
+  if (view === "week") {
+    const start = startOfWeek(anchor);
+    const end = addDays(start, 7);
+    const endDisplay = addDays(end, -1);
+    return {
+      from: isoDateFromDate(start),
+      to: isoDateFromDate(end),
+      label: `สัปดาห์ ${formatThaiDay(start)} ถึง ${formatThaiDay(endDisplay)}`,
+      chartLabel: `รายสัปดาห์ ${formatThaiDay(start)} ถึง ${formatThaiDay(endDisplay)}`,
+      inputType: "date" as const,
+      inputValue: isoDateFromDate(anchor),
+      inputLabel: "เลือกวันในสัปดาห์",
+    };
+  }
+  const start = startOfMonth(anchor);
+  const end = endOfMonth(anchor);
+  return {
+    from: isoDateFromDate(start),
+    to: isoDateFromDate(end),
+    label: `เดือน${formatThaiMonth(start)}`,
+    chartLabel: `รายเดือน${formatThaiMonth(start)}`,
+    inputType: "month" as const,
+    inputValue: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`,
+    inputLabel: "เลือกเดือน",
+  };
+}
+
 export default function PM25Page() {
   const toast = useToast();
   const navigate = useNavigate();
@@ -70,20 +158,21 @@ export default function PM25Page() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Pm25Record | null>(null);
   const [deleting, setDeleting] = useState<Pm25Record | null>(null);
-  const monthKey = currentMonthKey();
-  const monthLabel = formatThaiMonth();
+  const [view, setView] = useState<Pm25View>("month");
+  const [anchorDate, setAnchorDate] = useState(todayDate());
+  const range = useMemo(() => viewRange(view, anchorDate), [view, anchorDate]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await listPm25({ month: monthKey });
+      const data = await listPm25({ from: range.from, to: range.to });
       setRecords(data);
     } catch {
       toast("โหลดข้อมูล PM2.5 ไม่สำเร็จ", "error");
     } finally {
       setLoading(false);
     }
-  }, [monthKey, toast]);
+  }, [range.from, range.to, toast]);
 
   useEffect(() => {
     load();
@@ -96,14 +185,17 @@ export default function PM25Page() {
   const chartData = useMemo(
     () =>
       [...records].reverse().map((record) => ({
-        date: new Date(record.recordDate).toLocaleDateString("th-TH", {
-          day: "2-digit",
-          month: "short",
-        }),
+        date:
+          view === "day"
+            ? record.recordTime
+            : new Date(record.recordDate).toLocaleDateString("th-TH", {
+                day: "2-digit",
+                month: "short",
+              }),
         value: Number(record.pm25Value),
         pointCount: normalizePm25Points(record).length,
       })),
-    [records],
+    [records, view],
   );
 
   const pdfRows = useMemo(
@@ -127,18 +219,18 @@ export default function PM25Page() {
     <>
       <PageHeader
         title="PM 2.5"
-        description={`ภาพรวมค่าฝุ่นประจำเดือน${monthLabel}, บันทึกได้หลายจุดต่อวัน`}
+        description={`ภาพรวมค่าฝุ่น${range.label}, บันทึกได้หลายจุดต่อวัน`}
         actions={
           <>
             <PdfExportButton
               label="ส่งออกกราฟ PDF"
               getReport={() => ({
                 title: "กราฟภาพรวมค่าฝุ่น PM 2.5",
-                subtitle: `ประจำเดือน${monthLabel}`,
+                subtitle: range.label,
                 orientation: "l",
                 fontSize: 11,
                 chart: {
-                  title: `แนวโน้มค่าเฉลี่ย PM2.5 ประจำเดือน${monthLabel}`,
+                  title: `แนวโน้มค่าเฉลี่ย PM2.5 ${range.chartLabel}`,
                   yLabel: "µg/m³",
                   points: chartData.map((point) => ({
                     label: point.date,
@@ -171,6 +263,46 @@ export default function PM25Page() {
           </>
         }
       />
+
+      <div className="mb-4 flex flex-col gap-3 rounded-xl border border-ksp-blue-100 bg-white px-3 py-3 shadow-card lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="มุมมอง PM2.5">
+          {viewOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={view === option.value}
+              className={
+                view === option.value
+                  ? "btn-primary px-4 py-2"
+                  : "btn-outline px-4 py-2"
+              }
+              onClick={() => setView(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="text-sm font-semibold text-ksp-navy" htmlFor="pm25-period">
+            {range.inputLabel}
+          </label>
+          <input
+            id="pm25-period"
+            type={range.inputType}
+            className="input sm:w-56"
+            value={range.inputValue}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (!value) return;
+              setAnchorDate(view === "month" ? `${value}-01` : value);
+            }}
+          />
+          <span className="text-sm font-semibold text-ksp-blue-700">
+            ทั้งหมด {records.length.toLocaleString("th-TH")} รายการ
+          </span>
+        </div>
+      </div>
 
       {latest && latestValue !== null && (
         <div className="card-pad mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -208,7 +340,7 @@ export default function PM25Page() {
 
       <div className="card-pad mb-4">
         <h3 className="mb-3 font-semibold text-ksp-navy">
-          แนวโน้มค่าเฉลี่ยเดือน{monthLabel}
+          แนวโน้มค่าเฉลี่ย{range.chartLabel}
         </h3>
         {chartData.length === 0 ? (
           <p className="text-sm text-ksp-gray">ไม่มีข้อมูล</p>
@@ -224,7 +356,7 @@ export default function PM25Page() {
                     `${Number(value).toFixed(2)} µg/m³`,
                     "ค่าเฉลี่ย",
                   ]}
-                  labelFormatter={(label) => `วันที่ ${label}`}
+                  labelFormatter={(label) => (view === "day" ? `เวลา ${label}` : `วันที่ ${label}`)}
                 />
                 <ReferenceLine
                   y={50}
