@@ -262,6 +262,7 @@ model Pm25Record {
   recordDate   DateTime  @map("record_date") @db.Date
   recordTime   String    @map("record_time") @db.VarChar(5)
   pm25Value    Decimal   @map("pm25_value") @db.Decimal(6, 2)
+  measurementPoints Json  @default("[]") @map("measurement_points")
   aqiLevel     AqiLevel  @map("aqi_level")
   notes        String?
   recordedById String    @map("recorded_by")

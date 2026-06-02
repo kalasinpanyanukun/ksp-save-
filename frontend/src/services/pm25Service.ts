@@ -1,18 +1,30 @@
 import { api } from "./api";
-import type { Pm25Record } from "../types";
+import type { Pm25MeasurementPoint, Pm25Record } from "../types";
 
 export interface Pm25Input {
   recordDate: string;
   recordTime: string;
-  pm25Value: number;
+  pm25Value?: number;
+  measurementPoints?: Pm25MeasurementPoint[];
   notes?: string | null;
 }
 
-export async function listPm25(days = 30): Promise<Pm25Record[]> {
+export interface Pm25ListParams {
+  days?: number;
+  month?: string;
+}
+
+export async function listPm25(params: number | Pm25ListParams = 30): Promise<Pm25Record[]> {
+  const query = typeof params === "number" ? { days: params } : params;
   const { data } = await api.get<{ data: Pm25Record[] }>("/pm25", {
-    params: { days },
+    params: query,
   });
   return data.data;
+}
+
+export async function getPm25(id: string): Promise<Pm25Record> {
+  const { data } = await api.get<{ record: Pm25Record }>(`/pm25/${id}`);
+  return data.record;
 }
 
 export async function createPm25(payload: Pm25Input): Promise<Pm25Record> {

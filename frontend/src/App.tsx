@@ -10,6 +10,7 @@ import AdmissionsPage from "./pages/Admissions";
 import ReferralsPage from "./pages/Referrals";
 import ReportsPage from "./pages/Reports";
 import PM25Page from "./pages/PM25";
+import PM25DetailPage from "./pages/PM25Detail";
 import MedicationStockPage from "./pages/MedicationStock";
 import SheetDataPage from "./pages/SheetDataPage";
 import HealthReportPage from "./pages/HealthReportPage";
@@ -113,6 +114,16 @@ export default function App() {
           <ProtectedRoute>
             <Shell>
               <PM25Page />
+            </Shell>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pm25/:id"
+        element={
+          <ProtectedRoute>
+            <Shell>
+              <PM25DetailPage />
             </Shell>
           </ProtectedRoute>
         }

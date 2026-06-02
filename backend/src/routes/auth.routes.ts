@@ -9,6 +9,7 @@ import {
 } from "../lib/tokens.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { HttpError } from "../middleware/error.middleware.js";
+import { writeAuditLogSafe } from "../lib/audit.js";
 
 const router = Router();
 
@@ -36,6 +37,14 @@ router.post("/login", async (req, res, next) => {
       role: user.role,
       fullName: user.fullName,
     } as const;
+    writeAuditLogSafe({
+      req,
+      userId: user.id,
+      action: "LOGIN",
+      entity: "auth",
+      entityId: user.id,
+      diff: { username: user.username },
+    });
     res.json({
       accessToken: signAccessToken(payload),
       refreshToken: signRefreshToken(payload),
@@ -102,7 +111,15 @@ router.get("/me", authMiddleware, async (req, res, next) => {
   }
 });
 
-router.post("/logout", authMiddleware, (_req, res) => {
+router.post("/logout", authMiddleware, (req, res) => {
+  writeAuditLogSafe({
+    req,
+    userId: req.user?.sub,
+    action: "LOGOUT",
+    entity: "auth",
+    entityId: req.user?.sub,
+    diff: { username: req.user?.username },
+  });
   res.json({ ok: true });
 });
 

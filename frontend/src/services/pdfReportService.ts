@@ -49,12 +49,18 @@ export interface PdfReportOptions {
   rows: (string | number)[][];
   orientation?: "p" | "l";
   fontSize?: number;
+  chart?: {
+    title: string;
+    yLabel?: string;
+    points: { label: string; value: number }[];
+    threshold?: { value: number; label: string };
+  };
 }
 
 export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
   const { title, subtitle, columns, rows } = options;
   const orientation = options.orientation ?? (columns.length > 6 ? "l" : "p");
-  const fontSize = 14;
+  const fontSize = options.fontSize ?? 14;
 
   const doc = new jsPDF({ orientation, unit: "mm", format: "a4" });
 
@@ -163,7 +169,92 @@ export async function exportTablePdf(options: PdfReportOptions): Promise<void> {
     return startY + rowH;
   }
 
+  function drawChart(startY: number) {
+    const chart = options.chart;
+    if (!chart || chart.points.length === 0) return startY;
+
+    const chartHeight = orientation === "l" ? 68 : 56;
+    const titleH = 8;
+    const axisPadLeft = 13;
+    const axisPadBottom = 12;
+    const plotX = margin + axisPadLeft;
+    const plotY = startY + titleH;
+    const plotW = usableWidth - axisPadLeft - 3;
+    const plotH = chartHeight - titleH - axisPadBottom;
+    const values = chart.points.map((point) => point.value);
+    const maxValue = Math.max(10, ...values, chart.threshold?.value ?? 0);
+    const yMax = Math.ceil(maxValue / 10) * 10;
+
+    doc.setFont(fontFamily, "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(13, 43, 69);
+    doc.text(chart.title, margin, startY + 4);
+
+    doc.setDrawColor(210, 225, 240);
+    doc.setLineWidth(0.25);
+    for (let i = 0; i <= 4; i++) {
+      const y = plotY + (plotH / 4) * i;
+      doc.line(plotX, y, plotX + plotW, y);
+      const label = String(Math.round(yMax - (yMax / 4) * i));
+      doc.setFont(fontFamily, "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(label, plotX - 2, y + 1.5, { align: "right" });
+    }
+
+    doc.setDrawColor(120, 140, 160);
+    doc.line(plotX, plotY, plotX, plotY + plotH);
+    doc.line(plotX, plotY + plotH, plotX + plotW, plotY + plotH);
+
+    if (chart.threshold) {
+      const y = plotY + plotH - (chart.threshold.value / yMax) * plotH;
+      doc.setDrawColor(239, 68, 68);
+      doc.setLineDashPattern([2, 2], 0);
+      doc.line(plotX, y, plotX + plotW, y);
+      doc.setLineDashPattern([], 0);
+      doc.setFont(fontFamily, "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(190, 18, 60);
+      doc.text(chart.threshold.label, plotX + plotW, y - 1.5, { align: "right" });
+    }
+
+    const step = chart.points.length > 1 ? plotW / (chart.points.length - 1) : 0;
+    const coords = chart.points.map((point, index) => ({
+      x: chart.points.length === 1 ? plotX + plotW / 2 : plotX + index * step,
+      y: plotY + plotH - (point.value / yMax) * plotH,
+    }));
+
+    doc.setDrawColor(32, 119, 199);
+    doc.setFillColor(32, 119, 199);
+    doc.setLineWidth(0.7);
+    coords.forEach((coord, index) => {
+      if (index > 0) {
+        const prev = coords[index - 1]!;
+        doc.line(prev.x, prev.y, coord.x, coord.y);
+      }
+      doc.circle(coord.x, coord.y, 1.2, "F");
+    });
+
+    const labelEvery = Math.max(1, Math.ceil(chart.points.length / 8));
+    doc.setFont(fontFamily, "normal");
+    doc.setFontSize(7.2);
+    doc.setTextColor(100, 116, 139);
+    chart.points.forEach((point, index) => {
+      if (index % labelEvery !== 0 && index !== chart.points.length - 1) return;
+      const coord = coords[index]!;
+      doc.text(point.label, coord.x, plotY + plotH + 5, { align: "center" });
+    });
+
+    if (chart.yLabel) {
+      doc.setFontSize(7.5);
+      doc.text(chart.yLabel, margin, plotY + 2);
+    }
+
+    return startY + chartHeight + 4;
+  }
+
   let y = drawDocHeader();
+  y = drawChart(y);
   y = drawTableHeader(y);
 
   doc.setFont(fontFamily, "normal");

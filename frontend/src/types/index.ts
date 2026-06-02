@@ -169,11 +169,18 @@ export type AqiLevel =
   | "very_unhealthy"
   | "hazardous";
 
+export interface Pm25MeasurementPoint {
+  id?: string;
+  location: string;
+  pm25Value: string | number;
+}
+
 export interface Pm25Record {
   id: string;
   recordDate: string;
   recordTime: string;
   pm25Value: string | number;
+  measurementPoints?: Pm25MeasurementPoint[] | null;
   aqiLevel: AqiLevel;
   notes: string | null;
   recordedById: string;

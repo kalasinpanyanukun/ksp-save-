@@ -15,10 +15,12 @@ import systemRoutes from "./system.routes.js";
 import healthReportsRoutes from "./health-reports.routes.js";
 import studentHandoffsRoutes from "./student-handoffs.routes.js";
 import uploadsRoutes from "./uploads.routes.js";
+import { auditActivityMiddleware } from "../middleware/audit.middleware.js";
 
 const router = Router();
 
 router.use("/health", healthRoutes);
+router.use(auditActivityMiddleware);
 router.use("/auth", authRoutes);
 router.use("/students", studentsRoutes);
 router.use("/visits", visitsRoutes);
