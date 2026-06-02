@@ -13,16 +13,6 @@ import {
   type HealthReportType,
 } from "../services/healthReportsService";
 
-const TINTS = [
-  "bg-sky-100",
-  "bg-emerald-100",
-  "bg-violet-100",
-  "bg-amber-100",
-  "bg-rose-100",
-  "bg-teal-100",
-];
-const tint = (i: number) => TINTS[i % TINTS.length];
-
 const THAI_MONTHS: Record<string, number> = {
   "ม.ค.": 1, มกราคม: 1, "ก.พ.": 2, กุมภาพันธ์: 2, "มี.ค.": 3, มีนาคม: 3,
   "เม.ย.": 4, เมษายน: 4, "พ.ค.": 5, พฤษภาคม: 5, "มิ.ย.": 6, มิถุนายน: 6,
@@ -213,18 +203,18 @@ export default function HealthReportPage({ type }: { type: HealthReportType }) {
             <table className={`${type === "physical" ? "min-w-full table-auto" : "w-max min-w-full"} border-collapse text-center text-xs`}>
               <thead>
                 <tr>
-                  <th className="sticky top-0 z-10 border-b-2 border-r border-slate-300 bg-slate-200 px-3 py-2.5 font-bold text-ksp-navy">
+                  <th className="sticky top-0 z-10 border-b-2 border-r border-ksp-blue-600 bg-ksp-blue-700 px-3 py-2.5 font-bold text-white">
                     ลำดับ
                   </th>
                   {report?.columns.map((c, i) => (
                     <th
                       key={`${c.header}-${i}`}
-                      className={`sticky top-0 z-10 whitespace-nowrap border-b-2 border-r border-slate-300 px-3 py-2.5 font-bold text-ksp-navy last:border-r-0 ${
+                      className={`sticky top-0 z-10 whitespace-nowrap border-b-2 border-r border-ksp-blue-600 bg-ksp-blue-700 px-3 py-2.5 font-bold text-white last:border-r-0 ${
                         type === "physical" &&
                         isHeader(c.header, "เรือนนอน", "ชื่อ-สกุล", "ชื่อ - สกุล", "ชั้น")
                           ? "!px-12"
                           : ""
-                      } ${tint(i)}`}
+                      }`}
                     >
                       {c.header}
                     </th>

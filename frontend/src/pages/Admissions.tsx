@@ -137,32 +137,32 @@ export default function AdmissionsPage() {
           description="เมื่อมีการ admit จะแสดงในส่วนนี้"
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {active.map((a) => (
-            <div key={a.id} className="relative overflow-hidden rounded-xl bg-ksp-blue-800 p-5 text-white shadow-card">
+            <div key={a.id} className="relative overflow-hidden rounded-xl border border-ksp-blue-100 bg-white p-5 text-ksp-blue-800 shadow-card">
               <div className="absolute right-[-2.9rem] top-5 w-44 rotate-45 bg-rose-600 py-1 text-center text-xs font-bold text-white shadow">
                 กำลังพักรักษา
               </div>
               <div className="flex items-start justify-between gap-2 pr-16">
                 <div className="min-w-0">
-                  <div className="font-semibold text-white">
+                  <div className="font-semibold text-ksp-blue-800">
                     {a.student?.firstName} {a.student?.lastName}
                   </div>
-                  <div className="text-xs font-medium text-white/75">
+                  <div className="text-xs font-medium text-ksp-blue-700">
                     {a.student?.studentCode} · {a.student?.nickname || "ไม่มีชื่อเล่น"} · {a.student?.classRoom ?? "—"}
                   </div>
                 </div>
               </div>
-              <div className="mt-3 text-sm font-medium text-white">
+              <div className="mt-3 text-sm font-semibold text-ksp-blue-800">
                 {a.chiefComplaint}
               </div>
-              <div className="mt-3 text-xs font-medium text-white/75">
+              <div className="mt-3 text-xs font-semibold text-ksp-blue-700">
                 Admit:{" "}
                 {new Date(a.admitDate).toLocaleDateString("th-TH")} · {a.admitTime}
               </div>
               <button
                 type="button"
-                className="btn mt-3 w-full border border-white bg-white text-ksp-blue-800 shadow-sm hover:bg-ksp-blue-50"
+                className="btn mt-3 w-full border border-ksp-blue-700 bg-ksp-blue-700 text-white shadow-sm hover:bg-ksp-blue-800"
                 onClick={() => setDischarging(a)}
               >
                 <LogOut className="h-4 w-4" /> จำหน่าย

@@ -178,7 +178,7 @@ export default function PatientListPage() {
     [students, ageFilter, disability1, disability2],
   );
   const stickyThClass =
-    "lg:sticky lg:top-16 lg:z-20 lg:bg-ksp-blue-50 lg:shadow-[0_1px_0_rgba(148,163,184,0.35),0_8px_16px_rgba(15,23,42,0.06)]";
+    "lg:sticky lg:top-16 lg:z-20 lg:bg-ksp-blue-700 lg:text-white lg:shadow-[0_1px_0_rgba(37,99,156,0.35),0_8px_16px_rgba(15,23,42,0.06)]";
 
   return (
     <>

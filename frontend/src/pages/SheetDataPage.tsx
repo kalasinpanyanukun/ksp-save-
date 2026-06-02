@@ -49,14 +49,14 @@ const pageCopy = {
   },
 } satisfies Record<SheetDataKind, unknown>;
 
-// โทนพาสเทลแนวโรงพยาบาล — หัวตารางทึบ (อ่านง่าย ไม่ทับกัน) เนื้อหาจาง ๆ
+// ใช้สีจางเฉพาะเนื้อหาเพื่อช่วยแยกคอลัมน์ โดยหัวตารางใช้สีน้ำเงินระบบเดียวกันทุกหน้า
 const COLUMN_TINTS = [
-  { head: "bg-sky-100", body: "bg-sky-50/40" },
-  { head: "bg-emerald-100", body: "bg-emerald-50/40" },
-  { head: "bg-violet-100", body: "bg-violet-50/35" },
-  { head: "bg-amber-100", body: "bg-amber-50/35" },
-  { head: "bg-rose-100", body: "bg-rose-50/35" },
-  { head: "bg-teal-100", body: "bg-teal-50/35" },
+  { body: "bg-sky-50/40" },
+  { body: "bg-emerald-50/40" },
+  { body: "bg-violet-50/35" },
+  { body: "bg-amber-50/35" },
+  { body: "bg-rose-50/35" },
+  { body: "bg-teal-50/35" },
 ];
 const tintFor = (index: number) =>
   COLUMN_TINTS[index % COLUMN_TINTS.length] ?? COLUMN_TINTS[0]!;
@@ -333,13 +333,13 @@ export default function SheetDataPage({ kind }: SheetDataPageProps) {
             <table className="w-max min-w-full border-collapse text-center text-xs">
               <thead>
                 <tr>
-                  <th className="sticky left-0 top-0 z-30 border-b-2 border-r-2 border-slate-300 bg-slate-200 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm">
+                  <th className="sticky left-0 top-0 z-30 border-b-2 border-r-2 border-ksp-blue-600 bg-ksp-blue-700 px-3 py-2.5 text-center font-bold text-white shadow-sm">
                     ลำดับ
                   </th>
                   {sheet?.headers.map((header, index) => (
                     <th
                       key={`${header}-${index}`}
-                      className={`sticky top-0 z-20 whitespace-nowrap border-b-2 border-r-2 border-slate-300 px-3 py-2.5 text-center font-bold text-ksp-navy shadow-sm last:border-r-0 ${tintFor(index).head} ${
+                      className={`sticky top-0 z-20 whitespace-nowrap border-b-2 border-r-2 border-ksp-blue-600 bg-ksp-blue-700 px-3 py-2.5 text-center font-bold text-white shadow-sm last:border-r-0 ${
                         isCompactCheckboxColumn(header) ? "w-[1%]" : ""
                       }`}
                     >
@@ -489,7 +489,7 @@ function MedicationScheduleTable({
     { key: "เที่ยง", alt: "การรับประทาน เที่ยง", label: "กลางวัน" },
     { key: "เย็น", alt: "การรับประทาน เย็น", label: "เย็น" },
   ];
-  const headBase = "border border-ksp-blue-700 bg-ksp-blue-800 px-2 py-2 font-bold text-white";
+  const headBase = "border border-ksp-blue-600 bg-ksp-blue-700 px-2 py-2 font-bold text-white";
   return (
     <div className="max-h-[calc(100vh-15rem)] overflow-auto">
       <table className="w-max min-w-full border-collapse text-center text-xs">
